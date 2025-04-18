@@ -177,4 +177,5 @@ cython_debug/
 .vscode/
 
 # Cursor
-.cursor/
+*.cursor/rules
+*.cursor/
