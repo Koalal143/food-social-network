@@ -1,0 +1,7 @@
+[project]
+name = "food-social-network"
+version = "0.1.0"
+description = "A food social network project"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
