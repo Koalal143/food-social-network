@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -36,6 +37,12 @@ class JWTConfig(BaseModel):
 class RedisConfig(BaseModel):
     host: str
     port: int
+
+
+class ServerConfig(BaseModel):
+    host: str
+    port: int
+    allowed_origins: list[str]
 
 
 class Settings(BaseSettings):
