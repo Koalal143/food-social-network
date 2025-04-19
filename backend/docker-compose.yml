@@ -1,0 +1,60 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        - SERVER__HOST=localhost
+        - SERVER__PORT=8000
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVER__HOST=0.0.0.0
+      - SERVER__PORT=8000
+      - POSTGRES__USER=postgres
+      - POSTGRES__PASSWORD=postgres
+      - POSTGRES__HOST=db
+      - POSTGRES__PORT=5432
+      - POSTGRES__DB=food_social_network
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
+      - JWT__SECRET_KEY=your-super-secret-key-in-production
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./src:/app/src
+    restart: unless-stopped
+
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=food_social_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data: 
