@@ -7,7 +7,7 @@ app = FastAPI(
     title=settings.project_name,
     description="API for Food Social Network",
     version="1.0.0",
-    debug=settings.debug,
+    debug=settings.mode == "dev",
 )
 
 app.add_middleware(
