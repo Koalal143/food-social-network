@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     )
 
     project_name: str = "Food Social Network"
+    server: ServerConfig
     postgres: PostgresConfig
     jwt: JWTConfig
     redis: RedisConfig
