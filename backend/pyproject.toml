@@ -19,6 +19,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "mypy>=1.15.0",
     "ruff>=0.1.13",
 ]
 test = [
@@ -67,3 +68,14 @@ lint.ignore = [
     "RUF001", # string contrains ambigious o
 ]
 format.skip-magic-trailing-comma = false
+
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+show_error_context = true
+show_absolute_path = true
+pretty = true
+ignore_missing_imports = true
+strict = false
+explicit_package_bases = true
