@@ -18,17 +18,23 @@ services:
       - REDIS__HOST=redis
       - REDIS__PORT=6379
       - JWT__SECRET_KEY=your-super-secret-key-in-production
+      - MODE=dev
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
-      - ./src:/app/src
+      - ./alembic:/app/alembic
     restart: unless-stopped
+    networks:
+      - db_network
+      - redis_network
 
   db:
     image: postgres:15
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -41,20 +47,31 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - db_network
 
   redis:
     image: redis:7
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli | grep PONG"]
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - redis_network
+
+networks:
+  db_network:
+    driver: bridge
+  redis_network:
+    driver: bridge
 
 volumes:
+  alembic_data:
   postgres_data:
   redis_data: 
