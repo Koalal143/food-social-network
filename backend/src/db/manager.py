@@ -21,7 +21,7 @@ class DatabaseManager:
 
 
 db_engine = create_async_engine(
-    settings.postgres.url_with_driver,
+    settings.postgres.url,
     echo=settings.postgres.echo,
     pool_size=10,
     max_overflow=20,
