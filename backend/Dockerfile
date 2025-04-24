@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     else \
         uv sync --frozen --no-install-project; \
     fi
-
+    
 ADD . /app
 
 FROM python:3.12-slim-bookworm
@@ -32,4 +32,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"] 
+CMD alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8000 
