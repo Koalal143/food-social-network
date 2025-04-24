@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String
+from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
@@ -17,6 +17,6 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(default=True)
     is_superuser: Mapped[bool] = mapped_column(default=False)
-    last_login: Mapped[datetime | None] = mapped_column(default=None)
+    last_login: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
