@@ -1,7 +1,15 @@
 services:
-  app:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
     build:
-      context: .
+      context: ./backend
       args:
         - SERVER__HOST=localhost
         - SERVER__PORT=8000
@@ -25,7 +33,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./alembic:/app/alembic
+      - ./backend/alembic:/app/alembic
     restart: unless-stopped
     networks:
       - db_network
