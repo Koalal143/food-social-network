@@ -2,27 +2,13 @@
 
 import Container from "@/components/Container"
 import RecommendationsRecipeCard from "../../components/shared/RecommendationsRecipeCard"
-import { useState, useEffect } from "react"
-import RecipesService from "../../services/recipes.service"
+import { useState } from "react"
+import { useRecipes } from "@/context/RecipeContext"
+import Loader from "@/components/ui/Loader"
 
-export default function Recommendations() {
+export default function RecommendationsPage() {
     const [currentIndex, setCurrentIndex] = useState(0)
-    const [recipes, setRecipes] = useState([])
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const fetchRecipes = async () => {
-            try {
-                const data = await RecipesService.getAllReceipts()
-                setRecipes(data)
-            } catch (error) {
-                console.error("Ошибка при загрузке рецептов:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchRecipes()
-    }, [])
+    const { recipes, loading } = useRecipes()
 
     const handleDislike = () => {
         const nextIndex = currentIndex + 1
@@ -38,19 +24,21 @@ export default function Recommendations() {
     }
 
     if (loading) {
-        return <Container className="py-6">Загрузка...</Container>
+        return <Loader />
     }
 
     return (
-        <Container className="py-6 overflow-hidden">
+        <Container className="py-6 overflow-hidden min-h-screen">
             <h2 className="text-2xl font-bold mb-6">Рекомендации</h2>
             <div className="flex justify-center overflow-hidden">
                 {currentIndex < recipes.length && (
-                    <RecommendationsRecipeCard 
-                        recipe={recipes[currentIndex]} 
-                        onLike={handleLike}
-                        onDislike={handleDislike}
-                    />
+                    <div className="max-w-lg w-full">
+                        <RecommendationsRecipeCard 
+                            recipe={recipes[currentIndex]} 
+                            onLike={handleLike}
+                            onDislike={handleDislike}
+                        />
+                    </div>
                 )}
             </div>
         </Container>

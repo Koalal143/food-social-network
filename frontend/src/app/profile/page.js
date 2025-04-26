@@ -1,11 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react";
-
 import Container from "@/components/Container"
 import RecipeCard from "../../components/shared/RecipeCard";
-
-import RecipesService from "../../services/recipes.service";
+import { useRecipes } from "@/context/RecipeContext";
+import Loader from "@/components/ui/Loader";
 
 const user = {
   name: "Тетя Зина",
@@ -13,27 +11,11 @@ const user = {
   image: "/images/ava.jpg"
 }
 
-export default function Profile() {
-  const [recipes, setRecipes] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        const data = await RecipesService.getAllReceipts();
-        setRecipes(data);
-      } catch (error) {
-        console.error("Ошибка при загрузке рецептов:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRecipes();
-  }, []);
+export default function ProfilePage() {
+  const { recipes, loading } = useRecipes();
 
   if (loading) {
-    return <Container className="py-6">Загрузка...</Container>;
+    return <Loader />
   }
 
   return (
