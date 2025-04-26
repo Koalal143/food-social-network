@@ -5,10 +5,8 @@ import { motion } from "framer-motion";
 
 export default function RecommendationsRecipeCard({ recipe, onLike, onDislike }) {
     return (
-        <div
-            className="bg-card/35 rounded-lg overflow-hidden max-w-96 h-full flex flex-col"
-        >
-            <div className="relative aspect-video">
+        <div className="bg-white rounded-2xl overflow-hidden max-w-lg h-full flex flex-col">
+            <div className="relative aspect-video h-64">
                 <Image 
                     src={recipe.preview} 
                     alt={recipe.title}
