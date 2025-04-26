@@ -1,0 +1,17 @@
+[
+    {
+        "id": 1,
+        "name": "Иван Иванов",
+        "avatar": "/images/ava.jpg"
+    },
+    {
+        "id": 2,
+        "name": "Мария Петрова",
+        "avatar": "/images/ava.jpg"
+    },
+    {
+        "id": 3,
+        "name": "Тетя Зина",
+        "avatar": "/images/ava.jpg"
+    }
+] 
