@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -7,8 +6,9 @@ from src.schemas.base import BaseReadSchema
 
 
 class UserCreate(BaseModel):
+    username: str = Field(min_length=3, max_length=30)
     email: EmailStr
-    password: Annotated[str, Field(min_length=8)]
+    password: str = Field(min_length=8)
 
 
 class UserRead(BaseReadSchema):
