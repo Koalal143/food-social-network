@@ -6,14 +6,14 @@ from src.schemas.base import BaseReadSchema
 
 
 class UserProfileRead(BaseReadSchema):
-    user_id: int = Field(description="ID пользователя, к которому относится профиль")
-    about: str | None = Field(None, description="О пользователе")
-    avatar_url: str | None = Field(None, description="URL аватара пользователя")
+    user_id: int = Field(description="User ID to which the profile belongs")
+    about: str | None = Field(None, description="About the user")
+    avatar_url: str | None = Field(None, description="User avatar URL")
 
 
 class UserProfileUpdate(BaseModel):
-    about: str | None = Field(None, description="О пользователе")
-    avatar_url: str | None = Field(None, description="URL аватара пользователя")
+    about: str | None = Field(None, description="About the user")
+    avatar_url: str | None = Field(None, description="User avatar URL")
 
 
 class UserCreate(BaseModel):
@@ -21,10 +21,15 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
 
-
 class UserRead(BaseReadSchema):
     email: str
     is_active: bool
     is_superuser: bool
-    profile: UserProfileRead | None = None
+    profile: UserProfileRead | None = Field(default=None)
     last_login: datetime | None
+
+
+class UserLogin(BaseModel):
+    email: str | None = Field(None, description="User email")
+    username: str | None = Field(None, description="Username")
+    password: str = Field(..., min_length=8, description="User password")
