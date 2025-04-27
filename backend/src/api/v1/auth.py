@@ -50,7 +50,7 @@ async def login(
 
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Inactive user",
         )
 
@@ -93,7 +93,7 @@ async def refresh_token(
     async with RedisManager() as redis:
         token_service = TokenService(session=session, redis=redis)
         refresh_token_service = RefreshTokenService(session=session)
-        
+
         token_in_redis = await redis.get(f"refresh_token:{refresh_token}")
         if not token_in_redis:
             raise HTTPException(
@@ -107,7 +107,7 @@ async def refresh_token(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token",
             )
-        
+
         access_token = token_service.create_access_token(data={"sub": refresh_token_model.user_id})
         new_refresh_token = token_service.create_access_token(
             data={"sub": refresh_token_model.user_id},
