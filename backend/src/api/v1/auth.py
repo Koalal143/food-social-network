@@ -7,7 +7,7 @@ from src.core.redis import RedisManager
 from src.db.manager import SessionDependency
 from src.models.user import User
 from src.schemas.token import Token
-from src.schemas.user import UserCreate, UserRead
+from src.schemas.user import UserCreate, UserLogin, UserRead
 from src.services import SecurityService, TokenService, UserService
 from src.services.token import RefreshTokenService
 
@@ -28,24 +28,39 @@ async def register(
             detail="Email already registered",
         )
 
-    return await user_service.create(
-        email=user_in.email,
-        hashed_password=SecurityService.get_password_hash(user_in.password),
-    )
+    try:
+        user = await user_service.create(
+            username=user_in.username,
+            email=user_in.email,
+            hashed_password=SecurityService.get_password_hash(user_in.password),
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e),
+        ) from None
+    else:
+        user.profile = None  # TODO: replace with profile selection
+        return user
 
 
 @router.post("/login")
 async def login(
-    user_in: UserCreate,
+    user_in: UserLogin,
     session: SessionDependency,
 ) -> Token:
     user_service = UserService(session=session)
 
-    user = await user_service.get_by_email(user_in.email)
+    user = None
+    if user_in.email:
+        user = await user_service.get_by_email(user_in.email)
+    elif user_in.username:
+        user = await user_service.get_by_username(user_in.username)
+
     if not user or not SecurityService.verify_password(user_in.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Incorrect email/username or password",
         )
 
     if not user.is_active:
@@ -58,7 +73,7 @@ async def login(
         token_service = TokenService(session=session, redis=redis)
         refresh_token_service = RefreshTokenService(session=session)
 
-        access_token = token_service.create_access_token(data={"sub": user.id})
+        access_token = token_service.create_access_token(data={"sub": str(user.id)})
         refresh_token = token_service.create_access_token(
             data={"sub": user.id},
             expires_delta=timedelta(days=settings.jwt.refresh_token_expire_days),
@@ -108,9 +123,10 @@ async def refresh_token(
                 detail="Invalid refresh token",
             )
 
-        access_token = token_service.create_access_token(data={"sub": refresh_token_model.user_id})
+
+        access_token = token_service.create_access_token(data={"sub": str(refresh_token_model.user_id)})
         new_refresh_token = token_service.create_access_token(
-            data={"sub": refresh_token_model.user_id},
+            data={"sub": str(refresh_token_model.user_id)},
             expires_delta=timedelta(days=settings.jwt.refresh_token_expire_days),
         )
 
