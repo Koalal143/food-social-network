@@ -23,6 +23,7 @@ dev = [
     "mypy>=1.15.0",
     "pre-commit>=4.2.0",
     "ruff>=0.1.13",
+    "uv-sort>=0.5.1",
 ]
 test = [
     "pytest>=7.4.4",
