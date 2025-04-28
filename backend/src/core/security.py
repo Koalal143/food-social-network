@@ -16,7 +16,6 @@ async def get_current_user(
     session: SessionDependency,
     redis: RedisDependency,
 ) -> User:
-    print(credentials.credentials)
     token_service = TokenService(session=session, redis=redis)
     return await token_service.get_current_user(
         token=credentials.credentials if credentials else None,
