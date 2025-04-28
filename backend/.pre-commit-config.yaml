@@ -17,3 +17,7 @@ repos:
       - id: check-yaml
       - id: check-toml
       - id: name-tests-test
+  - repo: https://github.com/ninoseki/uv-sort
+    rev: v0.5.1
+    hooks:
+      - id: uv-sort
