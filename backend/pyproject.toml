@@ -67,13 +67,15 @@ lint.ignore = [
     "TD003",
     "FIX002", # too verbose descriptions of todos
     "S101",   # prohibited assert statement
-    "INP001",
     "ARG001", # unused function argument
     "ANN401", # disallow Any type
     "RUF001", # string contrains ambigious o
 ]
 format.skip-magic-trailing-comma = false
 
+[tool.ruff.lint.per-file-ignores]
+"alembic/*" = ["INP001"]
+"tests/*" = ["ANN", "INP001"]
 
 [tool.mypy]
 python_version = "3.12"
