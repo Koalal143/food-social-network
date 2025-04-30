@@ -28,9 +28,11 @@ class UserService:
         existing = result.scalars().all()
         for user in existing:
             if user.username == username:
-                raise ValueError("Username already taken")
+                msg = "Username already taken"
+                raise ValueError(msg)
             if user.email == email:
-                raise ValueError("Email already registered")
+                msg = "Email already registered"
+                raise ValueError(msg)
         user = User(
             username=username,
             email=email,
