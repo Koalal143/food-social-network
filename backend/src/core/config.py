@@ -45,6 +45,13 @@ class ServerConfig(BaseModel):
     allowed_origins: list[str]
 
 
+class S3Config(BaseModel):
+    host: str
+    port: int
+    access_key: str
+    secret_key: str
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -56,6 +63,7 @@ class Settings(BaseSettings):
     project_name: str = "Food Social Network"
     server: ServerConfig
     postgres: PostgresConfig
+    s3_storage: S3Config
     jwt: JWTConfig
     redis: RedisConfig
     mode: Literal["dev", "test", "prod"] = Field(default="prod", description="Application mode")
