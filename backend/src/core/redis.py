@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 from asyncio import Lock
-from collections.abc import AsyncGenerator
-from typing import Annotated, Any, Self
+from typing import TYPE_CHECKING, Annotated, Any, Self
 
 from fastapi import Depends
 from redis.asyncio import Redis
 from redis.asyncio.connection import ConnectionPool
 
 from src.core.config import settings
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 
 class RedisManager:
