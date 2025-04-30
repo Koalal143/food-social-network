@@ -1,0 +1,96 @@
+"""
+Main interface for s3 service.
+
+[Documentation](https://youtype.github.io/types_aiobotocore_docs/types_aiobotocore_s3/)
+
+Copyright 2025 Vlad Emelianov
+
+Usage::
+
+    ```python
+    from aiobotocore.session import get_session
+    from types_aiobotocore_s3 import (
+        BucketExistsWaiter,
+        BucketNotExistsWaiter,
+        Client,
+        ListBucketsPaginator,
+        ListDirectoryBucketsPaginator,
+        ListMultipartUploadsPaginator,
+        ListObjectVersionsPaginator,
+        ListObjectsPaginator,
+        ListObjectsV2Paginator,
+        ListPartsPaginator,
+        ObjectExistsWaiter,
+        ObjectNotExistsWaiter,
+        S3Client,
+        S3ServiceResource,
+        ServiceResource,
+    )
+
+    session = get_session()
+    async with session.create_client("s3") as client:
+        client: S3Client
+        ...
+
+
+    bucket_exists_waiter: BucketExistsWaiter = client.get_waiter("bucket_exists")
+    bucket_not_exists_waiter: BucketNotExistsWaiter = client.get_waiter("bucket_not_exists")
+    object_exists_waiter: ObjectExistsWaiter = client.get_waiter("object_exists")
+    object_not_exists_waiter: ObjectNotExistsWaiter = client.get_waiter("object_not_exists")
+
+    list_buckets_paginator: ListBucketsPaginator = client.get_paginator("list_buckets")
+    list_directory_buckets_paginator: ListDirectoryBucketsPaginator = client.get_paginator("list_directory_buckets")
+    list_multipart_uploads_paginator: ListMultipartUploadsPaginator = client.get_paginator("list_multipart_uploads")
+    list_object_versions_paginator: ListObjectVersionsPaginator = client.get_paginator("list_object_versions")
+    list_objects_paginator: ListObjectsPaginator = client.get_paginator("list_objects")
+    list_objects_v2_paginator: ListObjectsV2Paginator = client.get_paginator("list_objects_v2")
+    list_parts_paginator: ListPartsPaginator = client.get_paginator("list_parts")
+    ```
+"""
+
+from .client import S3Client
+from .paginator import (
+    ListBucketsPaginator,
+    ListDirectoryBucketsPaginator,
+    ListMultipartUploadsPaginator,
+    ListObjectsPaginator,
+    ListObjectsV2Paginator,
+    ListObjectVersionsPaginator,
+    ListPartsPaginator,
+)
+from .waiter import (
+    BucketExistsWaiter,
+    BucketNotExistsWaiter,
+    ObjectExistsWaiter,
+    ObjectNotExistsWaiter,
+)
+
+try:
+    from .service_resource import S3ServiceResource
+except ImportError:
+    from builtins import object as S3ServiceResource  # type: ignore[assignment]
+
+
+Client = S3Client
+
+
+ServiceResource = S3ServiceResource
+
+
+__all__ = (
+    "BucketExistsWaiter",
+    "BucketNotExistsWaiter",
+    "Client",
+    "ListBucketsPaginator",
+    "ListDirectoryBucketsPaginator",
+    "ListMultipartUploadsPaginator",
+    "ListObjectVersionsPaginator",
+    "ListObjectsPaginator",
+    "ListObjectsV2Paginator",
+    "ListPartsPaginator",
+    "ObjectExistsWaiter",
+    "ObjectNotExistsWaiter",
+    "S3Client",
+    "S3ServiceResource",
+    "ServiceResource",
+)
