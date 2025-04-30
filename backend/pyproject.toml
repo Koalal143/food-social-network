@@ -35,7 +35,7 @@ test = [
 
 [tool.ruff]
 target-version = "py311"
-exclude = ["venv", ".venv", ".env"]
+exclude = ["venv", ".venv", ".env", "src/types/external"]
 
 line-length = 120
 lint.select = ["ALL"]
