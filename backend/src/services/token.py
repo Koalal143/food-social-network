@@ -34,35 +34,39 @@ class  TokenService:
 
     async def verify_token(self, token: str) -> dict:
         try:
-            payload = jwt.decode(
+            return jwt.decode(
                 token,
                 settings.jwt.secret_key,
                 algorithms=settings.jwt.algorithm,
             )
-            return payload
         except JWTError as e:
-            raise self._exception_fabric(f"Could not validate credentials: {e}") from None
+            msg = f"Could not validate credentials: {e}"
+            raise self._exception_fabric(msg) from None
 
     async def get_current_user(self, token: str | None) -> User:
         if not token:
-            raise self._exception_fabric("Could not validate credentials")
+            msg = "Could not validate credentials"
+            raise self._exception_fabric(msg)
 
         payload = await self.verify_token(token)
         user_id_str: str | None = payload.get("sub")
         if user_id_str is None:
-            raise self._exception_fabric("Could not validate credentials: no user ID in JWT")
+            msg = "Could not validate credentials: no user ID in JWT"
+            raise self._exception_fabric(msg)
 
         user_id = int(user_id_str)
         user = await self.session.scalar(select(User).where(User.id == user_id))
         if not user or not user.is_active:
-            raise self._exception_fabric("Could not validate credentials: user is inactive or user does not exists")
+            msg = "Could not validate credentials: user is inactive or user does not exists"
+            raise self._exception_fabric(msg)
 
         return user
 
     async def verify_refresh_token(self, token: str) -> RefreshToken:
         token_in_redis = await self.redis.get(f"refresh_token:{token}")
         if not token_in_redis:
-            raise self._exception_fabric("Invalid refresh token")
+            msg = "Invalid refresh token"
+            raise self._exception_fabric(msg)
 
         refresh_token = await self.session.scalar(
             select(RefreshToken).where(
@@ -72,7 +76,8 @@ class  TokenService:
             )
         )
         if not refresh_token:
-            raise self._exception_fabric("Invalid refresh token")
+            msg = "Invalid refresh token"
+            raise self._exception_fabric(msg)
 
         return refresh_token
 
