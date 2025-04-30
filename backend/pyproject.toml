@@ -5,7 +5,7 @@ description = "Food Social Network API"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "aiobotocore>=2.21.1",
+    "aiobotocore==2.21.1",
     "alembic>=1.13.1",
     "asyncpg>=0.29.0",
     "fastapi>=0.109.0",
@@ -24,6 +24,7 @@ dev = [
     "mypy>=1.15.0",
     "pre-commit>=4.2.0",
     "ruff>=0.1.13",
+    "types-aiobotocore[essential]==2.21.1",
     "uv-sort>=0.5.1",
 ]
 test = [
