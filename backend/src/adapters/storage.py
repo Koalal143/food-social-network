@@ -21,6 +21,7 @@ class S3StorageClientManager:
             endpoint_url=self.endpoint_url,
             aws_access_key_id=self.access_key,
             aws_secret_access_key=self.secret_key,
+            use_ssl=False,
         ) as client:
             yield client
 
