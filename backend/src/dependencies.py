@@ -24,11 +24,10 @@ async def get_s3_client() -> AsyncGenerator[S3Client, None]:
 
 
 async def get_s3_storage(client: Annotated[S3Client, Depends(get_s3_client)]) -> AsyncGenerator[S3Storage, None]:
-    async with S3Storage(
+    return S3Storage(
         client=client,
         endpoint_url=settings.s3_storage.endpoint_url,
-    ) as storage:
-        yield storage
+    )
 
 
 S3StorageDependency = Annotated[S3Storage, Depends(get_s3_storage)]
