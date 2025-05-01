@@ -1,9 +1,11 @@
-from fastapi import APIRouter, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from src.core.security import CurrentUserDependency
-from src.dependencies import SessionDependency
+from src.dependencies import S3StorageDependency, SessionDependency
 from src.schemas import UserProfileRead, UserProfileUpdate, UserRead
-from src.services.user import UserService
+from src.services import UserAvatarService, UserService
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -43,3 +45,39 @@ async def update_my_profile(
 ) -> UserProfileRead:
     service = UserService(session)
     return await service.update_profile(current_user.id, about=update.about, avatar_url=update.avatar_url)
+
+
+@router.patch(
+    "/me/avatar",
+    summary="Update user avatar",
+    description="Updates the avatar of a user by their ID.",
+)
+async def update_user_avatar(
+    image: Annotated[UploadFile, File()],
+    current_user: CurrentUserDependency,
+    session: SessionDependency,
+    s3_storage: S3StorageDependency,
+) -> dict[str, str]:
+    if image is not None and (not image.content_type or not image.content_type.startswith("image/")):
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Unsupported media type: should be image",
+        )
+
+    service = UserAvatarService(session, s3_storage)
+    return {"avatar_url": await service.update_avatar(current_user.id, image)}
+
+
+@router.delete(
+    "/me/avatar",
+    summary="Delete user avatar",
+    description="Deletes the avatar of a user by their ID.",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_user_avatar(
+    current_user: CurrentUserDependency,
+    session: SessionDependency,
+    s3_storage: S3StorageDependency,
+) -> None:
+    service = UserAvatarService(session, s3_storage)
+    await service.delete_avatar(current_user.id)
