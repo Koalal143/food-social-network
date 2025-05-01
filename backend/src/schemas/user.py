@@ -13,7 +13,6 @@ class UserProfileRead(BaseReadSchema):
 
 class UserProfileUpdate(BaseModel):
     about: str | None = Field(None, description="About the user")
-    avatar_url: str | None = Field(None, description="User avatar URL")
 
 
 class UserCreate(BaseModel):
