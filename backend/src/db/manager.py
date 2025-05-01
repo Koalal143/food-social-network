@@ -1,7 +1,5 @@
 from collections.abc import AsyncGenerator
-from typing import Annotated
 
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from src.core.config import settings
@@ -29,5 +27,3 @@ db_engine = create_async_engine(
 db_sessionmaker = async_sessionmaker(db_engine, expire_on_commit=False, autoflush=True)
 database_manager = DatabaseManager(db_engine, db_sessionmaker)
 database_session_function = database_manager.get_db_session
-
-SessionDependency = Annotated[AsyncSession, Depends(database_session_function)]

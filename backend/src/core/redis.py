@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 from asyncio import Lock
-from typing import TYPE_CHECKING, Annotated, Any, Self
+from typing import Any, Self
 
-from fastapi import Depends
 from redis.asyncio import Redis
 from redis.asyncio.connection import ConnectionPool
 
 from src.core.config import settings
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
 
 
 class RedisManager:
@@ -69,11 +65,3 @@ class RedisManager:
     @property
     def is_initialized(self) -> bool:
         return self.initialized and self.client is not None
-
-
-async def get_redis() -> AsyncGenerator[Redis, None]:
-    async with RedisManager() as redis:
-        yield redis
-
-
-RedisDependency = Annotated[Redis, Depends(get_redis)]
