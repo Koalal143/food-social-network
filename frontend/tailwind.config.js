@@ -9,45 +9,45 @@ export default {
   theme: {
       extend: {
           colors: {
-              background: 'hsl(var(--background))',
-              foreground: 'hsl(var(--foreground))',
+              background: '#ffffff',
+              foreground: '#000000',
               card: {
-                  DEFAULT: 'hsl(var(--card))',
-                  foreground: 'hsl(var(--card-foreground))'
+                  DEFAULT: '#f8f8f8',
+                  foreground: '#333333'
               },
               popover: {
-                  DEFAULT: 'hsl(var(--popover))',
-                  foreground: 'hsl(var(--popover-foreground))'
+                  DEFAULT: '#e0e0e0',
+                  foreground: '#4d4d4d'
               },
               primary: {
-                  DEFAULT: 'hsl(var(--primary))',
-                  foreground: 'hsl(var(--primary-foreground))'
+                  DEFAULT: '#d9d9d9',
+                  foreground: '#262626'
               },
               secondary: {
-                  DEFAULT: 'hsl(var(--secondary))',
-                  foreground: 'hsl(var(--secondary-foreground))'
+                  DEFAULT: '#bfbfbf',
+                  foreground: '#1a1a1a'
               },
               muted: {
-                  DEFAULT: 'hsl(var(--muted))',
-                  foreground: 'hsl(var(--muted-foreground))'
+                  DEFAULT: '#a6a6a6',
+                  foreground: '#0d0d0d'
               },
               accent: {
-                  DEFAULT: 'hsl(var(--accent))',
-                  foreground: 'hsl(var(--accent-foreground))'
+                  DEFAULT: '#8c8c8c',
+                  foreground: '#000000'
               },
               destructive: {
-                  DEFAULT: 'hsl(var(--destructive))',
-                  foreground: 'hsl(var(--destructive-foreground))'
+                  DEFAULT: '#737373',
+                  foreground: '#000000'
               },
-              border: 'hsl(var(--border))',
-              input: 'hsl(var(--input))',
-              ring: 'hsl(var(--ring))',
+              border: '#595959',
+              input: '#404040',
+              ring: '#262626',
               chart: {
-                  '1': 'hsl(var(--chart-1))',
-                  '2': 'hsl(var(--chart-2))',
-                  '3': 'hsl(var(--chart-3))',
-                  '4': 'hsl(var(--chart-4))',
-                  '5': 'hsl(var(--chart-5))'
+                  '1': '#1a1a1a',
+                  '2': '#333333',
+                  '3': '#4d4d4d',
+                  '4': '#666666',
+                  '5': '#808080'
               }
           },
           borderRadius: {
