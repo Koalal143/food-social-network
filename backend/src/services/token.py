@@ -11,7 +11,7 @@ from src.models.token import RefreshToken
 from src.models.user import User
 
 
-class  TokenService:
+class TokenService:
     def __init__(self, session: AsyncSession, redis: Redis) -> None:
         self.session = session
         self.redis = redis
@@ -80,6 +80,7 @@ class  TokenService:
             raise self._exception_fabric(msg)
 
         return refresh_token
+
 
 class RefreshTokenService:
     def __init__(self, session: AsyncSession) -> None:

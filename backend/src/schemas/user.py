@@ -21,6 +21,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
 
+
 class UserRead(BaseReadSchema):
     email: str
     is_active: bool
