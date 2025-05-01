@@ -4,6 +4,7 @@ from typing import Any
 
 from aiobotocore.session import get_session
 
+from src.core.config import settings
 from src.types.external.aiobotocore_s3.client import S3Client
 
 
@@ -43,5 +44,10 @@ class S3Storage:
     async def delete_file(self, bucket_name: str, file_name: str) -> None:
         await self.client.delete_object(Bucket=bucket_name, Key=file_name)
 
-    def get_file_url(self, bucket_name: str, file_name: str) -> str:
-        return f"{self.endpoint_url}/{bucket_name}/{file_name}"
+    async def get_file_url(self, bucket_name: str, file_name: str, expires_in: int = 3600) -> str:
+        unprepared_url = await self.client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": bucket_name, "Key": file_name},
+            ExpiresIn=expires_in,
+        )
+        return unprepared_url.replace(self.endpoint_url, settings.server.url + "/static")
