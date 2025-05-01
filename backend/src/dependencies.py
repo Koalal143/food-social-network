@@ -1,4 +1,4 @@
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from fastapi import Depends
@@ -16,7 +16,7 @@ from src.types.external.aiobotocore_s3.client import S3Client
 SessionDependency = Annotated[AsyncSession, Depends(database_session_function)]
 
 
-async def get_s3_client() -> AsyncIterator[S3Client]:
+async def get_s3_client() -> AsyncGenerator[S3Client, None]:
     async with S3StorageClientManager(
         settings.s3_storage.endpoint_url,
         settings.s3_storage.access_key,
@@ -25,7 +25,7 @@ async def get_s3_client() -> AsyncIterator[S3Client]:
         yield client
 
 
-async def get_s3_storage(client: Annotated[S3Client, Depends(get_s3_client)]) -> AsyncIterator[S3Storage]:
+async def get_s3_storage(client: Annotated[S3Client, Depends(get_s3_client)]) -> AsyncGenerator[S3Storage, None]:
     async with S3Storage(
         client=client,
         endpoint_url=settings.s3_storage.endpoint_url,
@@ -33,7 +33,7 @@ async def get_s3_storage(client: Annotated[S3Client, Depends(get_s3_client)]) ->
         yield storage
 
 
-S3StorageDependency = Annotated[S3Client, Depends(get_s3_storage)]
+S3StorageDependency = Annotated[S3Storage, Depends(get_s3_storage)]
 
 async def get_redis() -> AsyncGenerator[Redis, None]:
     async with redis_manager as redis:
