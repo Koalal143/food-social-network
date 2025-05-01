@@ -1,3 +1,3 @@
-from src.adapters.storage import S3Storage, S3StorageClient
+from src.adapters.storage import S3Storage, S3StorageClientManager
 
-__all__ = ["S3Storage", "S3StorageClient"]
+__all__ = ["S3Storage", "S3StorageClientManager"]
