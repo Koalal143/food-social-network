@@ -12,7 +12,6 @@ class RedisManager:
         self.client: Redis | None = None
         self._initialized: bool = False
 
-
     async def init(self) -> None:
         try:
             self.pool = ConnectionPool.from_url(

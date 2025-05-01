@@ -122,7 +122,6 @@ async def refresh_token(
             detail="Invalid refresh token",
         )
 
-
     access_token = token_service.create_access_token(data={"sub": str(refresh_token_model.user_id)})
     new_refresh_token = token_service.create_access_token(
         data={"sub": str(refresh_token_model.user_id)},
