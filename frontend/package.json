@@ -30,7 +30,7 @@
     "react-hot-toast": "^2.5.2",
     "react-input-mask": "^2.0.4",
     "react-number-format": "^5.4.3",
-    "tailwind-merge": "^3.0.2",
+    "tailwind-merge": "^3.2.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
