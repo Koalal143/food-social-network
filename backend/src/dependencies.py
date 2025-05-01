@@ -6,7 +6,7 @@ from redis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.storage import S3Storage
-from src.core.redis import RedisManager
+from src.core.redis import redis_manager
 from src.core.security import get_current_user
 from src.db.manager import database_session_function
 from src.models.user import User
@@ -30,7 +30,7 @@ S3ClientDependency = Annotated[S3Client, Depends(get_s3_client)]
 
 
 async def get_redis() -> AsyncGenerator[Redis, None]:
-    async with RedisManager() as redis:
+    async with redis_manager as redis:
         yield redis
 
 
