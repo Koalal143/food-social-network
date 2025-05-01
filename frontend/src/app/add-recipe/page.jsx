@@ -1,3 +1,5 @@
+'use client';
+
 import Container from '@/components/Container';
 import AddRecipeForm from '@/components/AddRecipeForm';
 

@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import Container from '@/components/Container';
 import RecipeCard from '@/components/RecipeCard';
