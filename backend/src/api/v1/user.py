@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from src.core.security import CurrentUserDependency
-from src.db.manager import SessionDependency
+from src.dependencies import CurrentUserDependency, SessionDependency
 from src.schemas import UserProfileRead, UserProfileUpdate, UserRead
 from src.services.user import UserService
 
