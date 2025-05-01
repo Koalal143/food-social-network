@@ -40,21 +40,17 @@ class RedisConfig(BaseModel):
 
 
 class ServerConfig(BaseModel):
+    url: str
     host: str
     port: int
     allowed_origins: list[str]
 
 
 class S3Config(BaseModel):
-    url: str
     host: str
     port: int
     access_key: str
     secret_key: str
-
-    @property
-    def endpoint_url(self) -> str:
-        return f"{self.host}:{self.port}"
 
 
 class Settings(BaseSettings):
