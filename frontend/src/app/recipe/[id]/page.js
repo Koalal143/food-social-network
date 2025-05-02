@@ -6,88 +6,98 @@ import { useRecipes } from "@/context/RecipeContext";
 import { useUsers } from "@/context/UserContext";
 import Loader from "@/components/ui/Loader";
 import Image from "next/image";
+import Link from "next/link";
+import AuthorCard from "@/components/shared/AuthorCard";
 
 export default function RecipePage({ params }) {
-    const router = useRouter();
-    const { getRecipeById } = useRecipes();
-    const { getUserById } = useUsers();
-    const [recipe, setRecipe] = useState(null);
-    const [author, setAuthor] = useState(null);
-    const { id } = React.use(params);
+  const router = useRouter();
+  const { getRecipeById } = useRecipes();
+  const { getUserById } = useUsers();
+  const [recipe, setRecipe] = useState(null);
+  const [author, setAuthor] = useState(null);
+  const { id } = React.use(params);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const recipeData = await getRecipeById(Number(id));
-            if (recipeData) {
-                setRecipe(recipeData);
-                const authorData = await getUserById(recipeData.authorId);
-                setAuthor(authorData);
-            }
-        };
-        fetchData();
-    }, [id, getRecipeById, getUserById]);
+  useEffect(() => {
+      const fetchData = async () => {
+          const recipeData = await getRecipeById(Number(id));
+          if (recipeData) {
+              setRecipe(recipeData);
+              const authorData = await getUserById(recipeData.authorId);
+              setAuthor(authorData);
+          }
+      };
+      fetchData();
+  }, [id, getRecipeById, getUserById]);
 
-    if (!recipe) {
-        return <Loader />;
-    }
+  if (!recipe) {
+      return <Loader />;
+  }
 
-    return (
-        <Container className="py-8 min-h-screen">
-            <button 
-                onClick={() => router.back()}
-                className="mb-6 text-blue-600 hover:text-blue-800 transition-colors"
-            >
-                ← Назад
-            </button>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="relative aspect-square rounded-lg overflow-hidden">
-                    <Image
-                        src={recipe.preview}
-                        alt={recipe.title}
-                        fill
-                        className="object-cover"
-                    />
-                </div>
-                <div className="p-6">
-                    <h1 className="text-3xl font-bold mb-4 text-gray-800">{recipe.title}</h1>
-                    <p className="text-lg text-gray-600 mb-6">{recipe.shortDescription}</p>
-                    
-                    {author && (
-                        <div className="flex items-center mb-6">
-                            <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
-                                <Image
-                                    src={author.avatar}
-                                    alt={author.name}
-                                    fill
-                                    className="object-cover"
-                                />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-600">Автор рецепта</p>
-                                <p className="font-medium">{author.name}</p>
-                            </div>
-                        </div>
-                    )}
+  return (
+    <article className="py-8">
+      <Container>
+        <div className="max-w-4xl mx-auto">
+          <div className="relative aspect-[16/9] mb-8">
+            <Image
+              src={recipe.preview}
+              alt={recipe.title}
+              fill
+              className="object-cover rounded-lg"
+              priority
+            />
+          </div>
 
-                    <div className="border-t border-b py-6 my-6">
-                        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Ингредиенты:</h2>
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {recipe.ingredients.map((ingredient, index) => (
-                                <li key={index} className="flex items-center space-x-2">
-                                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                    <span className="text-gray-700">{ingredient}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+          <h1 className="text-4xl font-bold mb-4">{recipe.title}</h1>
+          <p className="text-lg text-muted-foreground mb-8">{recipe.description}</p>
 
-                    <div className="prose max-w-none">
-                        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Приготовление:</h2>
-                        <p className="text-gray-700 whitespace-pre-line">{recipe.recipe}</p>
-                    </div>
-                </div>
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="bg-card p-4 rounded-lg">
+              <h3 className="font-medium mb-2">Время приготовления</h3>
+              <p>{recipe.time}</p>
             </div>
-        </Container>
-    );
-}
+            <div className="bg-card p-4 rounded-lg">
+              <h3 className="font-medium mb-2">Порций</h3>
+              <p>{recipe.servings}</p>
+            </div>
+            <div className="bg-card p-4 rounded-lg">
+              <h3 className="font-medium mb-2">Сложность</h3>
+              <p>{recipe.difficulty}</p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <section>
+              <h2 className="text-2xl font-bold mb-4">Ингредиенты</h2>
+              <ul className="space-y-2">
+                {recipe.ingredients.map((ingredient, index) => (
+                  <li key={index} className="flex items-center space-x-2">
+                    <span className="w-2 h-2 bg-primary rounded-full" />
+                    <span>{ingredient}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section>
+              {author && (
+                <AuthorCard author={author}/>
+              )}
+
+              <h2 className="text-2xl font-bold mb-4">Инструкция приготовления</h2>
+              <ol className="space-y-4">
+                {recipe.instructions.map((step, index) => (
+                  <li key={index} className="flex space-x-4">
+                    <span className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    <p>{step}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          </div>
+        </div>
+      </Container>
+    </article>
+  );
+} 
