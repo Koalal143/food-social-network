@@ -2,6 +2,7 @@ from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.storage import S3Storage
+from src.exceptions.image import ImageTooLargeException, WrongImageFormatException
 from src.services.user import UserService
 
 
@@ -12,6 +13,14 @@ class UserAvatarService:
         self.user_service = UserService(session)
 
     async def update_avatar(self, user_id: int, file: UploadFile) -> str:
+        if not file.content_type or not file.content_type.startswith("image/"):
+            msg = "File is not an image"
+            raise WrongImageFormatException(msg)
+
+        if file.size > 8 * 1024 * 1024 * 5:
+            msg = "File is larger than 5MB"
+            raise ImageTooLargeException(msg)
+
         file_name = f"avatars/{user_id}/avatar.png"
         await self.s3_client.upload_file(
             "images",
