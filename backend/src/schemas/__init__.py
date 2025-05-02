@@ -1,6 +1,6 @@
 from src.schemas.base import BaseReadSchema, BaseSchema
 from src.schemas.token import Token, TokenPayload
-from src.schemas.user import UserCreate, UserProfileRead, UserProfileUpdate, UserRead
+from src.schemas.user import UserCreate, UserProfileRead, UserProfileUpdate, UserRead, UserUpdate
 
 __all__ = [
     "BaseReadSchema",
@@ -11,4 +11,5 @@ __all__ = [
     "UserProfileRead",
     "UserProfileUpdate",
     "UserRead",
+    "UserUpdate",
 ]
