@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
                         <Header />
                         <div className="flex flex-1">
                             <DesktopSidebar />
-                            <main className="flex-1 md:pl-64 pt-12 bg-[#F5F2F2] h-full">
+                            <main className="flex-1 md:pl-64 pt-12 bg-[#F5F2F2] h-full pb-16 md:pb-0">
                                 {children}
                             </main>
                         </div>
