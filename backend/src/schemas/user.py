@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from src.schemas.base import BaseReadSchema
 
@@ -12,6 +12,8 @@ class UserProfileRead(BaseReadSchema):
 
 
 class UserProfileUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
+
     about: str | None = Field(None, description="About the user")
 
 
@@ -33,3 +35,10 @@ class UserLogin(BaseModel):
     email: str | None = Field(None, description="User email")
     username: str | None = Field(None, description="Username")
     password: str = Field(..., min_length=8, description="User password")
+
+
+class UserUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
+
+    username: str | None = Field(None, min_length=3, max_length=30, description="New username for the user")
+    profile: UserProfileUpdate | None = Field(None, description="User profile information")
