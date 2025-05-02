@@ -1,11 +1,17 @@
-"use client";
-import React from "react";
-import Container from "@/components/Container";
+'use client';
+
+import Container from '@/components/Container';
+import AddRecipeForm from '@/components/AddRecipeForm';
 
 export default function AddRecipePage() {
-    return (
-        <Container className="py-8 h-screen">
-           Добавление рецепта
-        </Container>
-    );
-};
+  return (
+    <div className="py-8">
+      <Container>
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-4xl font-bold mb-8">Добавить новый рецепт</h1>
+          <AddRecipeForm />
+        </div>
+      </Container>
+    </div>
+  );
+} 
