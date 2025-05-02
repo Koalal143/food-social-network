@@ -44,6 +44,16 @@ export function RecipeProvider({ children }) {
         }
     }
 
+    const getRecipesByAuthorId = async (authorId) => {
+        try {
+            return await RecipesService.getRecipesByAuthorId(authorId);
+        } catch (error) {
+            setError(error);
+            console.error("Ошибка при загрузке рецептов автора:", error);
+            return [];
+        }
+    };
+
     useEffect(() => {
         fetchRecipes()
     }, [])
@@ -56,7 +66,8 @@ export function RecipeProvider({ children }) {
                 error,
                 fetchRecipes,
                 getRecipeById,
-                addRecipe
+                addRecipe,
+                getRecipesByAuthorId
             }}
         >
             {children}
