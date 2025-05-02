@@ -1,8 +1,10 @@
+from backend.src.exceptions.http import AppHTTPException
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api import v1_router
 from src.core.config import settings
+from src.core.exception_handlers import http_exception_handler
 from src.core.lifespan import lifespan
 
 app = FastAPI(
@@ -12,6 +14,8 @@ app = FastAPI(
     lifespan=lifespan,
     debug=settings.mode == "dev",
 )
+
+app.add_exception_handler(AppHTTPException, http_exception_handler)
 
 app.add_middleware(
     CORSMiddleware,
