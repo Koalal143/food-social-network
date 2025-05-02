@@ -14,21 +14,21 @@ class UserService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def get(self, user_id: int) -> User | None:
+    async def get(self, user_id: int) -> User:
         user = await self.session.scalar(select(User).options(joinedload(User.profile)).where(User.id == user_id))
         if not user:
             msg = "User not found"
             raise UserNotFoundError(msg)
         return user
 
-    async def get_by_email(self, email: str) -> User | None:
+    async def get_by_email(self, email: str) -> User:
         user = await self.session.scalar(select(User).options(joinedload(User.profile)).where(User.email == email))
         if not user:
             msg = "User not found"
             raise UserNotFoundError(msg)
         return user
 
-    async def get_by_username(self, username: str) -> User | None:
+    async def get_by_username(self, username: str) -> User:
         user = await self.session.scalar(
             select(User).options(joinedload(User.profile)).where(User.username == username)
         )
