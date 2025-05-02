@@ -34,4 +34,16 @@ export default class RecipesService {
             return null;
         }
     }
+
+    static async getRecipesByAuthorId(authorId) {
+        try {
+            const response = await fetch('/recipes.json');
+            if (!response.ok) throw new Error('Ошибка при загрузке рецептов');
+            const recipes = await response.json();
+            return recipes.filter(recipe => recipe.authorId === authorId);
+        } catch (error) {
+            console.error('Ошибка:', error);
+            return [];
+        }
+    }
 }
