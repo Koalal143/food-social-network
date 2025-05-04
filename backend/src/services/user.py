@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+from backend.src.exceptions.auth import InactiveOrNotExistingUserError, IncorrectCredentialsError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -8,6 +9,7 @@ from src.exceptions.user import UserEmailAlreadyExistsError, UserNicknameAlready
 from src.models.user import User
 from src.models.user_profile import UserProfile
 from src.schemas.user import UserProfileUpdate
+from src.services.security import SecurityService
 
 
 class UserService:
@@ -58,6 +60,26 @@ class UserService:
         await self.session.commit()
         await self.session.refresh(user)
         await self.session.refresh(user_profile)
+        return user
+
+    async def authenticate(self, *, email: str | None, username: str | None, password: str) -> User:
+        try:
+            if email:
+                user = await self.get_by_email(email)
+            else:
+                user = await self.get_by_username(username)  # type: ignore[arg-type]
+        except UserNotFoundError:
+            msg = "Incorrect email/username or password"
+            raise UserNotFoundError(msg) from None
+
+        if not SecurityService.verify_password(password, user.hashed_password):
+            msg = "Incorrect email/username or password"
+            raise IncorrectCredentialsError(msg)
+
+        if not user.is_active:
+            msg = "Inactive user"
+            raise InactiveOrNotExistingUserError(msg)
+
         return user
 
     async def update_last_login(self, user: User) -> User:
