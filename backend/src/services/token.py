@@ -91,6 +91,11 @@ class TokenService:
         )
 
 
+class RefreshTokenService:
+    def __init__(self, session: AsyncSession, redis: Redis) -> None:
+        self.session = session
+        self.redis = redis
+
     async def verify_refresh_token(self, token: str) -> RefreshToken:
         token_in_redis = await self.redis.get(f"refresh_token:{token}")
         if not token_in_redis:
@@ -109,11 +114,6 @@ class TokenService:
             raise InvalidTokenError(msg)
 
         return refresh_token
-
-
-class RefreshTokenService:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
 
     async def get_by_token(self, token: str) -> RefreshToken | None:
         return await self.session.scalar(
@@ -145,3 +145,32 @@ class RefreshTokenService:
     async def deactivate(self, refresh_token: RefreshToken) -> None:
         refresh_token.is_active = False
         await self.session.commit()
+
+    async def generate_new_refresh_token(self, refresh_token_str: str) -> Token:
+        refresh_token_model = await self.verify_refresh_token(refresh_token_str)
+
+        token_service = TokenService(session=self.session, redis=self.redis)
+        access_token = token_service.create_access_token(data={"sub": str(refresh_token_model.user_id)})
+        new_refresh_token = token_service.create_access_token(
+            data={"sub": str(refresh_token_model.user_id)},
+            expires_delta=timedelta(days=settings.jwt.refresh_token_expire_days),
+        )
+
+        expires_at = datetime.now(tz=UTC) + timedelta(days=settings.jwt.refresh_token_expire_days)
+        await self.update_token(
+            refresh_token=refresh_token_model,
+            new_token=new_refresh_token,
+            new_expires_at=expires_at,
+        )
+
+        await self.redis.delete(f"refresh_token:{refresh_token_str}")
+        await self.redis.set(
+            f"refresh_token:{new_refresh_token}",
+            "1",
+            ex=settings.jwt.refresh_token_expire_days * 24 * 60 * 60,
+        )
+
+        return Token(
+            access_token=access_token,
+            refresh_token=new_refresh_token,
+        )
