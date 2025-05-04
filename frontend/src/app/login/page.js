@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import Container from "@/components/Container";
+import Container from "@/components/layout/Container";
 
 export default function LoginPage() {
     return (
