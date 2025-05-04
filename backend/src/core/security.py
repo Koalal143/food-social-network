@@ -28,12 +28,13 @@ async def get_current_user(
             return await token_service.get_current_user(
                 token=credentials.credentials if credentials else None,
             )
-        except (InvalidTokenError, InactiveOrNotExistingUserError, InvalidJWTError, JWTSignatureExpiredError)  as e:
+        except (InvalidTokenError, InactiveOrNotExistingUserError, InvalidJWTError, JWTSignatureExpiredError) as e:
             raise AppHTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=e.message,
                 error_key=e.error_key,
                 headers={"WWW-Authenticate": "Bearer"},
             ) from e
+
 
 CurrentUserDependency = Annotated[User, Depends(get_current_user)]
