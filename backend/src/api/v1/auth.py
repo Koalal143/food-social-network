@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
 
-from src.dependencies import RedisDependency, SessionDependency
+from src.dependencies import RedisDependency, UnitOfWorkDependency
 from src.exceptions import (
     AppHTTPException,
     InactiveOrNotExistingUserError,
@@ -48,24 +48,25 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 )
 async def register(
     user_in: UserCreate,
-    session: SessionDependency,
+    uow: UnitOfWorkDependency,
 ) -> User:
-    user_service = UserService(session=session)
+    async with uow:
+        user_service = UserService(uow=uow)
 
-    try:
-        user = await user_service.create(
-            username=user_in.username,
-            email=user_in.email,
-            hashed_password=SecurityService.get_password_hash(user_in.password),
-        )
-    except (UserNicknameAlreadyExistsError, UserEmailAlreadyExistsError) as e:
-        raise AppHTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=e.message,
-            error_key=e.error_key,
-        ) from None
+        try:
+            user = await user_service.create(
+                username=user_in.username,
+                email=user_in.email,
+                hashed_password=SecurityService.get_password_hash(user_in.password),
+            )
+        except (UserNicknameAlreadyExistsError, UserEmailAlreadyExistsError) as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=e.message,
+                error_key=e.error_key,
+            ) from None
 
-    return user
+        return user
 
 
 @router.post(
@@ -96,35 +97,36 @@ async def register(
 )
 async def login(
     user_in: UserLogin,
-    session: SessionDependency,
+    uow: UnitOfWorkDependency,
     redis: RedisDependency,
 ) -> Token:
-    user_service = UserService(session=session)
-    token_service = TokenService(session=session, redis=redis)
+    async with uow:
+        user_service = UserService(uow=uow)
+        token_service = TokenService(uow=uow, redis=redis)
 
-    try:
-        user = await user_service.authenticate(
-            email=user_in.email,
-            username=user_in.username,
-            password=user_in.password,
-        )
-    except (
-        UserEmailAlreadyExistsError,
-        UserNicknameAlreadyExistsError,
-        InactiveOrNotExistingUserError,
-        IncorrectCredentialsError,
-    ) as e:
-        raise AppHTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-            error_key=e.error_key,
-        ) from None
+        try:
+            user = await user_service.authenticate(
+                email=user_in.email,
+                username=user_in.username,
+                password=user_in.password,
+            )
+        except (
+            UserEmailAlreadyExistsError,
+            UserNicknameAlreadyExistsError,
+            InactiveOrNotExistingUserError,
+            IncorrectCredentialsError,
+        ) as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=e.message,
+                error_key=e.error_key,
+            ) from None
 
-    tokens = await token_service.create_tokens(user.id)
+        tokens = await token_service.create_tokens(user.id)
 
-    await user_service.update_last_login(user)
+        await user_service.update_last_login(user)
 
-    return tokens
+        return tokens
 
 
 @router.post(
@@ -144,16 +146,17 @@ async def login(
 )
 async def refresh_token(
     refresh_token: str,
-    session: SessionDependency,
+    uow: UnitOfWorkDependency,
     redis: RedisDependency,
 ) -> Token:
-    refresh_token_service = RefreshTokenService(session=session, redis=redis)
+    async with uow:
+        refresh_token_service = RefreshTokenService(uow=uow, redis=redis)
 
-    try:
-        return await refresh_token_service.generate_new_refresh_token(refresh_token)
-    except InvalidTokenError as e:
-        raise AppHTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-            error_key=e.error_key,
-        ) from None
+        try:
+            return await refresh_token_service.generate_new_refresh_token(refresh_token)
+        except InvalidTokenError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=e.message,
+                error_key=e.error_key,
+            ) from None
