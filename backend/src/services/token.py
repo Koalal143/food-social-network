@@ -108,9 +108,7 @@ class RefreshTokenService:
 
         return refresh_token
 
-    async def update_token(
-        self, refresh_token: RefreshToken, new_token: str, new_expires_at: datetime
-    ) -> RefreshToken:
+    async def update_token(self, refresh_token: RefreshToken, new_token: str, new_expires_at: datetime) -> RefreshToken:
         await self.uow.refresh_tokens.update(refresh_token, new_token=new_token, new_expires_at=new_expires_at)
         await self.uow.commit()
         return refresh_token

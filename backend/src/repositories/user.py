@@ -41,14 +41,8 @@ class UserRepository:
 
     async def update_last_login(self, user_id: int, last_login: datetime | None) -> None:
         await self.session.execute(
-            update(User)
-            .where(User.id == user_id)
-            .values(last_login=last_login or datetime.now(UTC))
+            update(User).where(User.id == user_id).values(last_login=last_login or datetime.now(UTC))
         )
 
     async def update_username(self, user_id: int, username: str) -> None:
-        await self.session.execute(
-            update(User)
-            .where(User.id == user_id)
-            .values(username=username)
-        )
+        await self.session.execute(update(User).where(User.id == user_id).values(username=username))

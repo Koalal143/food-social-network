@@ -20,7 +20,10 @@ class SQLAlchemyUnitOfWork:
         return self
 
     async def __aexit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None,
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         if exc_type:
             await self.rollback()
