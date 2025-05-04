@@ -53,7 +53,7 @@ class UserService:
 
         await self.uow.user_profiles.create(user_id=user.id)
         await self.uow.commit()
-        return user
+        return await self.get(user.id)
 
     async def authenticate(self, *, email: str | None, username: str | None, password: str) -> User:
         try:
