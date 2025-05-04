@@ -49,6 +49,7 @@ class UserService:
             email=email,
             hashed_password=hashed_password,
         )
+        await self.uow.session.flush()
 
         await self.uow.user_profiles.create(user_id=user.id)
         await self.uow.commit()
