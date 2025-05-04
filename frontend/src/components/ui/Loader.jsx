@@ -1,6 +1,6 @@
 "use client"
 
-import Container from "../Container"
+import Container from "../layout/Container"
 
 export default function Loader() {
     return (
