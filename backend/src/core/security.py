@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from src.dependencies import RedisDependency, SessionDependency
+from src.dependencies import RedisDependency, UnitOfWorkDependency
 from src.exceptions import (
     AppHTTPException,
     InactiveOrNotExistingUserError,
@@ -19,42 +19,21 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-    session: SessionDependency,
+    uow: UnitOfWorkDependency,
     redis: RedisDependency,
 ) -> User:
-    token_service = TokenService(session=session, redis=redis)
-    try:
-        return await token_service.get_current_user(
-            token=credentials.credentials if credentials else None,
-        )
-    except InvalidTokenError as e:
-        raise AppHTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-            error_key=e.error_key,
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from e
-    except InactiveOrNotExistingUserError as e:
-        raise AppHTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-            error_key=e.error_key,
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from None
-    except InvalidJWTError as e:
-        raise AppHTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-            error_key=e.error_key,
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from None
-    except JWTSignatureExpiredError as e:
-        raise AppHTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-            error_key=e.error_key,
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from None
-
+    async with uow:
+        token_service = TokenService(uow=uow, redis=redis)
+        try:
+            return await token_service.get_current_user(
+                token=credentials.credentials if credentials else None,
+            )
+        except (InvalidTokenError, InactiveOrNotExistingUserError, InvalidJWTError, JWTSignatureExpiredError)  as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=e.message,
+                error_key=e.error_key,
+                headers={"WWW-Authenticate": "Bearer"},
+            ) from e
 
 CurrentUserDependency = Annotated[User, Depends(get_current_user)]
