@@ -1,15 +1,14 @@
-from datetime import UTC, datetime, timedelta
-
 from fastapi import APIRouter, status
 
-from src.core.config import settings
 from src.dependencies import RedisDependency, SessionDependency
 from src.exceptions import (
     AppHTTPException,
+    InactiveOrNotExistingUserError,
+    IncorrectCredentialsError,
     UserEmailAlreadyExistsError,
     UserNicknameAlreadyExistsError,
-    UserNotFoundError,
 )
+from src.exceptions.auth import InvalidTokenError
 from src.models.user import User
 from src.schemas.token import Token
 from src.schemas.user import UserCreate, UserLogin, UserRead
@@ -59,18 +58,13 @@ async def register(
             email=user_in.email,
             hashed_password=SecurityService.get_password_hash(user_in.password),
         )
-    except UserNicknameAlreadyExistsError as e:
+    except (UserNicknameAlreadyExistsError, UserEmailAlreadyExistsError) as e:
         raise AppHTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=e.message,
             error_key=e.error_key,
         ) from None
-    except UserEmailAlreadyExistsError as e:
-        raise AppHTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=e.message,
-            error_key=e.error_key,
-        ) from None
+
     return user
 
 
@@ -106,67 +100,31 @@ async def login(
     redis: RedisDependency,
 ) -> Token:
     user_service = UserService(session=session)
+    token_service = TokenService(session=session, redis=redis)
 
-    user = None
     try:
-        if user_in.email:
-            user = await user_service.get_by_email(user_in.email)
-        elif user_in.username:
-            user = await user_service.get_by_username(user_in.username)
-        else:
-            raise AppHTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email/username or password",
-                error_key="incorrect_email_username_or_password",
-            )
-    except UserNotFoundError as e:
+        user = await user_service.authenticate(
+            email=user_in.email,
+            username=user_in.username,
+            password=user_in.password,
+        )
+    except (
+        UserEmailAlreadyExistsError,
+        UserNicknameAlreadyExistsError,
+        InactiveOrNotExistingUserError,
+        IncorrectCredentialsError,
+    ) as e:
         raise AppHTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=e.message,
             error_key=e.error_key,
         ) from None
-    if not SecurityService.verify_password(user_in.password, user.hashed_password):
-        raise AppHTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email/username or password",
-            error_key="incorrect_email_username_or_password",
-        )
 
-    if not user.is_active:
-        raise AppHTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Inactive user",
-            error_key="inactive_user",
-        )
-
-    token_service = TokenService(session=session, redis=redis)
-    refresh_token_service = RefreshTokenService(session=session)
-
-    access_token = token_service.create_access_token(data={"sub": str(user.id)})
-    refresh_token = token_service.create_access_token(
-        data={"sub": user.id},
-        expires_delta=timedelta(days=settings.jwt.refresh_token_expire_days),
-    )
-
-    expires_at = datetime.now(tz=UTC) + timedelta(days=settings.jwt.refresh_token_expire_days)
-    await refresh_token_service.create(
-        user_id=user.id,
-        token=refresh_token,
-        expires_at=expires_at,
-    )
-
-    await redis.set(
-        f"refresh_token:{refresh_token}",
-        "1",
-        ex=settings.jwt.refresh_token_expire_days * 24 * 60 * 60,
-    )
+    tokens = await token_service.create_tokens(user.id)
 
     await user_service.update_last_login(user)
 
-    return Token(
-        access_token=access_token,
-        refresh_token=refresh_token,
-    )
+    return tokens
 
 
 @router.post(
@@ -189,40 +147,13 @@ async def refresh_token(
     session: SessionDependency,
     redis: RedisDependency,
 ) -> Token:
-    token_service = TokenService(session=session, redis=redis)
-    refresh_token_service = RefreshTokenService(session=session)
+    refresh_token_service = RefreshTokenService(session=session, redis=redis)
 
-    token_in_redis = await redis.get(f"refresh_token:{refresh_token}")
-    if not token_in_redis:
-        refresh_token_model = await refresh_token_service.get_by_token(refresh_token)
-        if not refresh_token_model:
-            raise AppHTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token",
-                error_key="invalid_refresh_token",
-            )
-
-    access_token = token_service.create_access_token(data={"sub": str(refresh_token_model.user_id)})
-    new_refresh_token = token_service.create_access_token(
-        data={"sub": str(refresh_token_model.user_id)},
-        expires_delta=timedelta(days=settings.jwt.refresh_token_expire_days),
-    )
-
-    expires_at = datetime.now(tz=UTC) + timedelta(days=settings.jwt.refresh_token_expire_days)
-    await refresh_token_service.update_token(
-        refresh_token=refresh_token_model,
-        new_token=new_refresh_token,
-        new_expires_at=expires_at,
-    )
-
-    await redis.delete(f"refresh_token:{refresh_token}")
-    await redis.set(
-        f"refresh_token:{new_refresh_token}",
-        "1",
-        ex=settings.jwt.refresh_token_expire_days * 24 * 60 * 60,
-    )
-
-    return Token(
-        access_token=access_token,
-        refresh_token=new_refresh_token,
-    )
+    try:
+        return await refresh_token_service.generate_new_refresh_token(refresh_token)
+    except InvalidTokenError as e:
+        raise AppHTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=e.message,
+            error_key=e.error_key,
+        ) from None
