@@ -1,19 +1,17 @@
 from fastapi import UploadFile
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.storage import S3Storage
+from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions.image import ImageTooLargeError, WrongImageFormatError
-from src.services.user import UserService
 
 
 class UserAvatarService:
-    def __init__(self, session: AsyncSession, s3_client: S3Storage) -> None:
-        self.session = session
+    def __init__(self, uow: SQLAlchemyUnitOfWork, s3_client: S3Storage) -> None:
+        self.uow = uow
         self.s3_client = s3_client
-        self.user_service = UserService(session)
 
     async def update_avatar(self, user_id: int, file: UploadFile) -> str:
-        if not file.content_type or not file.content_type.startswith("image/"):
+        if not file.size or not file.content_type or not file.content_type.startswith("image/"):
             msg = "File is not an image"
             raise WrongImageFormatError(msg)
 
@@ -28,13 +26,23 @@ class UserAvatarService:
             content=file.file,
             content_type=file.content_type,
         )
+
         avatar_url = await self.s3_client.get_file_url("images", file_name)
-        await self.user_service.update_profile(user_id, avatar_url=avatar_url)
-        await self.session.commit()
+
+        user_profile = await self.uow.user_profiles.get_by_user_id(user_id)
+        if not user_profile:
+            user_profile = await self.uow.user_profiles.create(user_id=user_id)
+
+        await self.uow.user_profiles.update(user_profile, avatar_url=avatar_url)
+        await self.uow.commit()
+
         return avatar_url
 
     async def delete_avatar(self, user_id: int) -> None:
         file_name = f"avatars/{user_id}/avatar.png"
         await self.s3_client.delete_file("images", file_name)
-        await self.user_service.update_profile(user_id, avatar_url=None)
-        await self.session.commit()
+
+        user_profile = await self.uow.user_profiles.get_by_user_id(user_id)
+        if user_profile:
+            await self.uow.user_profiles.update(user_profile, avatar_url=None)
+            await self.uow.commit()
