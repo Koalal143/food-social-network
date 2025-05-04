@@ -1,10 +1,10 @@
 import "./globals.css";
 import {Montserrat} from "next/font/google";
-import { RecipeProvider } from "@/context/RecipeContext";
-import { UserProvider } from "@/context/UserContext";
-import Header from "@/components/Header";
-import DesktopSidebar from "@/components/DesktopSidebar";
-import MobileMenu from "@/components/MobileMenu";
+import MainProvider from "@/providers/MainProvider";
+import Header from "@/components/layout/Header";
+import DesktopSidebar from "@/components/layout/DesktopSidebar";
+import MobileMenu from "@/components/layout/MobileMenu";
+import { Toaster } from "@/components/ui/toaster";
 
 const montserrat = Montserrat({
     variable: "--font-montserrat",
@@ -22,18 +22,17 @@ export default function RootLayout({ children }) {
         <html lang="ru">
             <head />
             <body className="min-h-screen bg-gradient-to-b from-background to-secondary/100">
-                <RecipeProvider>
-                    <UserProvider>
-                        <Header />
-                        <div className="flex flex-1">
-                            <DesktopSidebar />
-                            <main className="flex-1 md:pl-64 pt-12 bg-[#F5F2F2] h-full pb-16 md:pb-0">
-                                {children}
-                            </main>
-                        </div>
-                        <MobileMenu />
-                    </UserProvider>
-                </RecipeProvider>
+                <MainProvider>
+                    <Header />
+                    <div className="flex flex-1">
+                        <DesktopSidebar />
+                        <main className="flex-1 md:pl-64 pt-12  h-full pb-16 md:pb-0">
+                            {children}
+                        </main>
+                    </div>
+                    <MobileMenu />
+                    <Toaster />
+                </MainProvider>
             </body>
         </html>
     );
