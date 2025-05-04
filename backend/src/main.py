@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,6 +7,7 @@ from src.core.config import settings
 from src.core.exception_handlers import http_exception_handler, request_validation_error_handler
 from src.core.lifespan import lifespan
 from src.exceptions.http import AppHTTPException
+from src.utils import json_example_factory
 
 app = FastAPI(
     title=settings.project_name,
@@ -14,6 +15,17 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
     debug=settings.mode == "dev",
+    responses={
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "content": json_example_factory(
+                {
+                    "detail": [{"loc": ["string", 0], "msg": "string", "type": "string"}],
+                    "error_key": "validation_error",
+                    "body": {"string": "string"},
+                },
+            )
+        }
+    },
 )
 
 app.add_exception_handler(AppHTTPException, http_exception_handler)
