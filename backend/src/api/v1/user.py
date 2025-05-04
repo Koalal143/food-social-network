@@ -93,9 +93,7 @@ async def update_current_user(
         )
     except UserNotFoundError as e:
         raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
-    except UserNicknameAlreadyExistsError as e:
-        raise AppHTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e), error_key=e.error_key) from None
-    except UserEmailAlreadyExistsError as e:
+    except (UserNicknameAlreadyExistsError, UserEmailAlreadyExistsError) as e:
         raise AppHTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e), error_key=e.error_key) from None
 
 
