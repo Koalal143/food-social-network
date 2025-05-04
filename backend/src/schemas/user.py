@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationInfo, field_validator
 
 from src.schemas.base import BaseReadSchema
 
@@ -35,6 +35,14 @@ class UserLogin(BaseModel):
     email: str | None = Field(None, description="User email")
     username: str | None = Field(None, description="Username")
     password: str = Field(..., min_length=8, description="User password")
+
+    @field_validator("email", mode="after")
+    @classmethod
+    def validate_email(cls, email: str | None, values: ValidationInfo) -> str | None:
+        if not email and not values.data.get("username"):
+            msg = "Either email or username must be provided"
+            raise ValueError(msg)
+        return email
 
 
 class UserUpdate(BaseModel):
