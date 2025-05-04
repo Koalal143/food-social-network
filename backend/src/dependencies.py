@@ -9,6 +9,7 @@ from src.adapters.storage import S3Storage, S3StorageClientManager
 from src.core.config import settings
 from src.core.redis import redis_manager
 from src.db.manager import database_session_function
+from src.db.uow import SQLAlchemyUnitOfWork
 from src.types.external.aiobotocore_s3.client import S3Client
 
 SessionDependency = Annotated[AsyncSession, Depends(database_session_function)]
@@ -39,3 +40,10 @@ async def get_redis() -> AsyncGenerator[Redis, None]:
 
 
 RedisDependency = Annotated[Redis, Depends(get_redis)]
+
+
+async def get_uow(session: SessionDependency) -> SQLAlchemyUnitOfWork:
+    return SQLAlchemyUnitOfWork(session=session)
+
+
+UnitOfWorkDependency = Annotated[SQLAlchemyUnitOfWork, Depends(get_uow)]
