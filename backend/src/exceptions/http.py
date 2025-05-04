@@ -2,8 +2,10 @@ from fastapi import HTTPException
 
 
 class AppHTTPException(HTTPException):
-    def __init__(self, status_code: int, error_key: str, detail: str | None = None) -> None:
-        super().__init__(status_code=status_code, detail=detail)
+    def __init__(
+        self, status_code: int, error_key: str, detail: str | None = None, headers: dict[str, str] | None = None
+    ) -> None:
+        super().__init__(status_code=status_code, detail=detail, headers=headers)
         self.error_key = error_key
 
     def __repr__(self) -> str:
