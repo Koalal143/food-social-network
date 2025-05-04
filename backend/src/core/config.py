@@ -51,6 +51,7 @@ class S3Config(BaseModel):
     port: int
     access_key: str
     secret_key: str
+    endpoint_url: str
 
 
 class Settings(BaseSettings):
