@@ -14,6 +14,7 @@ from src.exceptions.auth import (
 )
 from src.models.token import RefreshToken
 from src.models.user import User
+from src.schemas.token import Token
 
 
 class TokenService:
@@ -62,6 +63,33 @@ class TokenService:
             raise InactiveOrNotExistingUserError(msg)
 
         return user
+
+    async def create_tokens(self, user_id: int) -> Token:
+        access_token = self.create_access_token(data={"sub": str(user_id)})
+        refresh_token = self.create_access_token(
+            data={"sub": str(user_id)},
+            expires_delta=timedelta(days=settings.jwt.refresh_token_expire_days),
+        )
+
+        await self.redis.set(
+            f"refresh_token:{refresh_token}",
+            "1",
+            ex=settings.jwt.refresh_token_expire_days * 24 * 60 * 60,
+        )
+
+        refresh_token_service = RefreshTokenService(session=self.session, redis=self.redis)
+        expires_at = datetime.now(tz=UTC) + timedelta(days=settings.jwt.refresh_token_expire_days)
+        await refresh_token_service.create(
+            user_id=user_id,
+            token=refresh_token,
+            expires_at=expires_at,
+        )
+
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+        )
+
 
     async def verify_refresh_token(self, token: str) -> RefreshToken:
         token_in_redis = await self.redis.get(f"refresh_token:{token}")
