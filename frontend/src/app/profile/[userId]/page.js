@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Container from "@/components/Container";
+import Container from "@/components/layout/Container";
 import RecipeCard from "../../../components/shared/RecipeCard";
 import { useRecipes } from "@/context/RecipeContext";
 import Loader from "@/components/ui/Loader";
