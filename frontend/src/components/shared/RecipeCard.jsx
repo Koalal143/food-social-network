@@ -1,31 +1,79 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Clock, User, Star } from "lucide-react";
+import { useState } from "react";
+import { useFavorites } from "@/context/FavoritesContext";
 
 export default function RecipeCard({ recipe }) {
+    const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+    const [isSaved, setIsSaved] = useState(isFavorite(recipe.id));
+
+    const handleSave = (e) => {
+        e.preventDefault();
+        if (isSaved) {
+            removeFavorite(recipe.id);
+        } else {
+            addFavorite(recipe);
+        }
+        setIsSaved(!isSaved);
+    };
+
     return (
         <motion.div
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
+            className="h-full"
         >
-            <div className="h-full">
-                <Link href={`/recipe/${recipe.id}`}>
-                    <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                        <div className="relative aspect-video">
-                            <Image 
-                                src={recipe.preview} 
-                                alt={recipe.title}
-                                fill
-                                className="object-cover"
-                            />
-                        </div>
-                        <div className="p-4">
-                            <h3 className="font-medium text-lg mb-2">{recipe.title}</h3>
-                            <p className="text-gray-600 line-clamp-3">{recipe.shortDescription}</p>
+            <Link href={`/recipe/${recipe.id}`}>
+                <div className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+                    <div className="relative aspect-video">
+                        <Image 
+                            src={recipe.preview} 
+                            alt={recipe.title}
+                            fill
+                            className="object-cover"
+                            priority
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                            <div className="flex items-center gap-2 text-white">
+                                <Clock className="w-4 h-4" />
+                                <span className="text-sm">{recipe.time}</span>
+                                <span className="mx-1">•</span>
+                                <User className="w-4 h-4" />
+                                <span className="text-sm">{recipe.servings} порций</span>
+                            </div>
                         </div>
                     </div>
-                </Link>
-            </div>
+                    
+                    <div className="p-4 flex-1 flex flex-col">
+                        <h3 className="font-semibold text-xl mb-2 text-gray-800">{recipe.title}</h3>
+                        <p className="text-gray-600 line-clamp-3 mb-4 flex-1">{recipe.shortDescription}</p>
+                        
+                        <div className="flex items-center justify-between mt-4">
+                            <div className="flex items-center gap-2">
+                                <div className="px-2 py-1 bg-primary/10 text-primary text-sm rounded-full">
+                                    {recipe.difficulty}
+                                </div>
+                                <div className="flex items-center gap-1 text-yellow-500">
+                                    <Star className="w-4 h-4 fill-yellow-500" />
+                                    <span className="text-sm">4.8</span>
+                                </div>
+                            </div>
+                            <button 
+                                className={`px-4 py-2 ${
+                                    isSaved 
+                                        ? 'bg-green-500 hover:bg-green-600' 
+                                        : 'bg-primary hover:bg-primary/90'
+                                } text-white rounded-full text-sm transition-colors`}
+                                onClick={handleSave}
+                            >
+                                {isSaved ? 'Сохранено' : 'Сохранить'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Link>
         </motion.div>
     );
 }
