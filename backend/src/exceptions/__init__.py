@@ -1,5 +1,6 @@
 from src.exceptions.auth import (
     InactiveOrNotExistingUserError,
+    IncorrectCredentialsError,
     InvalidJWTError,
     InvalidTokenError,
     JWTSignatureExpiredError,
@@ -14,6 +15,7 @@ __all__ = [
     "BaseAppError",
     "ImageTooLargeError",
     "InactiveOrNotExistingUserError",
+    "IncorrectCredentialsError",
     "InvalidJWTError",
     "InvalidTokenError",
     "JWTSignatureExpired",
