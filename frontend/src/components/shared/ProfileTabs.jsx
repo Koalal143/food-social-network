@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import RecipeCard from "./RecipeCard"
 import { Button } from "../ui/button"
+import EmptyState from "./favorites/EmptyState"
 
 export default function ProfileTabs({ userRecipes, favorites }) {
   return (
@@ -41,15 +42,7 @@ export default function ProfileTabs({ userRecipes, favorites }) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-600 mb-6">У вас пока нет избранных рецептов</p>
-            <Button 
-              className="w-full md:w-auto"
-              onClick={() => window.location.href = '/recommendations'}
-            >
-              Найти рецепты
-            </Button>
-          </div>
+          <EmptyState hasFavorites={false}/>
         )}
       </TabsContent>
     </Tabs>
