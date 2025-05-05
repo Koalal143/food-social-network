@@ -1,13 +1,16 @@
 import { RecipeProvider } from "./RecipeProvider"
 import { UserProvider } from "./UserProvider"
 import { FavoritesProvider } from "./FavoritesProvider"
+import { SearchHistoryProvider } from "./SearchHistoryProvider"
 
 export default function MainProvider({ children }) {
     return (
         <RecipeProvider>
             <UserProvider>
                 <FavoritesProvider>
-                    {children}
+                    <SearchHistoryProvider>
+                        {children}
+                    </SearchHistoryProvider>
                 </FavoritesProvider>
             </UserProvider>
         </RecipeProvider>
