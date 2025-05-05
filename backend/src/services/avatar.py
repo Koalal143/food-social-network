@@ -33,7 +33,7 @@ class UserAvatarService:
         if not user_profile:
             user_profile = await self.uow.user_profiles.create(user_id=user_id)
 
-        await self.uow.user_profiles.update(user_profile, avatar_url=avatar_url)
+        await self.uow.user_profiles.update(user_profile, avatar_url=file_name)
         await self.uow.commit()
 
         return avatar_url
