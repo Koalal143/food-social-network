@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Container from '@/components/layout/Container';
 import { useSearchHistory } from '@/context/SearchHistoryContext';
-import RecipeCard from '@/components/shared/RecipeCard';
 import { useRecipes } from '@/context/RecipeContext';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useSearchParams, useRouter } from 'next/navigation';
