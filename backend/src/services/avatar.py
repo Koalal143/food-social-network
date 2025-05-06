@@ -27,16 +27,14 @@ class UserAvatarService:
             content_type=file.content_type,
         )
 
-        avatar_url = await self.s3_client.get_file_url("images", file_name)
-
         user_profile = await self.uow.user_profiles.get_by_user_id(user_id)
-        if not user_profile:
-            user_profile = await self.uow.user_profiles.create(user_id=user_id)
 
         await self.uow.user_profiles.update(user_profile, avatar_url=file_name)
-        await self.uow.commit()
 
-        return avatar_url
+        presigned_url = await self.s3_client.get_file_url("images", user_profile.avatar_url)
+        user_profile.avatar_url = presigned_url
+        await self.uow.commit()
+        return presigned_url
 
     async def delete_avatar(self, user_id: int) -> None:
         file_name = f"avatars/{user_id}/avatar.png"
@@ -46,3 +44,7 @@ class UserAvatarService:
         if user_profile:
             await self.uow.user_profiles.update(user_profile, avatar_url=None)
             await self.uow.commit()
+            user_profile = await self.uow.user_profiles.get_by_user_id(user_id)
+            if not user_profile:  # Should not happen
+                msg = "User profile not found after delete update"
+                raise RuntimeError(msg)
