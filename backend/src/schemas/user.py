@@ -78,7 +78,7 @@ class UserRead(BaseReadSchema):
 
 class UserLogin(BaseModel):
     email: str | None = Field(None, description="User email")
-    username: str | None = Field(None, description="Username")
+    username: Nickname | None = Field(None, description="Username")
     password: str = Field(..., min_length=8, description="User password")
 
     @field_validator("email", mode="after")
