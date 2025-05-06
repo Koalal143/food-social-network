@@ -1,4 +1,6 @@
+import re
 from datetime import datetime
+from typing import Annotated, Final
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationInfo, field_validator
 
@@ -17,6 +19,10 @@ BANNED_USERNAMES = [
     "me",
 ]
 
+NICKNAME_PATTERN: Final[re.Pattern] = re.compile(r"^[a-zA-Z0-9_-]+$")
+
+Nickname = Annotated[str, Field(pattern=NICKNAME_PATTERN, min_length=3, max_length=30)]
+
 
 class UserProfileRead(BaseReadSchema):
     user_id: int = Field(description="User ID to which the profile belongs")
@@ -31,7 +37,7 @@ class UserProfileUpdate(BaseModel):
 
 
 class UserCreate(BaseModel):
-    username: str = Field(min_length=3, max_length=30)
+    username: Nickname = Field(min_length=3, max_length=30)
     email: EmailStr
     password: str = Field(min_length=8)
 
