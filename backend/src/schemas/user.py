@@ -4,6 +4,19 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationInfo, fie
 
 from src.schemas.base import BaseReadSchema
 
+BANNED_USERNAMES = [
+    "admin",
+    "administrator",
+    "root",
+    "moderator",
+    "support",
+    "help",
+    "owner",
+    "staff",
+    "avatar",
+    "me",
+]
+
 
 class UserProfileRead(BaseReadSchema):
     user_id: int = Field(description="User ID to which the profile belongs")
@@ -21,6 +34,14 @@ class UserCreate(BaseModel):
     username: str = Field(min_length=3, max_length=30)
     email: EmailStr
     password: str = Field(min_length=8)
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, username: str) -> str:
+        if username.lower() in BANNED_USERNAMES:
+            msg = "Username is not allowed"
+            raise ValueError(msg)
+        return username
 
 
 class UserRead(BaseReadSchema):
