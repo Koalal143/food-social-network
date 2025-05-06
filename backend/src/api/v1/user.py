@@ -37,9 +37,9 @@ router = APIRouter(
         },
     },
 )
-async def get_user(user_id: int, uow: UnitOfWorkDependency) -> UserRead:
+async def get_user(user_id: int, uow: UnitOfWorkDependency, s3_client: S3StorageDependency) -> UserRead:
     async with uow:
-        service = UserService(uow=uow)
+        service = UserService(uow=uow, s3_client=s3_client)
         try:
             user = await service.get(user_id)
         except UserNotFoundError as e:
@@ -87,9 +87,10 @@ async def update_current_user(
     update: UserUpdate,
     current_user: CurrentUserDependency,
     uow: UnitOfWorkDependency,
+    s3_client: S3StorageDependency,
 ) -> User:
     async with uow:
-        service = UserService(uow=uow)
+        service = UserService(uow=uow, s3_client=s3_client)
         try:
             return await service.update(
                 current_user.id,
