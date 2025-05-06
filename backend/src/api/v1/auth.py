@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status
 
-from src.dependencies import RedisDependency, UnitOfWorkDependency
+from src.dependencies import RedisDependency, S3StorageDependency, UnitOfWorkDependency
 from src.exceptions import (
     AppHTTPException,
     InactiveOrNotExistingUserError,
@@ -49,9 +49,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def register(
     user_in: UserCreate,
     uow: UnitOfWorkDependency,
+    s3_client: S3StorageDependency,
 ) -> User:
     async with uow:
-        user_service = UserService(uow=uow)
+        user_service = UserService(uow=uow, s3_client=s3_client)
 
         try:
             user = await user_service.create(
@@ -99,9 +100,10 @@ async def login(
     user_in: UserLogin,
     uow: UnitOfWorkDependency,
     redis: RedisDependency,
+    s3_client: S3StorageDependency,
 ) -> Token:
     async with uow:
-        user_service = UserService(uow=uow)
+        user_service = UserService(uow=uow, s3_client=s3_client)
         token_service = TokenService(uow=uow, redis=redis)
 
         try:
