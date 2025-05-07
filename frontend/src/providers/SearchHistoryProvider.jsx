@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { SearchHistoryContext } from "@/context/SearchHistoryContext";
 
-export function SearchHistoryProvider({ children }) {
+export default function SearchHistoryProvider({ children }) {
     const [searchHistory, setSearchHistory] = useState([]);
   
     const addToHistory = (query) => {
