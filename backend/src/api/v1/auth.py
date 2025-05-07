@@ -8,7 +8,7 @@ from src.exceptions import (
     UserEmailAlreadyExistsError,
     UserNicknameAlreadyExistsError,
 )
-from src.exceptions.auth import InvalidTokenError
+from src.exceptions.auth import InvalidTokenError, SuspiciousEmailError
 from src.models.user import User
 from src.schemas.token import Token
 from src.schemas.user import UserCreate, UserLogin, UserRead
@@ -41,6 +41,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
                             "error_key": "user_email_already_exists",
                         },
                     },
+                    "User email is suspicious": {
+                        "value": {
+                            "detail": "Email is suspicious",
+                            "error_key": "suspicious_email",
+                        },
+                    },
                 },
             ),
         },
@@ -66,7 +72,12 @@ async def register(
                 detail=e.message,
                 error_key=e.error_key,
             ) from None
-
+        except SuspiciousEmailError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=e.message,
+                error_key=e.error_key,
+            ) from None
         return user
 
 
