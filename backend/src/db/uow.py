@@ -3,6 +3,7 @@ from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.repositories.banned_email import BannedEmailRepository
 from src.repositories.token import RefreshTokenRepository
 from src.repositories.user import UserRepository
 from src.repositories.user_profile import UserProfileRepository
@@ -15,6 +16,7 @@ class SQLAlchemyUnitOfWork:
         self.users = UserRepository(self.session)
         self.refresh_tokens = RefreshTokenRepository(self.session)
         self.user_profiles = UserProfileRepository(self.session)
+        self.banned_emails = BannedEmailRepository(self.session)
 
     async def __aenter__(self) -> Self:
         return self
