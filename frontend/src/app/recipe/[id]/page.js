@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
 import Container from "@/components/layout/Container";
 import { useRecipes } from "@/context/RecipeContext";
-import { useUsers } from "@/context/UserContext";
+import { useUser } from "@/context/UserContext";
 import Loader from "@/components/ui/Loader";
 import Image from "next/image";
 import AuthorCard from "@/components/shared/AuthorCard";
@@ -13,7 +13,7 @@ import CopyLinkButton from "@/components/ui/CopyLinkButton";
 
 export default function RecipePage({ params }) {
   const { getRecipeById } = useRecipes();
-  const { getUserById } = useUsers();
+  const { getUserById } = useUser();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const [recipe, setRecipe] = useState(null);
   const [author, setAuthor] = useState(null);
