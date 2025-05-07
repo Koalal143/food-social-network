@@ -2,7 +2,15 @@ import re
 from datetime import datetime
 from typing import Annotated, Final
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field, ValidationInfo, field_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    ValidationInfo,
+    field_validator,
+)
 
 from src.schemas.base import BaseReadSchema
 
@@ -45,8 +53,8 @@ Password = Annotated[
         examples=["H2rdP$ssw0rdTh3Wi&&er"],
         description=(
             "User password. Must contain at least one uppercase letter, one lowercase letter, one "
-            "special symbol and number",
-        )
+            "special symbol and number"
+        ),
     ),
     AfterValidator(validate_password),
 ]
