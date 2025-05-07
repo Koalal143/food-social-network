@@ -1,7 +1,7 @@
 FROM node:alpine as build
 
-COPY package.json package.json
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci --quiet
 COPY . .
 
 CMD ["npm", "run", "dev"]
