@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 from src.adapters.storage import S3Storage
 from src.db.uow import SQLAlchemyUnitOfWork
-from src.exceptions.auth import InactiveOrNotExistingUserError, IncorrectCredentialsError
+from src.exceptions.auth import InactiveOrNotExistingUserError, IncorrectCredentialsError, SuspiciousEmailError
 from src.exceptions.user import UserEmailAlreadyExistsError, UserNicknameAlreadyExistsError, UserNotFoundError
 from src.models.user import User
 from src.schemas.user import UserProfileUpdate, UserRead
@@ -44,6 +44,12 @@ class UserService:
             if user.email == email:
                 msg = "Email already registered"
                 raise UserEmailAlreadyExistsError(msg)
+
+        _, email_domain = email.split("@", 1)
+
+        if await self.uow.banned_emails.get_by_domain(email_domain):
+            msg = "Email is disposable"
+            raise SuspiciousEmailError(msg)
 
         user = await self.uow.users.create(
             username=username,
