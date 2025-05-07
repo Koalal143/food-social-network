@@ -1,84 +1,90 @@
 import { BASE_API } from "./constants";
 
-class AuthService {
+export default class AuthService {
     static async register(username, email, password) {
+        console.log(username, email, password);
+        
+
         try {
             const response = await fetch(`${BASE_API}/v1/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, email, password })
+                body: JSON.stringify({
+                    username,
+                    email,
+                    password,
+                }),
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Ошибка регистрации');
+                const error = await response.json();
+                throw new Error(error.detail);
             }
 
             return await response.json();
         } catch (error) {
-            console.error('Ошибка регистрации:', error);
             throw error;
         }
     }
 
     static async login(emailOrUsername, password) {
         try {
-            const body = emailOrUsername.includes('@') 
-                ? { email: emailOrUsername, password }
-                : { username: emailOrUsername, password };
-
             const response = await fetch(`${BASE_API}/v1/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(body)
+                body: JSON.stringify({
+                    email: emailOrUsername.includes('@') ? emailOrUsername : null,
+                    username: !emailOrUsername.includes('@') ? emailOrUsername : null,
+                    password,
+                }),
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Ошибка входа');
+                const error = await response.json();
+                throw new Error(error.detail);
             }
 
             const data = await response.json();
-            localStorage.setItem('accessToken', data.access_token);
-            localStorage.setItem('refreshToken', data.refresh_token);
+            localStorage.setItem('access_token', data.access_token);
+            localStorage.setItem('refresh_token', data.refresh_token);
             return data;
         } catch (error) {
-            console.error('Ошибка входа:', error);
             throw error;
         }
     }
 
-    static async refresh() {
+    static async refreshToken() {
         try {
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (!refreshToken) throw new Error('Refresh token отсутствует');
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (!refreshToken) {
+                throw new Error('No refresh token found');
+            }
 
             const response = await fetch(`${BASE_API}/v1/auth/refresh?refresh_token=${refreshToken}`, {
-                method: 'POST'
+                method: 'POST',
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Ошибка обновления токена');
+                const error = await response.json();
+                throw new Error(error.detail);
             }
 
             const data = await response.json();
-            localStorage.setItem('accessToken', data.access_token);
-            localStorage.setItem('refreshToken', data.refresh_token);
+            localStorage.setItem('access_token', data.access_token);
+            localStorage.setItem('refresh_token', data.refresh_token);
             return data;
         } catch (error) {
-            console.error('Ошибка обновления токена:', error);
             throw error;
         }
     }
 
     static async getCurrentUser() {
         try {
-            const accessToken = localStorage.getItem('accessToken');
+            const accessToken = localStorage.getItem('access_token');
             if (!accessToken) throw new Error('Пользователь не авторизован');
 
             const response = await fetch(`${BASE_API}/v1/users/me`, {
@@ -102,7 +108,7 @@ class AuthService {
 
     static async updateUserProfile(profileData) {
         try {
-            const accessToken = localStorage.getItem('accessToken');
+            const accessToken = localStorage.getItem('access_token');
             if (!accessToken) throw new Error('Пользователь не авторизован');
 
             const response = await fetch(`${BASE_API}/v1/users/me`, {
@@ -128,7 +134,7 @@ class AuthService {
 
     static async updateAvatar(imageFile) {
         try {
-            const accessToken = localStorage.getItem('accessToken');
+            const accessToken = localStorage.getItem('access_token');
             if (!accessToken) throw new Error('Пользователь не авторизован');
 
             const formData = new FormData();
@@ -156,7 +162,7 @@ class AuthService {
 
     static async deleteAvatar() {
         try {
-            const accessToken = localStorage.getItem('accessToken');
+            const accessToken = localStorage.getItem('access_token');
             if (!accessToken) throw new Error('Пользователь не авторизован');
 
             const response = await fetch(`${BASE_API}/v1/users/me/avatar`, {
@@ -179,9 +185,7 @@ class AuthService {
     }
 
     static logout() {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
     }
 }
-
-export default AuthService;

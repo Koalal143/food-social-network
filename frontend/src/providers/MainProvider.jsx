@@ -1,8 +1,10 @@
-import { RecipeProvider } from "./RecipeProvider"
-import { UserProvider } from "./UserProvider"
-import { FavoritesProvider } from "./FavoritesProvider"
-import { SearchHistoryProvider } from "./SearchHistoryProvider"
-import { AuthProvider } from "@/context/AuthContext"
+'use client'
+
+import RecipeProvider from "./RecipeProvider"
+import UserProvider from "./UserProvider"
+import FavoritesProvider from "./FavoritesProvider"
+import SearchHistoryProvider from "./SearchHistoryProvider"
+import AuthProvider from "./AuthProvider"
 
 export default function MainProvider({ children }) {
     return (
