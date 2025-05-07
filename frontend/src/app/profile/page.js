@@ -7,27 +7,19 @@ import Loader from "@/components/ui/Loader"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import ProfileTabs from "@/components/shared/ProfileTabs"
+import { useAuth } from "@/context/AuthContext"
 
 export default function ProfilePage() {
     const { getRecipesByAuthorId } = useRecipes()
     const { favorites } = useFavorites()
     const [userRecipes, setUserRecipes] = useState([])
     const [loading, setLoading] = useState(true)
-
-    // TODO: Create authContext
-    const currentUserId = 3
-
-    const user = {
-        id: currentUserId,
-        name: "Тетя Зина",
-        experience: "69 лет",
-        avatar: "/images/ava.jpg"
-    }
+    const { user } = useAuth()
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const recipes = await getRecipesByAuthorId(currentUserId)
+                const recipes = await getRecipesByAuthorId(user.id)
                 setUserRecipes(recipes)
             } catch (error) {
                 console.error("Ошибка при загрузке рецептов:", error)
@@ -36,7 +28,7 @@ export default function ProfilePage() {
             }
         }
         fetchData()
-    }, [currentUserId, getRecipesByAuthorId])
+    }, [getRecipesByAuthorId])
 
     if (loading) {
         return <Loader />
