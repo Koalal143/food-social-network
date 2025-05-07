@@ -23,35 +23,8 @@ router = APIRouter(
 
 
 @router.get(
-    "/{user_id}",
-    summary="Get user by ID",
-    description="Returns a user by their ID.",
-    responses={
-        status.HTTP_404_NOT_FOUND: {
-            "content": json_example_factory(
-                {
-                    "detail": "User not found",
-                    "error_key": "user_not_found",
-                },
-            ),
-        },
-    },
-)
-async def get_user(user_id: int, uow: UnitOfWorkDependency, s3_client: S3StorageDependency) -> UserRead:
-    async with uow:
-        service = UserService(uow=uow, s3_client=s3_client)
-        try:
-            user = await service.get(user_id)
-        except UserNotFoundError as e:
-            raise AppHTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
-            ) from None
-        return user
-
-
-@router.get(
     "/me",
-    summary="Get user by ID",
+    summary="Get current user",
     description="Returns current user",
     responses={
         status.HTTP_404_NOT_FOUND: {
@@ -71,6 +44,33 @@ async def get_current_user(
         service = UserService(uow=uow, s3_client=s3_client)
         try:
             user = await service.get(current_user.id)
+        except UserNotFoundError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
+            ) from None
+        return user
+
+
+@router.get(
+    "/{user_id}",
+    summary="Get user by ID",
+    description="Returns a user by their ID.",
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "content": json_example_factory(
+                {
+                    "detail": "User not found",
+                    "error_key": "user_not_found",
+                },
+            ),
+        },
+    },
+)
+async def get_user(user_id: int, uow: UnitOfWorkDependency, s3_client: S3StorageDependency) -> UserRead:
+    async with uow:
+        service = UserService(uow=uow, s3_client=s3_client)
+        try:
+            user = await service.get(user_id)
         except UserNotFoundError as e:
             raise AppHTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
