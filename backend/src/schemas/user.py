@@ -95,7 +95,7 @@ class UserRead(BaseReadSchema):
 
 
 class UserLogin(BaseModel):
-    email: str | None = Field(None, description="User email")
+    email: EmailStr | None = Field(None, description="User email")
     username: Nickname | None = Field(None, description="Username")
     password: Password
 
