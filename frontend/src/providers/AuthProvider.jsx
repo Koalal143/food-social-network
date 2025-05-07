@@ -1,34 +1,47 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import AuthService from "@/services/auth.service"
-import { AuthContext } from "@/context/AuthContext"
+import { useState, useEffect } from 'react'
+import { AuthContext } from '@/context/AuthContext'
+import AuthService from '@/services/auth.service'
+import UsersService from '@/services/users.service'
 
-export function AuthProvider({ children }) {
+export default function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
 
     useEffect(() => {
-        const fetchCurrentUser = async () => {
+        const initializeAuth = async () => {
             try {
-                const userData = await AuthService.getCurrentUser()
+                const userData = await UsersService.getCurrentUser()
                 setUser(userData)
             } catch (error) {
-                setUser(null)
+                setError(error.message)
+                // Если токен невалиден, пробуем обновить
+                try {
+                    await AuthService.refreshToken()
+                    const userData = await UsersService.getCurrentUser()
+                    setUser(userData)
+                } catch (refreshError) {
+                    AuthService.logout()
+                    setUser(null)
+                }
             } finally {
                 setLoading(false)
             }
         }
 
-        fetchCurrentUser()
+        initializeAuth()
     }, [])
 
     const login = async (emailOrUsername, password) => {
         try {
-            const userData = await AuthService.login(emailOrUsername, password)
+            const tokens = await AuthService.login(emailOrUsername, password)
+            const userData = await UsersService.getCurrentUser()
             setUser(userData)
             return userData
         } catch (error) {
+            setError(error.message)
             throw error
         }
     }
@@ -36,9 +49,12 @@ export function AuthProvider({ children }) {
     const register = async (username, email, password) => {
         try {
             const userData = await AuthService.register(username, email, password)
-            setUser(userData)
-            return userData
+            const tokens = await AuthService.login(email, password)
+            const currentUser = await UsersService.getCurrentUser()
+            setUser(currentUser)
+            return currentUser
         } catch (error) {
+            setError(error.message)
             throw error
         }
     }
@@ -50,46 +66,52 @@ export function AuthProvider({ children }) {
 
     const updateProfile = async (profileData) => {
         try {
-            const updatedUser = await AuthService.updateUserProfile(profileData)
+            const updatedUser = await UsersService.updateCurrentUser(profileData)
             setUser(updatedUser)
             return updatedUser
         } catch (error) {
+            setError(error.message)
             throw error
         }
     }
 
     const updateAvatar = async (imageFile) => {
         try {
-            const updatedUser = await AuthService.updateAvatar(imageFile)
+            const result = await UsersService.updateAvatar(imageFile)
+            const updatedUser = await UsersService.getCurrentUser()
             setUser(updatedUser)
-            return updatedUser
+            return result
         } catch (error) {
+            setError(error.message)
             throw error
         }
     }
 
     const deleteAvatar = async () => {
         try {
-            await AuthService.deleteAvatar()
-            setUser(prev => ({ ...prev, profile: { ...prev.profile, avatar_url: null } }))
+            await UsersService.deleteAvatar()
+            const updatedUser = await UsersService.getCurrentUser()
+            setUser(updatedUser)
         } catch (error) {
+            setError(error.message)
             throw error
         }
     }
 
-    const value = {
-        user,
-        loading,
-        login,
-        register,
-        logout,
-        updateProfile,
-        updateAvatar,
-        deleteAvatar
-    }
-
     return (
-        <AuthContext.Provider value={value}>
+        <AuthContext.Provider
+            value={{
+                user,
+                loading,
+                error,
+                login,
+                register,
+                logout,
+                updateProfile,
+                updateAvatar,
+                deleteAvatar
+            }}
+        >
             {children}
         </AuthContext.Provider>
     )

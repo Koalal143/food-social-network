@@ -2,69 +2,93 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import Container from "@/components/layout/Container";
-import AuthService from "@/services/auth.service";
 import { useRouter } from "next/navigation";
-import { toast } from "@/hooks/use-toast";
+import Container from "@/components/layout/Container";
+import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
     const [emailOrUsername, setEmailOrUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const { login } = useAuth();
     const router = useRouter();
+    const { toast } = useToast();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        setIsLoading(true);
 
         try {
-            await AuthService.login(emailOrUsername, password);
+            await login(emailOrUsername, password);
             toast({
-                title: "Успешно!",
-                description: "Вы успешно вошли в систему",
+                title: "Успешный вход",
+                description: "Добро пожаловать!",
             });
             router.push("/");
         } catch (error) {
             toast({
-                title: "Ошибка",
-                description: error.message,
                 variant: "destructive",
+                title: "Ошибка входа",
+                description: error.message,
             });
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
     return (
-        <Container className="py-8 h-screen flex items-center justify-center">
-            <div className="w-full max-w-md">
-                <h1 className="text-2xl font-bold mb-6 text-center">Вход в аккаунт</h1>
+        <Container className="max-w-md py-8">
+            <div className="space-y-6">
+                <div className="space-y-2 text-center">
+                    <h1 className="text-3xl font-bold">Вход в аккаунт</h1>
+                    <p className="text-gray-500">
+                        Войдите в свой аккаунт, чтобы получить доступ к рецептам
+                    </p>
+                </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="emailOrUsername">Email или имя пользователя</Label>
+                        <label htmlFor="emailOrUsername" className="text-sm font-medium">
+                            Email или имя пользователя
+                        </label>
                         <Input
                             id="emailOrUsername"
+                            type="text"
+                            placeholder="Введите email или имя пользователя"
                             value={emailOrUsername}
                             onChange={(e) => setEmailOrUsername(e.target.value)}
                             required
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="password">Пароль</Label>
+                        <label htmlFor="password" className="text-sm font-medium">
+                            Пароль
+                        </label>
                         <Input
                             id="password"
                             type="password"
+                            placeholder="Введите пароль"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            minLength={8}
                         />
                     </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? "Вход..." : "Войти"}
+                    <Button 
+                        type="submit" 
+                        className="w-full"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Вход...' : 'Войти'}
                     </Button>
                 </form>
+                <p className="text-center text-sm text-gray-600">
+                    Нет аккаунта?{' '}
+                    <Link href="/registration" className="text-primary hover:underline">
+                        Зарегистрироваться
+                    </Link>
+                </p>
             </div>
         </Container>
     );

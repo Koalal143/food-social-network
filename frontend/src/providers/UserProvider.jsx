@@ -1,39 +1,45 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import UsersService from "@/services/users.service"
-import { UserContext } from "@/context/UserContext"
+import { useState } from 'react'
+import { UserContext } from '@/context/UserContext'
+import UsersService from '@/services/users.service'
 
-export function UserProvider({ children }) {
-    const [users, setUsers] = useState([])
-    const [loading, setLoading] = useState(true)
+export default function UserProvider({ children }) {
+    const [users, setUsers] = useState({})
+    const [loading, setLoading] = useState({})
     const [error, setError] = useState(null)
 
-    const fetchUsers = async () => {
+    const getUserById = async (userId) => {
         try {
-            const data = await UsersService.getAllUsers()
-            setUsers(data)
+            setLoading(prev => ({ ...prev, [userId]: true }))
+            
+            // Проверяем, есть ли пользователь уже в кэше
+            if (users[userId]) {
+                return users[userId]
+            }
+
+            const userData = await UsersService.getUserById(userId)
+            setUsers(prev => ({ ...prev, [userId]: userData }))
+            return userData
         } catch (error) {
-            setError(error)
-            console.error("Ошибка при загрузке пользователей:", error)
+            setError(error.message)
+            throw error
         } finally {
-            setLoading(false)
+            setLoading(prev => ({ ...prev, [userId]: false }))
         }
     }
 
-    const getUserById = async (id) => {
-        try {
-            return await UsersService.getUserById(id);
-        } catch (error) {
-            setError(error);
-            console.error("Ошибка при загрузке пользователя:", error);
-            return null;
+    const clearUserCache = (userId) => {
+        if (userId) {
+            setUsers(prev => {
+                const newUsers = { ...prev }
+                delete newUsers[userId]
+                return newUsers
+            })
+        } else {
+            setUsers({})
         }
-    };
-
-    useEffect(() => {
-        fetchUsers()
-    }, [])
+    }
 
     return (
         <UserContext.Provider
@@ -41,8 +47,8 @@ export function UserProvider({ children }) {
                 users,
                 loading,
                 error,
-                fetchUsers,
-                getUserById
+                getUserById,
+                clearUserCache
             }}
         >
             {children}
