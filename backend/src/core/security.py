@@ -37,4 +37,17 @@ async def get_current_user(
             ) from e
 
 
+async def get_superuser(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User:
+    if not current_user.is_superuser:
+        raise AppHTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The user doesn't have enough privileges",
+            error_key="not_enough_perms",
+        )
+    return current_user
+
+
 CurrentUserDependency = Annotated[User, Depends(get_current_user)]
+SuperUserDependency = Annotated[User, Depends(get_superuser)]
