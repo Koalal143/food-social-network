@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { FavoritesContext } from "@/context/FavoritesContext"
 import FavoritesService from "@/services/favorites.service"
 
-export function FavoritesProvider({ children }) {
+export default function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState([])
   const [loading, setLoading] = useState(true)
 

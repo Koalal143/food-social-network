@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import RecipesService from "@/services/recipes.service"
 import { RecipeContext } from "@/context/RecipeContext"
 
-export function RecipeProvider({ children }) {
+export default function RecipeProvider({ children }) {
     const [recipes, setRecipes] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
