@@ -19,3 +19,7 @@ class InactiveOrNotExistingUserError(BaseAppError):
 
 class IncorrectCredentialsError(BaseAppError):
     error_key = "username_or_email_or_password_is_incorrect"
+
+
+class SuspiciousEmailError(BaseAppError):
+    error_key = "suspicious_email"
