@@ -14,7 +14,7 @@ from src.exceptions.image import ImageTooLargeError, WrongImageFormatError
 from src.models.user import User
 from src.schemas import UserRead, UserUpdate
 from src.services import UserAvatarService, UserService
-from src.utils import json_example_factory, json_examples_factory
+from src.utils.examples_factory import json_example_factory, json_examples_factory
 
 router = APIRouter(
     prefix="/users",
