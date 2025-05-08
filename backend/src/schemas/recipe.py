@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
 from src.schemas.base import BaseReadSchema
@@ -36,12 +36,13 @@ class RecipeTagUpdate(RecipeTag):
 
 
 class BaseRecipeSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
+
     title: str = Field(max_length=135, examples=["Pasta Carbonara", "Салат Цезарь"])
     short_description: str = Field(max_length=255, examples=["Рецепт салата Цезарь"])
     image_url: str = Field(max_length=255, examples=["https://example.com/image.jpg"])
     difficulty: RecipeDifficultyEnum = Field(examples=["EASY"])
     cook_time_minutes: int = Field(gt=0)
-
 
 
 class _InstructionsMixin(BaseModel):
