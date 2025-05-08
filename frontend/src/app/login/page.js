@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-    const [emailOrUsername, setEmailOrUsername] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     
@@ -22,10 +22,10 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            await login(emailOrUsername, password);
+            await login(email, password);
             toast({
                 title: "Успешный вход",
-                description: "Добро пожаловать!",
+                description: "Добро пожаловать назад!",
             });
             router.push("/");
         } catch (error) {
@@ -40,25 +40,22 @@ export default function LoginPage() {
     };
 
     return (
-        <Container className="max-w-md py-8">
-            <div className="space-y-6">
+        <Container className="h-screen flex items-center justify-center overflow-hidden">
+            <div className="w-full max-w-md space-y-6 bg-white p-8 rounded-lg shadow-lg">
                 <div className="space-y-2 text-center">
-                    <h1 className="text-3xl font-bold">Вход в аккаунт</h1>
-                    <p className="text-gray-500">
-                        Войдите в свой аккаунт, чтобы получить доступ к рецептам
-                    </p>
+                    <h1 className="text-3xl font-bold">Вход</h1>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <label htmlFor="emailOrUsername" className="text-sm font-medium">
-                            Email или имя пользователя
+                        <label htmlFor="email" className="text-sm font-medium">
+                            Email
                         </label>
                         <Input
-                            id="emailOrUsername"
-                            type="text"
-                            placeholder="Введите email или имя пользователя"
-                            value={emailOrUsername}
-                            onChange={(e) => setEmailOrUsername(e.target.value)}
+                            id="email"
+                            type="email"
+                            placeholder="Введите email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             required
                         />
                     </div>
