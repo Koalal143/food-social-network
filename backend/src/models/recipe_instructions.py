@@ -14,6 +14,6 @@ class RecipeInstruction(Base):
 
     step_number: Mapped[int]
     description: Mapped[str] = mapped_column(String(1000), nullable=False)
-    image_url: Mapped[str] = mapped_column(nullable=True)
+    image_url: Mapped[str | None] = mapped_column(nullable=True)
 
     recipe: Mapped["Recipe"] = relationship(back_populates="instructions")
