@@ -47,7 +47,12 @@ class RecipeRepository:
         return db_recipe
 
     async def update(self, recipe_id: int, **fields: Any) -> Recipe | None:
-        stmt = update(Recipe).where(Recipe.id == recipe_id).values(**fields).returning(Recipe)
+        stmt = (
+            update(Recipe)
+            .where(Recipe.id == recipe_id)
+            .values(**fields)
+            .returning(Recipe)
+        )
         result = await self.session.scalars(stmt)
         return result.first()
 
