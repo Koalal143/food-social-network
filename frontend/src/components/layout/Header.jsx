@@ -25,9 +25,9 @@ export default function Header() {
     }
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <Container>
-                <div className="flex h-16 items-center justify-between gap-4">
+        <Container>
+            <header className="fixed top-0 left-0 right-0 z-50 bg-primary text-primary-foreground">
+                <div className="py-2 flex items-center justify-between px-4">                    
                     <Link href="/" className="flex items-center gap-2">
                         <h1 className="text-lg font-bold">РЕЦЕПТЫ</h1>
                     </Link>
@@ -88,7 +88,7 @@ export default function Header() {
                                         Войти
                                     </Link>
                                 </Button>
-                                <Button size="sm" asChild>
+                                <Button className="bg-white text-black hover:text-white" size="sm" asChild>
                                     <Link href="/registration">
                                         Регистрация
                                     </Link>
@@ -97,7 +97,7 @@ export default function Header() {
                         )}
                     </div>
                 </div>
-            </Container>
-        </header>
+            </header>
+        </Container>
     )
 }
