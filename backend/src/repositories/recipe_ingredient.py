@@ -37,6 +37,7 @@ class RecipeIngredientRepository:
     async def delete_by_recipe_id(self, recipe_id: int) -> None:
         stmt = delete(RecipeIngredient).where(RecipeIngredient.recipe_id == recipe_id)
         await self.session.execute(stmt)
+        await self.session.flush()
 
     async def delete_by_id(self, ingredient_id: int) -> None:
         stmt = delete(RecipeIngredient).where(RecipeIngredient.id == ingredient_id)
