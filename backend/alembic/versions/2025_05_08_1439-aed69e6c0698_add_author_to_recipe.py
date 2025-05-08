@@ -20,7 +20,6 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.drop_constraint("banned_emails_domain_key", "banned_emails", type_="unique")
     op.create_unique_constraint(op.f("uq_banned_emails_domain"), "banned_emails", ["domain"])
     op.add_column("recipes", sa.Column("author_id", sa.Integer(), nullable=False))
     op.create_foreign_key(
@@ -35,5 +34,4 @@ def downgrade() -> None:
     op.create_unique_constraint("user_profiles_user_id_key", "user_profiles", ["user_id"])
     op.drop_constraint(op.f("fk_recipes_author_id_users"), "recipes", type_="foreignkey")
     op.drop_column("recipes", "author_id")
-    op.drop_constraint(op.f("uq_banned_emails_domain"), "banned_emails", type_="unique")
     op.create_unique_constraint("banned_emails_domain_key", "banned_emails", ["domain"])
