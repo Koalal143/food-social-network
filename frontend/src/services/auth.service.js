@@ -1,10 +1,82 @@
 import { BASE_API } from "./constants";
+import { tokenManager } from "@/utils/tokenManager";
+
+class CustomError extends Error {
+    constructor(message, name = 'Error') {
+        super(message);
+        this.name = name;
+    }
+}
+
+class NetworkError extends CustomError {
+    constructor(message) {
+        super(message, 'NetworkError');
+    }
+}
+
+class AuthError extends CustomError {
+    constructor(message) {
+        super(message, 'AuthError');
+    }
+}
+
+class ValidationError extends CustomError {
+    constructor(message) {
+        super(message, 'ValidationError');
+    }
+}
 
 export default class AuthService {
-    static async register(username, email, password) {
-        console.log(username, email, password);
-        
+    static getAccessToken() {
+        return localStorage.getItem('access_token');
+    }
 
+    static getRefreshToken() {
+        return localStorage.getItem('refresh_token');
+    }
+
+    static setTokens(accessToken, refreshToken) {
+        localStorage.setItem('access_token', accessToken);
+        localStorage.setItem('refresh_token', refreshToken);
+    }
+
+    static async makeAuthenticatedRequest(url, options = {}) {
+        await tokenManager.ensureValidToken();
+        
+        const accessToken = this.getAccessToken();
+        if (!accessToken) {
+            throw new AuthError('Пользователь не авторизован');
+        }
+
+        const headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${accessToken}`
+        };
+
+        try {
+            const response = await fetch(url, { ...options, headers });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                if (response.status === 401) {
+                    throw new AuthError(errorData.detail || 'Ошибка авторизации');
+                } else if (response.status === 400) {
+                    throw new ValidationError(errorData.detail || 'Ошибка валидации');
+                } else {
+                    throw new Error(errorData.detail || 'Неизвестная ошибка');
+                }
+            }
+
+            return response;
+        } catch (error) {
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                throw new NetworkError('Проблема с подключением к сети');
+            }
+            throw error;
+        }
+    }
+
+    static async register(username, email, password) {
         try {
             const response = await fetch(`${BASE_API}/v1/auth/register`, {
                 method: 'POST',
@@ -19,12 +91,18 @@ export default class AuthService {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail);
+                const errorData = await response.json();
+                if (response.status === 400) {
+                    throw new ValidationError(errorData.detail || 'Ошибка валидации данных');
+                }
+                throw new Error(errorData.detail || 'Ошибка регистрации');
             }
 
             return await response.json();
         } catch (error) {
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                throw new NetworkError('Проблема с подключением к сети');
+            }
             throw error;
         }
     }
@@ -44,24 +122,31 @@ export default class AuthService {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail);
+                const errorData = await response.json();
+                if (response.status === 401) {
+                    throw new AuthError(errorData.detail || 'Неверные учетные данные');
+                } else if (response.status === 400) {
+                    throw new ValidationError(errorData.detail || 'Ошибка валидации данных');
+                }
+                throw new Error(errorData.detail || 'Ошибка входа');
             }
 
             const data = await response.json();
-            localStorage.setItem('access_token', data.access_token);
-            localStorage.setItem('refresh_token', data.refresh_token);
+            this.setTokens(data.access_token, data.refresh_token);
             return data;
         } catch (error) {
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                throw new NetworkError('Проблема с подключением к сети');
+            }
             throw error;
         }
     }
 
     static async refreshToken() {
         try {
-            const refreshToken = localStorage.getItem('refresh_token');
+            const refreshToken = this.getRefreshToken();
             if (!refreshToken) {
-                throw new Error('No refresh token found');
+                throw new AuthError('Отсутствует refresh token');
             }
 
             const response = await fetch(`${BASE_API}/v1/auth/refresh?refresh_token=${refreshToken}`, {
@@ -69,36 +154,27 @@ export default class AuthService {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail);
+                const errorData = await response.json();
+                if (response.status === 401) {
+                    throw new AuthError(errorData.detail || 'Недействительный refresh token');
+                }
+                throw new Error(errorData.detail || 'Ошибка обновления токена');
             }
 
             const data = await response.json();
-            localStorage.setItem('access_token', data.access_token);
-            localStorage.setItem('refresh_token', data.refresh_token);
+            this.setTokens(data.access_token, data.refresh_token);
             return data;
         } catch (error) {
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                throw new NetworkError('Проблема с подключением к сети');
+            }
             throw error;
         }
     }
 
     static async getCurrentUser() {
         try {
-            const accessToken = localStorage.getItem('access_token');
-            if (!accessToken) throw new Error('Пользователь не авторизован');
-
-            const response = await fetch(`${BASE_API}/v1/users/me`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                }
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Ошибка получения данных пользователя');
-            }
-
+            const response = await this.makeAuthenticatedRequest(`${BASE_API}/v1/users/me`);
             return await response.json();
         } catch (error) {
             console.error('Ошибка получения данных пользователя:', error);
@@ -108,23 +184,13 @@ export default class AuthService {
 
     static async updateUserProfile(profileData) {
         try {
-            const accessToken = localStorage.getItem('access_token');
-            if (!accessToken) throw new Error('Пользователь не авторизован');
-
-            const response = await fetch(`${BASE_API}/v1/users/me`, {
+            const response = await this.makeAuthenticatedRequest(`${BASE_API}/v1/users/me`, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(profileData)
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Ошибка обновления профиля');
-            }
-
             return await response.json();
         } catch (error) {
             console.error('Ошибка обновления профиля:', error);
@@ -134,25 +200,13 @@ export default class AuthService {
 
     static async updateAvatar(imageFile) {
         try {
-            const accessToken = localStorage.getItem('access_token');
-            if (!accessToken) throw new Error('Пользователь не авторизован');
-
             const formData = new FormData();
             formData.append('image', imageFile);
 
-            const response = await fetch(`${BASE_API}/v1/users/me/avatar`, {
+            const response = await this.makeAuthenticatedRequest(`${BASE_API}/v1/users/me/avatar`, {
                 method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                },
                 body: formData
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Ошибка обновления аватара');
-            }
-
             return await response.json();
         } catch (error) {
             console.error('Ошибка обновления аватара:', error);
@@ -162,21 +216,9 @@ export default class AuthService {
 
     static async deleteAvatar() {
         try {
-            const accessToken = localStorage.getItem('access_token');
-            if (!accessToken) throw new Error('Пользователь не авторизован');
-
-            const response = await fetch(`${BASE_API}/v1/users/me/avatar`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                }
+            const response = await this.makeAuthenticatedRequest(`${BASE_API}/v1/users/me/avatar`, {
+                method: 'DELETE'
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Ошибка удаления аватара');
-            }
-
             return true;
         } catch (error) {
             console.error('Ошибка удаления аватара:', error);
