@@ -14,7 +14,7 @@ from src.schemas.token import Token
 from src.schemas.user import UserCreate, UserLogin, UserRead
 from src.services import SecurityService, TokenService, UserService
 from src.services.token import RefreshTokenService
-from src.utils import json_example_factory, json_examples_factory
+from src.utils.examples_factory import json_example_factory, json_examples_factory
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

@@ -11,7 +11,7 @@ from src.schemas.banned_email import (
     BannedEmailDomainRead,
 )
 from src.services.banned_email import BannedEmailService
-from src.utils import json_example_factory
+from src.utils.examples_factory import json_example_factory
 
 router = APIRouter(prefix="/banned-emails", tags=["Banned Emails"], dependencies=[Depends(get_superuser)])
 
