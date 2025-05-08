@@ -4,7 +4,7 @@ import Container from "@/components/layout/Container";
 import RecipeCard from "../../../components/shared/RecipeCard";
 import { useRecipes } from "@/context/RecipeContext";
 import Loader from "@/components/ui/Loader";
-import { useUsers } from "@/context/UserContext";
+import { useUser } from "@/context/UserContext";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import CopyLinkButton from "@/components/ui/CopyLinkButton"
@@ -13,7 +13,7 @@ export default function ProfilePage({ params }) {
     const { toast } = useToast()
     const { userId } = React.use(params);
     const { loading, getRecipesByAuthorId } = useRecipes();
-    const { getUserById } = useUsers();
+    const { getUserById } = useUser();
 
     const [user, setUser] = useState(null);
     const [userRecipes, setUserRecipes] = useState([]);
