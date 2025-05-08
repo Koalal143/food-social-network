@@ -4,6 +4,10 @@ from typing import Self
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.repositories.banned_email import BannedEmailRepository
+from src.repositories.recipe import RecipeRepository
+from src.repositories.recipe_ingredient import RecipeIngredientRepository
+from src.repositories.recipe_instruction import RecipeInstructionRepository
+from src.repositories.recipe_tag import RecipeTagRepository
 from src.repositories.token import RefreshTokenRepository
 from src.repositories.user import UserRepository
 from src.repositories.user_profile import UserProfileRepository
@@ -17,6 +21,10 @@ class SQLAlchemyUnitOfWork:
         self.refresh_tokens = RefreshTokenRepository(self.session)
         self.user_profiles = UserProfileRepository(self.session)
         self.banned_emails = BannedEmailRepository(self.session)
+        self.recipes = RecipeRepository(self.session)
+        self.recipe_ingredients = RecipeIngredientRepository(self.session)
+        self.recipe_instructions = RecipeInstructionRepository(self.session)
+        self.recipe_tags = RecipeTagRepository(self.session)
 
     async def __aenter__(self) -> Self:
         return self
