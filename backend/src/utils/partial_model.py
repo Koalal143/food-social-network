@@ -16,8 +16,5 @@ def partial_model(model: type[BaseModel]) -> type[BaseModel]:
         f"Partial{model.__name__}",
         __base__=model,
         __module__=model.__module__,
-        **{
-            field_name: make_field_optional(field_info)
-            for field_name, field_info in model.model_fields.items()
-        },
+        **{field_name: make_field_optional(field_info) for field_name, field_info in model.model_fields.items()},
     )
