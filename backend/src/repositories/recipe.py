@@ -65,4 +65,4 @@ class RecipeRepository:
     async def get_by_title(self, title: str) -> Recipe | None:
         stmt = select(Recipe).where(Recipe.title == title)
         result = await self.session.scalars(stmt)
-        return result.first
+        return result.first()
