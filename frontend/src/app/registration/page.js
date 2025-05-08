@@ -42,13 +42,10 @@ export default function RegistrationPage() {
     }
 
     return (
-        <Container className="max-w-md py-8">
-            <div className="space-y-6">
+        <Container className="h-screen flex items-center justify-center overflow-hidden">
+            <div className="w-full max-w-md space-y-6 bg-white p-8 rounded-lg shadow-lg">
                 <div className="space-y-2 text-center">
-                    <h1 className="text-3xl font-bold">Создание аккаунта</h1>
-                    <p className="text-gray-500">
-                        Зарегистрируйтесь, чтобы делиться своими рецептами и сохранять любимые
-                    </p>
+                    <h1 className="text-3xl font-bold">Регистрация</h1>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
