@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Any
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -25,7 +25,7 @@ class RecipeRepository:
         result = await self.session.scalars(stmt)
         return result.first()
 
-    async def get_all(self, skip: int = 0, limit: int = 100) -> Sequence[Recipe]:
+    async def get_all(self, skip: int = 0, limit: int = 100, **filters: Any) -> tuple[int, Sequence[Recipe]]:
         stmt = (
             select(Recipe)
             .options(
@@ -36,8 +36,11 @@ class RecipeRepository:
             .offset(skip)
             .limit(limit)
         )
+        if filters:
+            stmt = stmt.filter_by(**filters)
         result = await self.session.scalars(stmt)
-        return result.all()
+        count = await self.session.scalar(select(func.count(Recipe.id)).filter_by(**filters))
+        return count or 0, result.all()
 
     async def create(self, **fields: Any) -> Recipe:
         db_recipe = Recipe(**fields)
