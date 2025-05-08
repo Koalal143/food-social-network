@@ -24,12 +24,8 @@ def upgrade() -> None:
     op.create_foreign_key(
         op.f("fk_recipes_author_id_users"), "recipes", "users", ["author_id"], ["id"], ondelete="SET NULL"
     )
-    op.drop_constraint("user_profiles_user_id_key", "user_profiles", type_="unique")
-    op.create_unique_constraint(op.f("uq_user_profiles_user_id"), "user_profiles", ["user_id"])
 
 
 def downgrade() -> None:
-    op.drop_constraint(op.f("uq_user_profiles_user_id"), "user_profiles", type_="unique")
-    op.create_unique_constraint("user_profiles_user_id_key", "user_profiles", ["user_id"])
     op.drop_constraint(op.f("fk_recipes_author_id_users"), "recipes", type_="foreignkey")
     op.drop_column("recipes", "author_id")
