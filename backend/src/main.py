@@ -7,7 +7,7 @@ from src.core.config import settings
 from src.core.exception_handlers import http_exception_handler, request_validation_error_handler
 from src.core.lifespan import lifespan
 from src.exceptions.http import AppHTTPException
-from src.utils import json_example_factory
+from src.utils.examples_factory import json_example_factory
 
 app = FastAPI(
     title=settings.project_name,
