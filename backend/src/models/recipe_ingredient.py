@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class RecipeIngredient(Base):
     __tablename__ = "recipe_ingredients"
 
-    recipe_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipes.id", ondelete="CASCADE"))
     name: Mapped[str] = mapped_column(String(135), nullable=False)
     quantity: Mapped[str] = mapped_column(String(135), nullable=True)
 

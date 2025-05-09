@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class RecipeInstruction(Base):
     __tablename__ = "recipe_instructions"
 
-    recipe_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipes.id", ondelete="CASCADE"))
     step_number: Mapped[int]
     description: Mapped[str] = mapped_column(String(1000), nullable=False)
     image_url: Mapped[str | None] = mapped_column(nullable=True)
