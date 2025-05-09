@@ -9,7 +9,7 @@ class UserProfileRepository:
         self.session = session
 
     async def get_by_user_id(self, user_id: int) -> UserProfile | None:
-        return await self.session.scalar(select(UserProfile).where(UserProfile.user_id == user_id))
+        return await self.session.scalars(select(UserProfile).where(UserProfile.user_id == user_id))
 
     async def create(self, user_id: int) -> UserProfile:
         profile = UserProfile(user_id=user_id)
