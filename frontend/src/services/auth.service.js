@@ -1,4 +1,4 @@
-import { BASE_API } from "./constants";
+import { BASE_API } from "../constants/backend-urls";
 import { tokenManager } from "@/utils/tokenManager";
 
 class CustomError extends Error {

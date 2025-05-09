@@ -1,4 +1,4 @@
-import { BASE_API } from "./constants";
+import { BASE_API } from "../constants/backend-urls";
 
 export default class UsersService {
     static async getAllUsers() {
