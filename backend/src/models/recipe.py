@@ -22,6 +22,7 @@ class Recipe(Base):
     image_url: Mapped[str] = mapped_column(String(255), nullable=False)
     difficulty: Mapped[RecipeDifficultyEnum]
     cook_time_minutes: Mapped[int]
+    is_published: Mapped[bool] = mapped_column(default=False)
 
     author: Mapped["User"] = relationship(back_populates="recipes")
     ingredients: Mapped[list["RecipeIngredient"]] = relationship(back_populates="recipe")
