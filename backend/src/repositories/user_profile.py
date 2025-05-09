@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from typing import Any
+
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.user_profile import UserProfile
@@ -16,8 +18,6 @@ class UserProfileRepository:
         self.session.add(profile)
         return profile
 
-    async def update(self, profile: UserProfile, about: str | None = None, avatar_url: str | None = None) -> None:
-        if about is not None:
-            profile.about = about
-        if avatar_url is not None:
-            profile.avatar_url = avatar_url
+    async def update(self, user_id: int, **fields: Any) -> UserProfile:
+        result = await self.session.scalars(update(UserProfile).where(UserProfile.user_id == user_id).values(**fields))
+        return result.first()
