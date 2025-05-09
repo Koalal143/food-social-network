@@ -6,11 +6,9 @@ import { useRecipes } from "@/context/RecipeContext";
 import Loader from "@/components/ui/Loader";
 import { useUser } from "@/context/UserContext";
 import Image from "next/image";
-import { useToast } from "@/hooks/use-toast";
 import CopyLinkButton from "@/components/ui/CopyLinkButton"
 
 export default function ProfilePage({ params }) {
-    const { toast } = useToast()
     const { userId } = React.use(params);
     const { loading, getRecipesByAuthorId } = useRecipes();
     const { getUserById } = useUser();
@@ -27,7 +25,7 @@ export default function ProfilePage({ params }) {
             setUserRecipes(recipesData);
         };
         fetchData();
-    }, [userId, getUserById, getRecipesByAuthorId]);
+    }, [userId]);
 
     if (loading || !user) {
         return <Loader />
