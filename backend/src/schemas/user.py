@@ -87,6 +87,7 @@ class UserCreate(BaseModel):
 
 
 class UserRead(BaseReadSchema):
+    username: str
     email: str
     is_active: bool
     is_superuser: bool
