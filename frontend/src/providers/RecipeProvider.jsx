@@ -11,7 +11,7 @@ export default function RecipeProvider({ children }) {
 
     const fetchRecipes = async () => {
         try {
-            const data = await RecipesService.getAllReceipts()
+            const data = await RecipesService.getAllRecipes()
             setRecipes(data)
         } catch (error) {
             setError(error)
@@ -23,7 +23,7 @@ export default function RecipeProvider({ children }) {
 
     const getRecipeById = async (id) => {
         try {
-            return await RecipesService.getReceiptById(id);
+            return await RecipesService.getRecipeById(id);
         } catch (error) {
             setError(error);
             console.error("Ошибка при загрузке рецепта:", error);
@@ -33,7 +33,7 @@ export default function RecipeProvider({ children }) {
 
     const addRecipe = async (newRecipe) => {
         try {
-            const updatedRecipes = await RecipesService.addReceipt(newRecipe)
+            const updatedRecipes = await RecipesService.addRecipe(newRecipe)
             setRecipes(updatedRecipes)
             return updatedRecipes
         } catch (error) {

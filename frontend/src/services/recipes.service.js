@@ -1,5 +1,5 @@
 export default class RecipesService {
-    static async getAllReceipts() {
+    static async getAllRecipes() {
         try {
             const response = await fetch('/recipes.json');
             if (!response.ok) throw new Error('Ошибка при загрузке рецептов');
@@ -10,7 +10,7 @@ export default class RecipesService {
         }
     }
 
-    static async getReceiptById(id) {
+    static async getRecipeById(id) {
         try {
             const response = await fetch('/recipes.json');
             if (!response.ok) throw new Error('Ошибка при загрузке рецептов');
@@ -22,7 +22,7 @@ export default class RecipesService {
         }
     }
 
-    static async addReceipt(newReceipt) {
+    static async addRecipe(newReceipt) {
         try {
             const response = await fetch('/recipes.json');
             if (!response.ok) throw new Error('Ошибка при загрузке рецептов');
