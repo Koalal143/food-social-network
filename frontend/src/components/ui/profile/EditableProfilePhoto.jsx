@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Button } from "../button";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { handleApiError } from "@/utils/errorHandler";
 
 export default function EditableProfilePhoto({ user }) {
     const { toast } = useToast()
@@ -21,10 +22,11 @@ export default function EditableProfilePhoto({ user }) {
                 description: "Ваш аватар успешно обновлен"
             })
         } catch (error) {
+            const { message, type } = handleApiError(error)
             toast({
-                variant: "destructive",
+                variant: type,
                 title: "Ошибка",
-                description: error.message
+                description: message
             })
         }
     }

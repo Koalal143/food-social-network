@@ -12,8 +12,9 @@ import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import EditableProfileInfo from '@/components/ui/profile/EditableProfileInfo'
 import EditableProfilePhoto from '@/components/ui/profile/EditableProfilePhoto'
-import Loader from '@/components/ui/Loader'
 import ProfileTabs from '@/components/ui/profile/ProfileTabs'
+import { handleApiError } from '@/utils/errorHandler'
+import Loader from '@/components/ui/Loader'
 
 export default function ProfilePage() {
     const { user, loading, updateProfile } = useAuth()
@@ -23,6 +24,7 @@ export default function ProfilePage() {
     const [userRecipes, setUserRecipes] = useState([])
     const { favorites } = useFavorites()
     const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState(null)
 
     useEffect(() => {
         if (!loading && !user) {
@@ -31,24 +33,22 @@ export default function ProfilePage() {
         }
 
         const loadData = async () => {
+            if (!user) return
+
             try {
-                const recipes = await getRecipesByAuthorId(2)
+                setError(null)
+                const recipes = await getRecipesByAuthorId(user.id)
                 setUserRecipes(recipes)
             } catch (error) {
-                toast({
-                    variant: "destructive",
-                    title: "Ошибка",
-                    description: "Не удалось загрузить данные"
-                })
+                const { message } = handleApiError(error)
+                setError(message)
             } finally {
                 setIsLoading(false)
             }
         }
 
-        if (user) {
-            loadData()
-        }
-    }, [user, loading])
+        loadData()
+    }, [user, loading, router, getRecipesByAuthorId])
 
     const handleUpdateProfile = async (values) => {
         try {
@@ -65,10 +65,11 @@ export default function ProfilePage() {
                 description: "Ваши данные успешно обновлены"
             })
         } catch (error) {
+            const { message, type } = handleApiError(error)
             toast({
-                variant: "destructive",
+                variant: type,
                 title: "Ошибка",
-                description: error.message
+                description: message
             })
         }
     }
@@ -91,7 +92,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-8 items-start">
-                    <EditableProfilePhoto user={user}/>
+                    <EditableProfilePhoto user={user} />
                     <EditableProfileInfo
                         user={user}
                         onSave={handleUpdateProfile}
@@ -100,7 +101,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="pt-4 border-t">
-                    <ProfileTabs recipes={userRecipes} favorites={favorites}/>
+                    <ProfileTabs recipes={userRecipes} favorites={favorites} />
                 </div>
             </div>
         </Container>

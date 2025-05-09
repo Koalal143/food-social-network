@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Container from '@/components/layout/Container'
 import { useToast } from '@/hooks/use-toast'
+import { handleApiError } from '@/utils/errorHandler';
 
 export default function RegistrationPage() {
     const [username, setUsername] = useState('')
@@ -47,10 +48,11 @@ export default function RegistrationPage() {
             })
             router.push('/')
         } catch (error) {
+            const { message, type } = handleApiError(error)
             toast({
-                variant: "destructive",
-                title: "Ошибка регистрации",
-                description: error.message,
+                variant: type,
+                title: "Ошибка",
+                description: message
             })
         } finally {
             setIsLoading(false)
