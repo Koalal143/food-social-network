@@ -21,12 +21,12 @@ export default function RecipeCard({ recipe }) {
 
     return (
         <motion.div
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
             className="h-full"
         >
             <Link href={`/recipe/${recipe.id}`}>
-                <div className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+                <div className="bg-secondary rounded-lg overflow-hidden  h-full flex flex-col">
                     <div className="relative aspect-video">
                         <Image 
                             src={recipe.preview} 
@@ -39,7 +39,7 @@ export default function RecipeCard({ recipe }) {
                             <div className="flex items-center gap-2 text-white">
                                 <Clock className="w-4 h-4" />
                                 <span className="text-sm">{recipe.time}</span>
-                                <span className="mx-1">•</span>
+                                <span className="mx-1">|</span>
                                 <User className="w-4 h-4" />
                                 <span className="text-sm">{recipe.servings} порций</span>
                             </div>
@@ -47,12 +47,12 @@ export default function RecipeCard({ recipe }) {
                     </div>
                     
                     <div className="p-4 flex-1 flex flex-col">
-                        <h3 className="font-semibold text-xl mb-2 text-gray-800">{recipe.title}</h3>
-                        <p className="text-gray-600 line-clamp-3 mb-4 flex-1">{recipe.shortDescription}</p>
+                        <h3 className="font-semibold text-xl mb-1 text-gray-800">{recipe.title}</h3>
+                        <p className="text-gray-600 line-clamp-3 mb-2 flex-1">{recipe.shortDescription}</p>
                         
-                        <div className="flex items-center justify-between mt-4">
+                        <div className="flex items-center justify-between ">
                             <div className="flex items-center gap-2">
-                                <div className="px-2 py-1 bg-primary/10 text-primary text-sm rounded-full">
+                                <div className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
                                     {recipe.difficulty}
                                 </div>
                                 <div className="flex items-center gap-1 text-yellow-500">
@@ -61,7 +61,7 @@ export default function RecipeCard({ recipe }) {
                                 </div>
                             </div>
                             <button 
-                                className={`px-4 py-2 ${
+                                className={`px-3 py-1 ${
                                     isSaved 
                                         ? 'bg-green-500 hover:bg-green-600' 
                                         : 'bg-primary hover:bg-primary/90'
