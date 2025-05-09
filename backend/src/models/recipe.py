@@ -17,7 +17,7 @@ class Recipe(Base):
     __tablename__ = "recipes"
 
     title: Mapped[str] = mapped_column(String(135), nullable=False)
-    author_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    author_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     short_description: Mapped[str] = mapped_column(String(255), nullable=False)
     image_url: Mapped[str] = mapped_column(String(255), nullable=False)
     difficulty: Mapped[RecipeDifficultyEnum]
