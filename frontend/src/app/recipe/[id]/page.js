@@ -6,13 +6,13 @@ import { useRecipes } from "@/context/RecipeContext";
 import { useUser } from "@/context/UserContext";
 import Loader from "@/components/ui/Loader";
 import Image from "next/image";
-import AuthorCard from "@/components/ui/AuthorCard";
+import AuthorCard from "@/components/ui/recipe-page/AuthorCard";
 import { Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CopyLinkButton from "@/components/ui/CopyLinkButton";
-import RecipeInfoCards from "@/components/ui/RecipeInfoCards";
-import RecipeIngridients from "@/components/ui/RecipeIngridients";
-import RecipeInstruction from "@/components/ui/RecipeInstruction";
+import RecipeInfoCards from "@/components/ui/recipe-page/RecipeInfoCards";
+import RecipeIngridients from "@/components/ui/recipe-page/RecipeIngridients";
+import RecipeInstruction from "@/components/ui/recipe-page/RecipeInstruction";
 
 export default function RecipePage({ params }) {
   const { getRecipeById } = useRecipes();
