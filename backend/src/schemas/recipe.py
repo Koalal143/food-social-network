@@ -43,6 +43,7 @@ class BaseRecipeSchema(BaseModel):
     image_url: str = Field(max_length=255, examples=["https://example.com/image.jpg"])
     difficulty: RecipeDifficultyEnum = Field(examples=["EASY"])
     cook_time_minutes: int = Field(gt=0)
+    is_published: bool = Field(default=False, description="Is the recipe published or not")
 
 
 class _InstructionsMixin(BaseModel):
