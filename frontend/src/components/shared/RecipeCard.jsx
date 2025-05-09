@@ -26,7 +26,7 @@ export default function RecipeCard({ recipe }) {
             className="h-full"
         >
             <Link href={`/recipe/${recipe.id}`}>
-                <div className="bg-secondary rounded-lg overflow-hidden  h-full flex flex-col">
+                <div className="bg-secondary/60 rounded-lg overflow-hidden  h-full flex flex-col">
                     <div className="relative aspect-video">
                         <Image 
                             src={recipe.preview} 

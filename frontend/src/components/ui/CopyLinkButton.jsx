@@ -1,6 +1,7 @@
 "use client"
 
 import { Copy } from "lucide-react"
+import { Button } from "./button"
 import { useToast } from "@/hooks/use-toast"
 
 export default function CopyLinkButton({ link, tooltipText }) {
@@ -15,12 +16,13 @@ export default function CopyLinkButton({ link, tooltipText }) {
     }
 
     return (
-        <button 
+        <Button
+            variant="ghost"
             onClick={handleCopy}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="bg-background/80 backdrop-blur rounded-full p-2.5"
             title={tooltipText}
         >
-            <Copy className="h-5 w-5 text-gray-600" />
-        </button>
+            <Copy className="w-5 h-5" />
+        </Button>
     )
 } 
