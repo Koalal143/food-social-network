@@ -1,5 +1,5 @@
 import "./globals.css";
-import {Montserrat} from "next/font/google";
+import { Montserrat } from "next/font/google";
 import MainProvider from "@/providers/MainProvider";
 import Header from "@/components/layout/Header";
 import DesktopSidebar from "@/components/layout/DesktopSidebar";
@@ -7,7 +7,7 @@ import MobileMenu from "@/components/layout/MobileMenu";
 import { Toaster } from "@/components/ui/toaster";
 
 const montserrat = Montserrat({
-    variable: "--font-montserrat",
+    variable: "--font-main",
     weight: ["400", "500", "600", "700"],
     subsets: ["cyrillic"],
 })
@@ -20,8 +20,8 @@ export const metadata = {
 export default function RootLayout({ children }) {
     return (
         <html lang="ru">
-            <head />
-            <body className="min-h-screen bg-gradient-to-b from-background to-secondary/100">
+            <head style={{fontFamily: montserrat}}/>
+            <body className="min-h-screen bg-gradient-to-b from-background to-chart-4/10">
                 <MainProvider>
                     <Header />
                     <div className="flex flex-1">
