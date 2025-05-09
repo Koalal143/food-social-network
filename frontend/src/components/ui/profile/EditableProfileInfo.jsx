@@ -35,6 +35,10 @@ export default function EditableProfileInfo({
         setIsEditing(false)
     }
 
+    if (!user) {
+        return
+    }
+
     return (
         <div className={`space-y-4 ${className}`}>
             <div className="flex items-center justify-between">

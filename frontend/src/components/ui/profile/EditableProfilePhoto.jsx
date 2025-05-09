@@ -45,6 +45,10 @@ export default function EditableProfilePhoto({ user }) {
         }
     }
 
+    if (!user) {
+        return
+    }
+
     return (
         <div className="flex flex-col items-center space-y-4">
             <div className="relative h-40 w-40">
