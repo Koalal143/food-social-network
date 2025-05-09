@@ -112,12 +112,8 @@ class UserService:
                 raise UserNicknameAlreadyExistsError(msg)
             await self.uow.users.update_username(user_id, username)
 
-        if profile is not None:
-            user_profile = await self.uow.user_profiles.get_by_user_id(user_id)
-            if not user_profile:
-                user_profile = await self.uow.user_profiles.create(user_id=user_id)
-            if profile.about is not None:
-                await self.uow.user_profiles.update(user_profile, about=profile.about)
+        if profile and profile.about is not None:
+            await self.uow.user_profiles.update(user_id=user_id, about=profile.about)
 
         await self.uow.commit()
         user = await self.uow.users.get_with_profile(user_id)
