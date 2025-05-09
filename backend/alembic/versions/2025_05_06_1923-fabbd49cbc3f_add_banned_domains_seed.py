@@ -30,7 +30,6 @@ def upgrade() -> None:
     values = [{"domain": domain, "created_at": current_datetime} for domain in domains]
     if values:
         conn.execute(sa.text("INSERT INTO banned_emails (domain, created_at) VALUES (:domain, :created_at)"), values)
-        conn.commit()
 
 
 def downgrade() -> None:
@@ -47,4 +46,3 @@ def downgrade() -> None:
         """),
             {"domains": domains},
         )
-        conn.commit()
