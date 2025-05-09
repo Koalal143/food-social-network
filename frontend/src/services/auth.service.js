@@ -109,16 +109,18 @@ export default class AuthService {
 
     static async login(emailOrUsername, password) {
         try {
+            const isEmail = emailOrUsername.includes('@');
+            const loginData = {
+                password,
+                ...(isEmail ? { email: emailOrUsername } : { username: emailOrUsername })
+            };
+
             const response = await fetch(`${BASE_API}/v1/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    email: emailOrUsername.includes('@') ? emailOrUsername : null,
-                    username: !emailOrUsername.includes('@') ? emailOrUsername : null,
-                    password,
-                }),
+                body: JSON.stringify(loginData),
             });
 
             if (!response.ok) {

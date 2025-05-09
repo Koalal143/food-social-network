@@ -23,15 +23,8 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            // Проверяем, является ли введенное значение email
-            const isEmail = identifier.includes('@');
+            await login(identifier, password);
             
-            await login({
-                email: isEmail ? identifier : undefined,
-                username: !isEmail ? identifier : undefined,
-                password
-            });
-
             toast({
                 title: "Успешный вход",
                 description: "Добро пожаловать назад!",
