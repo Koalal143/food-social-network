@@ -9,6 +9,7 @@ from src.exceptions import (
     UserNicknameAlreadyExistsError,
 )
 from src.exceptions.auth import InvalidTokenError, SuspiciousEmailError
+from src.exceptions.user import UserNotFoundError
 from src.models.user import User
 from src.schemas.token import Token
 from src.schemas.user import UserCreate, UserLogin, UserRead
@@ -131,6 +132,12 @@ async def login(
         ) as e:
             raise AppHTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=e.message,
+                error_key=e.error_key,
+            ) from None
+        except UserNotFoundError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail=e.message,
                 error_key=e.error_key,
             ) from None
