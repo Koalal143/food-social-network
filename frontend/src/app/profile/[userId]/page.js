@@ -7,6 +7,7 @@ import Loader from "@/components/ui/Loader";
 import { useUser } from "@/context/UserContext";
 import Image from "next/image";
 import CopyLinkButton from "@/components/ui/CopyLinkButton"
+import NotFound from "@/app/not-found";
 
 export default function ProfilePage({ params }) {
     const { userId } = React.use(params);
@@ -27,8 +28,12 @@ export default function ProfilePage({ params }) {
         fetchData();
     }, [userId]);
 
-    if (loading || !user) {
+    if (loading) {
         return <Loader />
+    }
+
+    if (!user) {
+        return <NotFound />
     }
 
     return (
