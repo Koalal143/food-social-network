@@ -19,5 +19,7 @@ class UserProfileRepository:
         return profile
 
     async def update(self, user_id: int, **fields: Any) -> UserProfile:
-        result = await self.session.scalars(update(UserProfile).where(UserProfile.user_id == user_id).values(**fields))
+        result = await self.session.scalars(
+            update(UserProfile).where(UserProfile.user_id == user_id).values(**fields).returning(UserProfile)
+        )
         return result.first()
