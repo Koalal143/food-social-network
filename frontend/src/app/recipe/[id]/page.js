@@ -6,10 +6,13 @@ import { useRecipes } from "@/context/RecipeContext";
 import { useUser } from "@/context/UserContext";
 import Loader from "@/components/ui/Loader";
 import Image from "next/image";
-import AuthorCard from "@/components/shared/AuthorCard";
-import { Clock, User, Bookmark, Heart } from "lucide-react";
+import AuthorCard from "@/components/ui/AuthorCard";
+import { Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CopyLinkButton from "@/components/ui/CopyLinkButton";
+import RecipeInfoCards from "@/components/ui/RecipeInfoCards";
+import RecipeIngridients from "@/components/ui/RecipeIngridients";
+import RecipeInstruction from "@/components/ui/RecipeInstruction";
 
 export default function RecipePage({ params }) {
   const { getRecipeById } = useRecipes();
@@ -43,16 +46,16 @@ export default function RecipePage({ params }) {
     setIsSaved(!isSaved);
   };
 
-  if (!recipe) {
+  if (!recipe || !author) {
     return <Loader />;
   }
 
   return (
-    <article className="py-8">
-      <Container>
-        <div className="max-w-4xl mx-auto space-y-8">
+    <Container>
+      <article className="py-8">
+        <div className="max-w-3xl mx-auto space-y-8 bg-secondary/60 rounded-lg pb-4">
           {/* Фотография и кнопки */}
-          <div className="relative aspect-[16/9] rounded-lg overflow-hidden shadow-lg">
+          <div className="relative aspect-[16/9] rounded-t-lg overflow-hidden">
             <Image
               src={recipe.preview}
               alt={recipe.title}
@@ -71,74 +74,30 @@ export default function RecipePage({ params }) {
               </Button>
               <CopyLinkButton
                 link={`${window.location.origin}/recipe/${id}`}
-                tooltipText="Скопировать ссылку на профиль"
+                tooltipText="Скопировать ссылку на рецепт"
               />
             </div>
           </div>
 
           {/* Заголовок */}
-          <div className="space-y-4">
+          <div className="space-y-2 m-4">
             <h1 className="text-3xl font-bold tracking-tight">{recipe.title}</h1>
-            <p className="text-lg text-muted-foreground">{recipe.description}</p>
+            <p className="text-lg text-muted-foreground">{recipe.shortDescription}</p>
           </div>
 
           {/* Информация о рецепте */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-card p-4 rounded-lg flex items-center gap-3">
-              <Clock className="w-6 h-6 text-primary" />
-              <div>
-                <h3 className="text-sm font-medium">Время</h3>
-                <p className="text-sm text-muted-foreground">{recipe.time}</p>
-              </div>
-            </div>
-            <div className="bg-card p-4 rounded-lg flex items-center gap-3">
-              <User className="w-6 h-6 text-primary" />
-              <div>
-                <h3 className="text-sm font-medium">Порций</h3>
-                <p className="text-sm text-muted-foreground">{recipe.servings}</p>
-              </div>
-            </div>
-            <div className="bg-card p-4 rounded-lg flex items-center gap-3">
-              <Heart className="w-6 h-6 text-primary" />
-              <div>
-                <h3 className="text-sm font-medium">Сложность</h3>
-                <p className="text-sm text-muted-foreground capitalize">{recipe.difficulty}</p>
-              </div>
-            </div>
-          </div>
+          <RecipeInfoCards recipe={recipe} />
 
           {/* Карточка автора */}
-          {author && <div className="mt-8"><AuthorCard author={author} /></div>}
+          <AuthorCard author={author} />
 
           {/* Ингредиенты */}
-          <section className="bg-card p-6 rounded-lg">
-            <h2 className="text-2xl font-bold mb-4">Ингредиенты</h2>
-            <ul className="space-y-3">
-              {recipe.ingredients.map((ingredient, index) => (
-                <li key={index} className="flex items-center gap-3 p-3 bg-background rounded-lg">
-                  <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
-                  <span className="text-base">{ingredient}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <RecipeIngridients recipe={recipe} />
 
           {/* Инструкция */}
-          <section className="bg-card p-6 rounded-lg">
-            <h2 className="text-2xl font-bold mb-4">Инструкция</h2>
-            <ol className="space-y-4">
-              {recipe.instructions.map((step, index) => (
-                <li key={index} className="flex gap-4 p-4 bg-background rounded-lg">
-                  <span className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-medium">
-                    {index + 1}
-                  </span>
-                  <p className="text-base">{step}</p>
-                </li>
-              ))}
-            </ol>
-          </section>
+          <RecipeInstruction recipe={recipe} />
         </div>
-      </Container>
-    </article>
+      </article>
+    </Container>
   );
 } 
