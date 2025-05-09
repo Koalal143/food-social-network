@@ -7,9 +7,10 @@ import Container from "@/components/layout/Container";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { handleApiError } from "@/utils/errorHandler";
 
 export default function LoginPage() {
-    const [email, setEmail] = useState("");
+    const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     
@@ -22,18 +23,27 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            await login(email, password);
+            // Проверяем, является ли введенное значение email
+            const isEmail = identifier.includes('@');
+            
+            await login({
+                email: isEmail ? identifier : undefined,
+                username: !isEmail ? identifier : undefined,
+                password
+            });
+
             toast({
                 title: "Успешный вход",
                 description: "Добро пожаловать назад!",
             });
             router.push("/");
         } catch (error) {
+            const { message, type } = handleApiError(error)
             toast({
-                variant: "destructive",
-                title: "Ошибка входа",
-                description: error.message,
-            });
+                variant: type,
+                title: "Ошибка",
+                description: message
+            })
         } finally {
             setIsLoading(false);
         }
@@ -47,15 +57,15 @@ export default function LoginPage() {
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <label htmlFor="email" className="text-sm font-medium">
-                            Email
+                        <label htmlFor="identifier" className="text-sm font-medium">
+                            Email или юзернейм
                         </label>
                         <Input
-                            id="email"
-                            type="email"
-                            placeholder="Введите email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            id="identifier"
+                            type="text"
+                            placeholder="Введите email или юзернейм"
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
                             required
                         />
                     </div>
