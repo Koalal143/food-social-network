@@ -94,10 +94,12 @@ export default function Header() {
                                                 className="relative h-8 w-8 rounded-full hover:bg-gray-100/50"
                                             >
                                                 <Image
-                                                    src={user.profile?.avatar_url || '/images/default-avatar.png'}
+                                                    src={user.profile?.avatar_url || '/images/user-dummy.svg'}
                                                     alt={user.username || 'Avatar'}
                                                     className="rounded-full object-cover"
                                                     fill
+                                                    priority
+                                                    unoptimized={true}
                                                 />
                                             </Button>
                                         </DropdownMenuTrigger>
