@@ -2,8 +2,9 @@ from collections.abc import Sequence
 
 from src.adapters.storage import S3Storage
 from src.db.uow import SQLAlchemyUnitOfWork
-from src.exceptions.recipe import NoRecipeImageError, RecipeNotFoundError
+from src.exceptions.recipe import NoRecipeImageError, RecipeNotFoundError, RecipeOwnershipError
 from src.models.recipe import Recipe
+from src.models.user import User
 from src.schemas.recipe import (
     Ingredient,
     RecipeCreate,
@@ -86,9 +87,9 @@ class RecipeService:
         if tags_data:
             await self.uow.recipe_tags.bulk_create(tags_data)
 
-    async def create(self, recipe_create: RecipeCreate) -> RecipeRead:
+    async def create(self, user: User, recipe_create: RecipeCreate) -> RecipeRead:
         recipe_data = recipe_create.model_dump(exclude={"ingredients", "instructions", "tags"})
-        recipe = await self.uow.recipes.create(**recipe_data)
+        recipe = await self.uow.recipes.create(is_published=False, author_id=user.id, **recipe_data)
 
         await self._create_ingredients(recipe.id, recipe_create.ingredients)
 
@@ -101,12 +102,15 @@ class RecipeService:
         created_recipe = await self.uow.recipes.get_by_id(recipe.id)
         return await self._to_recipe_schema(created_recipe)
 
-    async def update(self, recipe_id: int, recipe_update: RecipeUpdate) -> RecipeRead:
+    async def update(self, user: User, recipe_id: int, recipe_update: RecipeUpdate) -> RecipeRead:
         existing_recipe = await self.uow.recipes.get_by_id(recipe_id)
         if not existing_recipe:
             msg = f"Recipe with id {recipe_id} not found"
             raise RecipeNotFoundError(msg)
 
+        if existing_recipe.author_id != user.id and not user.is_superuser:
+            msg = f"Recipe with id {recipe_id} belongs to other user"
+            raise RecipeOwnershipError(msg)
         if not existing_recipe.image_url and recipe_update.is_published:
             msg = "Recipe can not be published without image"
             raise NoRecipeImageError(msg)
@@ -132,11 +136,15 @@ class RecipeService:
         updated_recipe = await self.uow.recipes.get_by_id(recipe_id)
         return await self._to_recipe_schema(updated_recipe)
 
-    async def delete(self, recipe_id: int) -> None:
+    async def delete(self, user: User, recipe_id: int) -> None:
         existing_recipe = await self.uow.recipes.get_by_id(recipe_id)
         if not existing_recipe:
             msg = f"Recipe with id {recipe_id} not found"
             raise RecipeNotFoundError(msg)
+
+        if existing_recipe.author_id != user.id and not user.is_superuser:
+            msg = f"Recipe with id {recipe_id} belongs to other user"
+            raise RecipeOwnershipError(msg)
 
         await self.uow.recipe_ingredients.delete_by_recipe_id(recipe_id)
         await self.uow.recipe_instructions.delete_by_recipe_id(recipe_id)
