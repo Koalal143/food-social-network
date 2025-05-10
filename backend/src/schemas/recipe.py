@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
 from src.schemas.base import BaseReadSchema, BaseSchema
@@ -17,7 +17,7 @@ class IngredientUpdate(Ingredient):
 
 
 class RecipeInstruction(BaseSchema):
-    step_number: int
+    step_number: PositiveInt
     description: str = Field(max_length=1000, examples=["Boil water", "Добавьте соль"])
     image_url: str | None = Field(default=None)
 
@@ -28,7 +28,7 @@ class RecipeInstructionUpdate(RecipeInstruction):
 
 
 class RecipeInstructionsUploadUrls(DirectUpload):
-    step_number: int
+    step_number: PositiveInt
 
 
 class RecipeTag(BaseSchema):
