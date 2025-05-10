@@ -6,22 +6,30 @@ import { ERROR_MESSAGES } from '@/constants/errors'
  * @returns {{ message: string, type: 'error' | 'warning' }} Объект с сообщением и типом ошибки
  */
 export const handleApiError = (error) => {
+    // Если это кастомная ошибка с именем
+    if (error.name) {
+        switch (error.name) {
+            case 'NetworkError':
+                return {
+                    message: 'Ошибка соединения. Проверьте подключение к интернету',
+                    type: 'error'
+                }
+            case 'AuthError':
+                return {
+                    message: error.message || ERROR_MESSAGES.invalid_credentials,
+                    type: 'error'
+                }
+            case 'ValidationError':
+                return {
+                    message: error.message || ERROR_MESSAGES.validation_error,
+                    type: 'error'
+                }
+        }
+    }
+
     // Если ошибка содержит response от сервера
     if (error.response?.data) {
         const { error_key, detail } = error.response.data
-
-        // Если это ошибка валидации с деталями
-        if (error_key === 'validation_error' && Array.isArray(detail)) {
-            const validationMessages = detail
-                .map(err => err.msg)
-                .filter(Boolean)
-                .join('. ')
-            
-            return {
-                message: validationMessages || ERROR_MESSAGES.validation_error,
-                type: 'error'
-            }
-        }
 
         // Если есть error_key, используем соответствующее сообщение
         if (error_key && ERROR_MESSAGES[error_key]) {
@@ -40,10 +48,23 @@ export const handleApiError = (error) => {
         }
     }
 
-    // Ошибки сети
-    if (error.message === 'Network Error') {
+    // Если ошибка содержит message
+    if (error.message) {
+        // Проверяем, есть ли сообщение в константах
+        const errorKey = Object.keys(ERROR_MESSAGES).find(key => 
+            ERROR_MESSAGES[key].toLowerCase() === error.message.toLowerCase()
+        )
+
+        if (errorKey) {
+            return {
+                message: ERROR_MESSAGES[errorKey],
+                type: errorKey.includes('not_found') ? 'warning' : 'error'
+            }
+        }
+
+        // Если сообщение не найдено в константах, используем его как есть
         return {
-            message: 'Ошибка соединения. Проверьте подключение к интернету',
+            message: error.message,
             type: 'error'
         }
     }
