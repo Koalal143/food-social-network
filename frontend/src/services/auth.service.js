@@ -1,30 +1,8 @@
 import { BASE_API } from "../constants/backend-urls";
 import { tokenManager } from "@/utils/tokenManager";
-
-class CustomError extends Error {
-    constructor(message, name = 'Error') {
-        super(message);
-        this.name = name;
-    }
-}
-
-class NetworkError extends CustomError {
-    constructor(message) {
-        super(message, 'NetworkError');
-    }
-}
-
-class AuthError extends CustomError {
-    constructor(message) {
-        super(message, 'AuthError');
-    }
-}
-
-class ValidationError extends CustomError {
-    constructor(message) {
-        super(message, 'ValidationError');
-    }
-}
+import { ERROR_MESSAGES } from "@/constants/errors";
+import { ValidationError, NetworkError, AuthError } from "@/utils/errors";
+import { BANNED_USERNAME_REGEX } from '@/constants/validation';
 
 export default class AuthService {
     static getAccessToken() {
@@ -45,7 +23,7 @@ export default class AuthService {
         
         const accessToken = this.getAccessToken();
         if (!accessToken) {
-            throw new AuthError('Пользователь не авторизован');
+            throw new AuthError(ERROR_MESSAGES.not_authenticated);
         }
 
         const headers = {
@@ -58,19 +36,36 @@ export default class AuthService {
             
             if (!response.ok) {
                 const errorData = await response.json();
+                
                 if (response.status === 401) {
-                    throw new AuthError(errorData.detail || 'Ошибка авторизации');
-                } else if (response.status === 400) {
-                    throw new ValidationError(errorData.detail || 'Ошибка валидации');
-                } else {
-                    throw new Error(errorData.detail || 'Неизвестная ошибка');
+                    if (errorData.error_key === 'token_expired') {
+                        throw new AuthError(ERROR_MESSAGES.token_expired);
+                    }
+                    throw new AuthError(errorData.detail || ERROR_MESSAGES.invalid_credentials);
                 }
+                
+                if (response.status === 400) {
+                    if (errorData.error_key === 'validation_error') {
+                        throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
+                    }
+                    throw new ValidationError(errorData.detail || ERROR_MESSAGES.invalid_request);
+                }
+                
+                if (response.status === 403) {
+                    throw new AuthError(ERROR_MESSAGES.insufficient_permissions);
+                }
+                
+                if (response.status === 404) {
+                    throw new Error(ERROR_MESSAGES.not_found);
+                }
+                
+                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
             }
 
             return response;
         } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
-                throw new NetworkError('Проблема с подключением к сети');
+                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
             throw error;
         }
@@ -78,30 +73,41 @@ export default class AuthService {
 
     static async register(username, email, password) {
         try {
+            if (BANNED_USERNAME_REGEX.test(username.toLowerCase())) {
+                throw new ValidationError(ERROR_MESSAGES.username_banned);
+            }
+
             const response = await fetch(`${BASE_API}/v1/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    username,
-                    email,
-                    password,
-                }),
+                body: JSON.stringify({ username, email, password }),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                if (response.status === 400) {
-                    throw new ValidationError(errorData.detail || 'Ошибка валидации данных');
+                
+                if (String(response.status).startsWith('4')) {
+                    if (errorData.error_key === 'user_email_already_exists') {
+                        throw new ValidationError(ERROR_MESSAGES.user_email_already_exists);
+                    }
+                    if (errorData.error_key === 'user_nickname_already_exists') {
+                        throw new ValidationError(ERROR_MESSAGES.user_nickname_already_exists);
+                    }
+                    if (errorData.error_key === 'suspicious_email') {
+                        throw new ValidationError(ERROR_MESSAGES.suspicious_email);
+                    }
+                    throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
                 }
-                throw new Error(errorData.detail || 'Ошибка регистрации');
+                
+                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
             }
 
             return await response.json();
         } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
-                throw new NetworkError('Проблема с подключением к сети');
+                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
             throw error;
         }
@@ -125,12 +131,19 @@ export default class AuthService {
 
             if (!response.ok) {
                 const errorData = await response.json();
+                
                 if (response.status === 401) {
-                    throw new AuthError(errorData.detail || 'Неверные учетные данные');
-                } else if (response.status === 400) {
-                    throw new ValidationError(errorData.detail || 'Ошибка валидации данных');
+                    if (errorData.error_key === 'inactive_user') {
+                        throw new AuthError(ERROR_MESSAGES.inactive_user);
+                    }
+                    throw new AuthError(ERROR_MESSAGES.incorrect_email_username_or_password);
                 }
-                throw new Error(errorData.detail || 'Ошибка входа');
+                
+                if (response.status === 400) {
+                    throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
+                }
+                
+                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
             }
 
             const data = await response.json();
@@ -138,7 +151,7 @@ export default class AuthService {
             return data;
         } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
-                throw new NetworkError('Проблема с подключением к сети');
+                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
             throw error;
         }
@@ -148,7 +161,7 @@ export default class AuthService {
         try {
             const refreshToken = this.getRefreshToken();
             if (!refreshToken) {
-                throw new AuthError('Отсутствует refresh token');
+                throw new AuthError(ERROR_MESSAGES.not_authenticated);
             }
 
             const response = await fetch(`${BASE_API}/v1/auth/refresh?refresh_token=${refreshToken}`, {
@@ -158,9 +171,9 @@ export default class AuthService {
             if (!response.ok) {
                 const errorData = await response.json();
                 if (response.status === 401) {
-                    throw new AuthError(errorData.detail || 'Недействительный refresh token');
+                    throw new AuthError(ERROR_MESSAGES.invalid_refresh_token);
                 }
-                throw new Error(errorData.detail || 'Ошибка обновления токена');
+                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
             }
 
             const data = await response.json();
@@ -168,7 +181,7 @@ export default class AuthService {
             return data;
         } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
-                throw new NetworkError('Проблема с подключением к сети');
+                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
             throw error;
         }
@@ -179,7 +192,6 @@ export default class AuthService {
             const response = await this.makeAuthenticatedRequest(`${BASE_API}/v1/users/me`);
             return await response.json();
         } catch (error) {
-            console.error('Ошибка получения данных пользователя:', error);
             throw error;
         }
     }
@@ -195,7 +207,6 @@ export default class AuthService {
             });
             return await response.json();
         } catch (error) {
-            console.error('Ошибка обновления профиля:', error);
             throw error;
         }
     }
@@ -211,7 +222,6 @@ export default class AuthService {
             });
             return await response.json();
         } catch (error) {
-            console.error('Ошибка обновления аватара:', error);
             throw error;
         }
     }
@@ -223,7 +233,6 @@ export default class AuthService {
             });
             return true;
         } catch (error) {
-            console.error('Ошибка удаления аватара:', error);
             throw error;
         }
     }
