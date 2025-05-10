@@ -129,9 +129,9 @@ class RecipeService:
             await self._create_tags(recipe_id, recipe_update.tags)
 
         await self.uow.commit()
+        await self.uow.session.refresh(existing_recipe)
 
-        updated_recipe = await self.uow.recipes.get_by_id(recipe_id)
-        return await self._to_recipe_schema(updated_recipe)
+        return await self._to_recipe_schema(existing_recipe)
 
     async def delete(self, user: User, recipe_id: int) -> None:
         existing_recipe = await self.uow.recipes.get_by_id(recipe_id)
