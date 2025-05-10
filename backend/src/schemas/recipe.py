@@ -1,12 +1,12 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
-from src.schemas.base import BaseReadSchema
+from src.schemas.base import BaseReadSchema, BaseSchema
 from src.schemas.direct_upload import DirectUpload
 from src.utils.partial_model import partial_model
 
 
-class Ingredient(BaseModel):
+class Ingredient(BaseSchema):
     name: str = Field(max_length=135, examples=["Tomato", "Чеснок"])
     quantity: str = Field(max_length=135, examples=["2 pieces", "два зубчика"])
 
@@ -16,7 +16,7 @@ class IngredientUpdate(Ingredient):
     pass
 
 
-class RecipeInstruction(BaseModel):
+class RecipeInstruction(BaseSchema):
     step_number: int
     description: str = Field(max_length=1000, examples=["Boil water", "Добавьте соль"])
     image_url: str | None = Field(default=None)
@@ -31,7 +31,7 @@ class RecipeInstructionsUploadUrls(DirectUpload):
     step_number: int
 
 
-class RecipeTag(BaseModel):
+class RecipeTag(BaseSchema):
     name: str = Field(max_length=50, examples=["Dinner", "Африканская кухня"])
 
 
@@ -45,25 +45,24 @@ class BaseRecipeSchema(BaseModel):
 
     title: str = Field(max_length=135, examples=["Pasta Carbonara", "Салат Цезарь"])
     short_description: str = Field(max_length=255, examples=["Рецепт салата Цезарь"])
-    image_url: str = Field(max_length=255, examples=["https://example.com/image.jpg"])
+    image_url: str | None = Field(None, max_length=255, examples=["https://example.com/image.jpg"])
     difficulty: RecipeDifficultyEnum = Field(examples=["EASY"])
     cook_time_minutes: int = Field(gt=0)
-    is_published: bool = Field(default=False, description="Is the recipe published or not")
 
 
-class _InstructionsMixin(BaseModel):
+class _InstructionsMixin(BaseSchema):
     instructions: list[RecipeInstruction]
 
 
-class _IngredientsMixin(BaseModel):
+class _IngredientsMixin(BaseSchema):
     ingredients: list[Ingredient]
 
 
-class _TagsMixin(BaseModel):
+class _TagsMixin(BaseSchema):
     tags: list[RecipeTag]
 
 
-class _IsPublishedMixin(BaseModel):
+class _IsPublishedMixin(BaseSchema):
     is_published: bool = Field(default=False, description="Is the recipe published or not")
 
 
