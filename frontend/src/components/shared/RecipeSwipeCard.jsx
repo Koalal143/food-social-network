@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/button';
-import { HeartCrack, ArrowRight, Bookmark, Clock, User } from 'lucide-react';
+import { HeartCrack, Eye, Bookmark, Clock, User } from 'lucide-react';
+import { useSwipeable } from 'react-swipeable';
 
 const RecipeSwipeCard = ({ recipe, onLike, onDislike, onViewRecipe }) => {
   const [direction, setDirection] = useState(null);
@@ -13,7 +14,8 @@ const RecipeSwipeCard = ({ recipe, onLike, onDislike, onViewRecipe }) => {
     enter: { x: 0, opacity: 1, scale: 1 },
     center: { x: 0, opacity: 1, scale: 1 },
     exit: (direction) => ({
-      x: direction === 'right' ? 500 : -500,
+      x: direction === 'right' ? 500 : direction === 'left' ? -500 : 0,
+      y: direction === 'up' ? -500 : 0,
       opacity: 0,
       scale: 0.8,
       transition: { duration: 0.3 }
@@ -30,6 +32,18 @@ const RecipeSwipeCard = ({ recipe, onLike, onDislike, onViewRecipe }) => {
     onDislike(recipe);
   };
 
+  const handleView = () => {
+    setDirection('up');
+    onViewRecipe(recipe);
+  };
+
+  const handlers = useSwipeable({
+    onSwipedLeft: handleDislike,
+    onSwipedRight: handleLike,
+    onSwipedUp: handleView,
+    preventDefaultTouchmoveEvent: true,
+  });
+
   return (
     <AnimatePresence mode="wait" custom={direction}>
       <motion.div
@@ -39,7 +53,8 @@ const RecipeSwipeCard = ({ recipe, onLike, onDislike, onViewRecipe }) => {
         initial="enter"
         animate="center"
         exit="exit"
-        className="relative w-full aspect-[3/4] rounded-lg overflow-hidden shadow-lg max-h-screen"
+        className="relative w-full aspect-[3/4] rounded-lg overflow-hidden shadow-lg touch-none"
+        {...handlers}
       >
         <div className="absolute inset-0">
           <Image
@@ -82,20 +97,20 @@ const RecipeSwipeCard = ({ recipe, onLike, onDislike, onViewRecipe }) => {
               <HeartCrack className="w-6 h-6" />
             </Button>
             <Button
+              onClick={() => onViewRecipe(recipe)}
+              size="lg"
+              variant="default"
+              className="rounded-full w-16 h-16 flex items-center justify-center bg-green-500 hover:bg-green-600"
+            >
+              <Eye className="w-6 h-6" />
+            </Button>
+            <Button
               onClick={handleLike}
               size="lg"
               variant="secondary"
               className="rounded-full w-16 h-16 flex items-center justify-center bg-primary hover:bg-primary/90"
             >
               <Bookmark className="w-6 h-6 text-white" />
-            </Button>
-            <Button
-              onClick={() => onViewRecipe(recipe)}
-              size="lg"
-              variant="default"
-              className="rounded-full w-16 h-16 flex items-center justify-center bg-green-500 hover:bg-green-600"
-            >
-              <ArrowRight className="w-6 h-6" />
             </Button>
           </div>
         </div>
