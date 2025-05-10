@@ -58,7 +58,13 @@ class _TagsMixin(BaseModel):
     tags: list[RecipeTag]
 
 
-class RecipeRead(_InstructionsMixin, _IngredientsMixin, _TagsMixin, BaseRecipeSchema, BaseReadSchema):
+class _IsPublishedMixin(BaseModel):
+    is_published: bool = Field(default=False, description="Is the recipe published or not")
+
+
+class RecipeRead(
+    _InstructionsMixin, _IngredientsMixin, _TagsMixin, _IsPublishedMixin, BaseRecipeSchema, BaseReadSchema
+):
     pass
 
 
@@ -67,7 +73,7 @@ class RecipeCreate(_InstructionsMixin, _IngredientsMixin, _TagsMixin, BaseRecipe
 
 
 @partial_model
-class RecipeUpdate(BaseRecipeSchema):
+class RecipeUpdate(_IsPublishedMixin, BaseRecipeSchema):
     instructions: list[RecipeInstructionUpdate]
     ingredients: list[IngredientUpdate]
     tags: list[RecipeTagUpdate]
