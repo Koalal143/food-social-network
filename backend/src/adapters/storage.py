@@ -44,10 +44,31 @@ class S3Storage:
     async def delete_file(self, bucket_name: str, file_name: str) -> None:
         await self.client.delete_object(Bucket=bucket_name, Key=file_name)
 
+    def _get_valid_url(self, url: str) -> str:
+        return url.replace(self.endpoint_url, settings.server.url + "/static")
+
     async def get_file_url(self, bucket_name: str, file_name: str, expires_in: int = 3600) -> str:
         unprepared_url = await self.client.generate_presigned_url(
             "get_object",
             Params={"Bucket": bucket_name, "Key": file_name},
             ExpiresIn=expires_in,
         )
-        return unprepared_url.replace(self.endpoint_url, settings.server.url + "/static")
+        return self._get_valid_url(unprepared_url)
+
+    async def generate_presigned_post(
+        self,
+        bucket_name: str,
+        key: str,
+        fields: dict[str, Any] | None = None,
+        conditions: list[Any] | None = None,
+        expires_in: int = 3600,
+    ) -> dict:
+        presigned_post = await self.client.generate_presigned_post(
+            Bucket=bucket_name,
+            Key=key,
+            Fields=fields,
+            Conditions=conditions,
+            ExpiresIn=expires_in,
+        )
+        presigned_post["url"] = self._get_valid_url(presigned_post["url"])
+        return presigned_post
