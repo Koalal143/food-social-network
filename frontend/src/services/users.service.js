@@ -1,16 +1,24 @@
 import { BASE_API } from "../constants/backend-urls";
+import { ERROR_MESSAGES } from "@/constants/errors";
+import { NetworkError } from "@/utils/errors";
+import AuthService from "./auth.service";
 
 export default class UsersService {
     static async getAllUsers() {
         try {
-            const response = await fetch('/users.json');
-            if (!response.ok) throw new Error('Ошибка при загрузке пользователей');
-            const data = await response.json();
-            console.log('Users loaded:', data);
-            return data;
+            const response = await AuthService.makeAuthenticatedRequest(`${BASE_API}/v1/users`);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
+            }
+
+            return await response.json();
         } catch (error) {
-            console.error('Ошибка:', error);
-            return [];
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+            }
+            throw error;
         }
     }
 
@@ -25,109 +33,6 @@ export default class UsersService {
         } catch (error) {
             console.error('Ошибка:', error);
             return null;
-        }
-    }
-
-    static async getCurrentUser() {
-        try {
-            const accessToken = localStorage.getItem('access_token');
-            if (!accessToken) {
-                throw new Error('No access token found');
-            }
-
-            const response = await fetch(`${BASE_API}/v1/users/me`, {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                },
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail);
-            }
-
-            return await response.json();
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    static async updateCurrentUser(userData) {
-        try {
-            const accessToken = localStorage.getItem('access_token');
-            if (!accessToken) {
-                throw new Error('No access token found');
-            }
-
-            const response = await fetch(`${BASE_API}/v1/users/me`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(userData),
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail);
-            }
-
-            return await response.json();
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    static async updateAvatar(imageFile) {
-        try {
-            const accessToken = localStorage.getItem('access_token');
-            if (!accessToken) {
-                throw new Error('No access token found');
-            }
-
-            const formData = new FormData();
-            formData.append('image', imageFile);
-
-            const response = await fetch(`${BASE_API}/v1/users/me/avatar`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                },
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail);
-            }
-
-            return await response.json();
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    static async deleteAvatar() {
-        try {
-            const accessToken = localStorage.getItem('access_token');
-            if (!accessToken) {
-                throw new Error('No access token found');
-            }
-
-            const response = await fetch(`${BASE_API}/v1/users/me/avatar`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                },
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail);
-            }
-        } catch (error) {
-            throw error;
         }
     }
 } 
