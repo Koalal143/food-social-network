@@ -96,7 +96,7 @@ export default function Header() {
                                                 <Image
                                                     src={user.profile?.avatar_url || '/images/user-dummy.svg'}
                                                     alt={user.username || 'Avatar'}
-                                                    className="rounded-full object-cover"
+                                                    className="rounded-full object-cover bg-secondary"
                                                     fill
                                                     priority
                                                     unoptimized={true}
