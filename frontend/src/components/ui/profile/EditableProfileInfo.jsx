@@ -9,6 +9,10 @@ export default function EditableProfileInfo({
     onSave,
     className = ''
 }) {
+    if (!user) {
+        return
+    }
+
     const [isEditing, setIsEditing] = useState(false)
     const [editValues, setEditValues] = useState({
         username: user.username,
@@ -33,10 +37,6 @@ export default function EditableProfileInfo({
             about: user.profile?.about || ''
         })
         setIsEditing(false)
-    }
-
-    if (!user) {
-        return
     }
 
     return (
