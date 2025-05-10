@@ -121,6 +121,6 @@ class UserService:
 
     async def _to_user_model(self, user: User) -> UserRead:
         model = UserRead.model_validate(user, from_attributes=True)
-        if user.profile and user.profile.avatar_url:
+        if model.profile and model.profile.avatar_url:
             model.profile.avatar_url = await self.s3_client.get_file_url("images", user.profile.avatar_url)
-        return UserRead.model_validate(user, from_attributes=True)
+        return UserRead.model_validate(model, from_attributes=True)
