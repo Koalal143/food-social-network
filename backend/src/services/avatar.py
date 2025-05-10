@@ -32,7 +32,6 @@ class UserAvatarService:
         await self.uow.user_profiles.update(user_id=user_id, avatar_url=file_name)
 
         presigned_url = await self.s3_client.get_file_url("images", user_profile.avatar_url)
-        user_profile.avatar_url = presigned_url
         await self.uow.commit()
         return presigned_url
 
