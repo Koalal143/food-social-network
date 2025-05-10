@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Any
 
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.recipe_instructions import RecipeInstruction
@@ -21,6 +21,11 @@ class RecipeInstructionRepository:
         )
         result = await self.session.scalars(stmt)
         return result.all()
+
+    async def get_instructions_count_by_recipe_id(self, recipe_id: int) -> int:
+        stmt = select(func.count()).where(RecipeInstruction.recipe_id == recipe_id)
+        result = await self.session.scalar(stmt)
+        return result or 0
 
     async def create(
         self, recipe_id: int, step_number: int, description: str, image_url: str | None = None
