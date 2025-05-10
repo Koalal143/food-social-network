@@ -14,6 +14,7 @@ from src.exceptions.user import UserEmailAlreadyExistsError, UserNicknameAlready
 
 __all__ = [
     "AppHTTPException",
+    "AttachInstructionStepError",
     "BannedEmailError",
     "BaseAppError",
     "EmailDomainAlreadyBannedError",
