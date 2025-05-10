@@ -1,4 +1,5 @@
-"use client";
+"use client"
+
 import React, { useEffect, useState } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
 import Container from "@/components/layout/Container";
