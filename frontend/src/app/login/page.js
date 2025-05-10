@@ -18,8 +18,23 @@ export default function LoginPage() {
     const router = useRouter();
     const { toast } = useToast();
 
+    const validatePassword = (password) => {
+        const hasUpperCase = /[A-Z]|[А-Я]/.test(password);
+        const hasLowerCase = /[a-z]|[а-я]/.test(password);
+        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        return password.length >= 8 && hasUpperCase && hasLowerCase && hasSpecialChar;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validatePassword(password)) {
+            toast({
+                variant: "destructive",
+                title: "Ошибка валидации",
+                description: "Пароль не соответствует требованиям.",
+            });
+            return;
+        }
         setIsLoading(true);
 
         try {
