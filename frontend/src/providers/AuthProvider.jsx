@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { AuthContext } from '@/context/AuthContext'
 import AuthService from '@/services/auth.service'
 import UsersService from '@/services/users.service'
+import { ERROR_MESSAGES } from '@/constants/errors'
+import { NetworkError, AuthError, ValidationError } from '@/utils/errors'
 
 export default function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
@@ -21,18 +23,18 @@ export default function AuthProvider({ children }) {
 
         clearError()
         
-        if (error.name === 'NetworkError') {
+        if (error instanceof NetworkError) {
             setErrorType('network')
-            setError('Проблема с подключением к сети')
-        } else if (error.name === 'ValidationError') {
+            setError(ERROR_MESSAGES.service_unavailable)
+        } else if (error instanceof ValidationError) {
             setErrorType('validation')
-            setError(error.message)
-        } else if (error.name === 'AuthError') {
+            setError(error.message || ERROR_MESSAGES.validation_error)
+        } else if (error instanceof AuthError) {
             setErrorType('auth')
-            setError(error.message)
+            setError(error.message || ERROR_MESSAGES.invalid_credentials)
         } else {
             setErrorType('unknown')
-            setError('Произошла неизвестная ошибка')
+            setError(ERROR_MESSAGES.default)
         }
     }, [clearError])
 
@@ -42,15 +44,18 @@ export default function AuthProvider({ children }) {
                 const userData = await UsersService.getCurrentUser()
                 setUser(userData)
             } catch (error) {
-                setError(error.message)
-                // Если токен невалиден, пробуем обновить
-                try {
-                    await AuthService.refreshToken()
-                    const userData = await UsersService.getCurrentUser()
-                    setUser(userData)
-                } catch (refreshError) {
-                    AuthService.logout()
-                    setUser(null)
+                if (error instanceof AuthError) {
+                    try {
+                        await AuthService.refreshToken()
+                        const userData = await UsersService.getCurrentUser()
+                        setUser(userData)
+                    } catch (refreshError) {
+                        AuthService.logout()
+                        setUser(null)
+                        handleError(refreshError)
+                    }
+                } else {
+                    handleError(error)
                 }
             } finally {
                 setLoading(false)
@@ -58,15 +63,15 @@ export default function AuthProvider({ children }) {
         }
 
         initializeAuth()
-    }, [])
+    }, [handleError])
 
     const login = async (emailOrUsername, password) => {
         try {
             clearError()
-            const tokens = await AuthService.login(emailOrUsername, password)
-            const userData = await UsersService.getCurrentUser()
-            setUser(userData)
-            return userData
+            await AuthService.login(emailOrUsername, password)
+            const currentUser = await AuthService.getCurrentUser()
+            setUser(currentUser)
+            return currentUser
         } catch (error) {
             handleError(error)
             throw error
@@ -76,9 +81,9 @@ export default function AuthProvider({ children }) {
     const register = async (username, email, password) => {
         try {
             clearError()
-            const userData = await AuthService.register(username, email, password)
-            const tokens = await AuthService.login(email, password)
-            const currentUser = await UsersService.getCurrentUser()
+            await AuthService.register(username, email, password)
+            await AuthService.login(email, password)
+            const currentUser = await AuthService.getCurrentUser()
             setUser(currentUser)
             return currentUser
         } catch (error) {
@@ -101,7 +106,7 @@ export default function AuthProvider({ children }) {
     const updateProfile = async (profileData) => {
         try {
             clearError()
-            const updatedUser = await UsersService.updateCurrentUser(profileData)
+            const updatedUser = await AuthService.updateUserProfile(profileData)
             setUser(updatedUser)
             return updatedUser
         } catch (error) {
@@ -113,8 +118,8 @@ export default function AuthProvider({ children }) {
     const updateAvatar = async (imageFile) => {
         try {
             clearError()
-            const result = await UsersService.updateAvatar(imageFile)
-            const updatedUser = await UsersService.getCurrentUser()
+            const result = await AuthService.updateAvatar(imageFile)
+            const updatedUser = await AuthService.getCurrentUser()
             setUser(updatedUser)
             return result
         } catch (error) {
@@ -126,8 +131,8 @@ export default function AuthProvider({ children }) {
     const deleteAvatar = async () => {
         try {
             clearError()
-            await UsersService.deleteAvatar()
-            const updatedUser = await UsersService.getCurrentUser()
+            await AuthService.deleteAvatar()
+            const updatedUser = await AuthService.getCurrentUser()
             setUser(updatedUser)
         } catch (error) {
             handleError(error)
