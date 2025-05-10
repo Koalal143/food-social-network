@@ -44,7 +44,6 @@ services:
         condition: service_healthy
     volumes:
       - ./backend/alembic:/app/alembic
-    restart: unless-stopped
     networks:
       - app_network
       - db_network

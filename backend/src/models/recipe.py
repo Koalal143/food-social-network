@@ -19,7 +19,7 @@ class Recipe(Base):
     title: Mapped[str] = mapped_column(String(135), nullable=False)
     author_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     short_description: Mapped[str] = mapped_column(String(255), nullable=False)
-    image_url: Mapped[str] = mapped_column(String(255), nullable=False)
+    image_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     difficulty: Mapped[RecipeDifficultyEnum]
     cook_time_minutes: Mapped[int]
     is_published: Mapped[bool] = mapped_column(default=False)
