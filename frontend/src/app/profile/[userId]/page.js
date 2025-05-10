@@ -1,4 +1,5 @@
-"use client";
+"use client"
+
 import React, { useEffect, useState } from "react";
 import Container from "@/components/layout/Container";
 import RecipeCard from "../../../components/shared/RecipeCard";
@@ -9,7 +10,7 @@ import Image from "next/image";
 import CopyLinkButton from "@/components/ui/CopyLinkButton"
 import NotFound from "@/app/not-found";
 
-export default function ProfilePage({ params }) {
+export default function ProfileIdPage({ params }) {
     const { userId } = React.use(params);
     const { loading, getRecipesByAuthorId } = useRecipes();
     const { getUserById } = useUser();
