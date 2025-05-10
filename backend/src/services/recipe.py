@@ -5,6 +5,7 @@ from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions.recipe import NoRecipeImageError, RecipeNotFoundError, RecipeOwnershipError
 from src.models.recipe import Recipe
 from src.models.user import User
+from src.schemas.direct_upload import DirectUpload
 from src.schemas.recipe import (
     Ingredient,
     RecipeCreate,
@@ -150,3 +151,26 @@ class RecipeService:
         await self.uow.recipes.delete_by_id(recipe_id)
 
         await self.uow.commit()
+
+    async def get_image_upload_url(self, user: User, recipe_id: int) -> DirectUpload:
+        existing_recipe = await self.uow.recipes.get_by_id(recipe_id)
+        if not existing_recipe:
+            msg = f"Recipe with id {recipe_id} not found"
+            raise RecipeNotFoundError(msg)
+
+        if existing_recipe.author_id != user.id and not user.is_superuser:
+            msg = f"Recipe with id {recipe_id} belongs to other user"
+            raise RecipeOwnershipError(msg)
+
+        file_name = f"recipes/{recipe_id}/main.png"
+        presigned_post_data = await self.s3_storage.generate_presigned_post(
+            bucket_name=self._recipe_bucket_name,
+            key=file_name,
+            conditions=[
+                {"acl": "private"},
+                ["starts-with", "$Content-Type", "image/"],
+                ["content-length-range", 1, 5 * 1024 * 1024],
+            ],
+            expires_in=300,
+        )
+        return DirectUpload.model_validate(presigned_post_data)
