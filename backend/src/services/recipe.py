@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 from src.adapters.storage import S3Storage
 from src.db.uow import SQLAlchemyUnitOfWork
-from src.exceptions.recipe import RecipeNotFoundError
+from src.exceptions.recipe import NoRecipeImageError, RecipeNotFoundError
 from src.models.recipe import Recipe
 from src.schemas.recipe import (
     Ingredient,
@@ -106,6 +106,10 @@ class RecipeService:
         if not existing_recipe:
             msg = f"Recipe with id {recipe_id} not found"
             raise RecipeNotFoundError(msg)
+
+        if not existing_recipe.image_url and recipe_update.is_published:
+            msg = "Recipe can not be published without image"
+            raise NoRecipeImageError(msg)
 
         recipe_data = recipe_update.model_dump(exclude={"ingredients", "instructions", "tags"}, exclude_unset=True)
         if recipe_data:
