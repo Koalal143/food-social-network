@@ -12,16 +12,14 @@ export default function RecommendationsPage() {
     const router = useRouter();
     const [currentIndex, setCurrentIndex] = useState(0);
     const { recipes, loading } = useRecipes();
-    const { addFavorite, removeFavorite, isFavorite } = useFavorites();
+    const { addFavorite, isFavorite } = useFavorites();
 
     const handleDislike = () => {
         showNextRecipe();
     };
 
     const handleLike = (recipe) => {
-        if (isFavorite(recipe.id)) {
-            removeFavorite(recipe.id);
-        } else {
+        if (!isFavorite(recipe.id)) {
             addFavorite(recipe);
         }
         showNextRecipe();
@@ -31,7 +29,7 @@ export default function RecommendationsPage() {
         if (currentIndex < recipes.length - 1) {
             setTimeout(() => {
                 setCurrentIndex(currentIndex + 1);
-            }, 300);
+            }, 500);
         }
     };
 
