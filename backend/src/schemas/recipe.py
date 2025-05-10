@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
 from src.schemas.base import BaseReadSchema
+from src.schemas.direct_upload import DirectUpload
 from src.utils.partial_model import partial_model
 
 
@@ -24,6 +25,10 @@ class RecipeInstruction(BaseModel):
 @partial_model
 class RecipeInstructionUpdate(RecipeInstruction):
     pass
+
+
+class RecipeInstructionsUploadUrls(DirectUpload):
+    step_number: int
 
 
 class RecipeTag(BaseModel):
