@@ -6,15 +6,15 @@ export const ERROR_MESSAGES = {
     user_not_found: 'Пользователь не найден',
     user_nickname_already_exists: 'Пользователь с таким именем уже существует',
     user_email_already_exists: 'Пользователь с таким email уже существует',
-    suspicious_email: 'Данный email помечен как подозрительный',
+    suspicious_email: 'Данный email помечен как подозрительный, попробуйте использовать другой',
     inactive_user: 'Аккаунт неактивен',
     incorrect_email_username_or_password: 'Неверный email/имя пользователя или пароль',
     
     // Ошибки авторизации
-    invalid_refresh_token: 'Недействительный токен обновления',
+    invalid_refresh_token: 'Что-то пошло не так, попробуйте перезайти в аккаунт',
     invalid_credentials: 'Неверные учетные данные',
-    token_expired: 'Срок действия токена истек',
-    invalid_token: 'Недействительный токен',
+    token_expired: 'Что-то пошло не так, попробуйте перезайти в аккаунт',
+    invalid_token: 'Что-то пошло не так, попробуйте перезайти в аккаунт',
     not_authenticated: 'Необходима авторизация',
     insufficient_permissions: 'Недостаточно прав для выполнения действия',
     
@@ -26,11 +26,11 @@ export const ERROR_MESSAGES = {
     // Ошибки данных
     not_found: 'Данные не найдены',
     already_exists: 'Запись уже существует',
-    invalid_request: 'Неверный запрос',
+    invalid_request: 'Неверный запрос. Попробуйте позже',
     
     // Ошибки сервера
-    internal_server_error: 'Внутренняя ошибка сервера',
-    service_unavailable: 'Сервис временно недоступен',
+    internal_server_error: 'Внутренняя ошибка сервера. Попробуйте позже',
+    service_unavailable: 'Сервис временно недоступен. Попробуйте позже',
     
     // Ошибки по умолчанию
     default: 'Произошла ошибка. Попробуйте позже'
