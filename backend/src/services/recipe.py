@@ -8,14 +8,10 @@ from src.models.user import User
 from src.schemas.recipe import (
     Ingredient,
     RecipeCreate,
+    RecipeInstruction,
     RecipeRead,
+    RecipeTag,
     RecipeUpdate,
-)
-from src.schemas.recipe import (
-    RecipeInstruction as RecipeInstructionSchema,
-)
-from src.schemas.recipe import (
-    RecipeTag as RecipeTagSchema,
 )
 
 
@@ -67,7 +63,7 @@ class RecipeService:
         if ingredients_data:
             await self.uow.recipe_ingredients.bulk_create(ingredients_data)
 
-    async def _create_instructions(self, recipe_id: int, instructions: list[RecipeInstructionSchema]) -> None:
+    async def _create_instructions(self, recipe_id: int, instructions: list[RecipeInstruction]) -> None:
         instructions_data = []
         for instruction in instructions:
             instruction_dict = instruction.model_dump()
@@ -77,7 +73,7 @@ class RecipeService:
         if instructions_data:
             await self.uow.recipe_instructions.bulk_create(instructions_data)
 
-    async def _create_tags(self, recipe_id: int, tags: list[RecipeTagSchema]) -> None:
+    async def _create_tags(self, recipe_id: int, tags: list[RecipeTag]) -> None:
         tags_data = []
         for tag in tags:
             tag_dict = tag.model_dump()
@@ -111,6 +107,7 @@ class RecipeService:
         if existing_recipe.author_id != user.id and not user.is_superuser:
             msg = f"Recipe with id {recipe_id} belongs to other user"
             raise RecipeOwnershipError(msg)
+
         if not existing_recipe.image_url and recipe_update.is_published:
             msg = "Recipe can not be published without image"
             raise NoRecipeImageError(msg)
