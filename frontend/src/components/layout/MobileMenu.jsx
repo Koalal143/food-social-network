@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Star, User, Plus } from "lucide-react"
+import { Home, Star, User, Plus, Bot } from "lucide-react"
 import Container from "./Container"
 import { Button } from "../ui/button"
 import Link from "next/link"
@@ -25,16 +25,16 @@ export default function MobileMenu() {
                     <span className={`text-xs ${isActive('/recommendations') ? 'underline underline-offset-4' : ''}`}>Рекомендации</span>
                 </Button>
             </Link>
+            <Link href="/recipe-ai" passHref>
+                <Button variant="icon" size="icon" className={`flex flex-col items-center ${isActive('/recipe-ai') ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <Bot className={`h-6 w-6 ${isActive('/recipe-ai') ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={`text-xs ${isActive('/recipe-ai') ? 'underline underline-offset-4' : ''}`}>Шеф</span>
+                </Button>
+            </Link>
             <Link href="/profile" passHref>
                 <Button variant="icon" size="icon" className={`flex flex-col items-center ${isActive('/profile') ? 'text-primary' : 'text-muted-foreground'}`}>
                     <User className={`h-6 w-6 ${isActive('/profile') ? 'text-primary' : 'text-muted-foreground'}`} />
                     <span className={`text-xs ${isActive('/profile') ? 'underline underline-offset-4' : ''}`}>Профиль</span>
-                </Button>
-            </Link>
-            <Link href="/recipe/add" passHref>
-                <Button variant="icon" size="icon" className={`flex flex-col items-center ${isActive('/recipe/add') ? 'text-primary' : 'text-muted-foreground'}`}>
-                    <Plus className={`h-6 w-6 ${isActive('/recipe/add') ? 'text-primary' : 'text-muted-foreground'}`} />
-                    <span className={`text-xs ${isActive('/recipe/add') ? 'underline underline-offset-4' : ''}`}>Добавить</span>
                 </Button>
             </Link>
         </Container>

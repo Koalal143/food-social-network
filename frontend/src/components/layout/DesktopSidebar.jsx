@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Star, User } from "lucide-react";
+import { Home, Star, User, Bot } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
@@ -29,6 +29,12 @@ export default function DesktopSidebar() {
                     <Button variant="ghost" className={`w-full justify-start ${isActive('/profile') ? 'bg-accent' : ''}`}>
                         <User className="mr-2 h-4 w-4" />
                         Профиль
+                    </Button>
+                </Link>
+                <Link href="/recipe-ai" passHref>
+                    <Button variant="ghost" className={`w-full justify-start ${isActive('/recipe-ai') ? 'bg-accent' : ''}`}>
+                        <Bot className="mr-2 h-4 w-4" />
+                        Шеф-помощник
                     </Button>
                 </Link>
             </nav>
