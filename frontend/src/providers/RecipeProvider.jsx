@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import RecipesService from "@/services/recipes.service"
 import { RecipeContext } from "@/context/RecipeContext"
+import S3Service from "@/services/s3.service"
 
 export default function RecipeProvider({ children }) {
     const [recipes, setRecipes] = useState([])
@@ -31,15 +32,87 @@ export default function RecipeProvider({ children }) {
         }
     };
 
-    const addRecipe = async (newRecipe) => {
+    const addRecipe = async (formData) => {
         try {
-            await RecipesService.addRecipe(newRecipe)
+            // 1. Создаем базовый объект рецепта
+            const newRecipe = {
+                title: formData.title,
+                short_description: formData.short_description,
+                difficulty: formData.difficulty,
+                cook_time_minutes: formData.cook_time_minutes,
+                tags: [{ name: "Dinner" }],
+                ingredients: formData.ingredients
+            };
+    
+            // 2. Создаем рецепт в базе данных
+            const recipe = await RecipesService.addRecipe(newRecipe);
+    
+            // 3. Загружаем основное фото
+            const mainPhotoPresigned = await RecipesService.getUploadImageUrl(recipe.id);
+            await S3Service.uploadImage(mainPhotoPresigned, formData.main_photo[0]);
+    
+            // 4. Обработка фото для шагов инструкций
+            let presignedPostDatas = []; // Объявляем переменную в общей области видимости
+            const stepsWithPhotos = formData.instructions
+                .filter(instruction => instruction.photo !== null && instruction.photo !== undefined)
+                .map(instruction => instruction.step_number);
+    
+            if (stepsWithPhotos.length > 0) {
+                try {
+                    presignedPostDatas = await RecipesService.getUploadInstructionsUrls(
+                        recipe.id, 
+                        stepsWithPhotos
+                    );
+    
+                    // Параллельная загрузка изображений шагов
+                    await Promise.all(
+                        presignedPostDatas.map(async (presignedData) => {
+                            const instruction = formData.instructions.find(
+                                inst => inst.step_number === presignedData.step_number
+                            );
+                            
+                            if (instruction?.photo) {
+                                await S3Service.uploadImage(presignedData, instruction.photo);
+                            }
+                        })
+                    );
+                } catch (error) {
+                    console.error('Ошибка при загрузке изображений шагов:', error);
+                    // Дополнительная логика: откат создания рецепта при необходимости
+                    throw error;
+                }
+            }
+    
+            // 5. Формируем инструкции с URL изображений
+            const instructions = formData.instructions.map(instruction => {
+                const presignedData = presignedPostDatas.find(
+                    item => item.step_number === instruction.step_number
+                );
+    
+                return {
+                    step_number: instruction.step_number,
+                    description: instruction.description,
+                    image_url: presignedData?.fields?.key || null // Безопасный доступ к полям
+                };
+            });
+    
+            // 6. Обновляем рецепт с финальными данными
+            const recipeWithPhotos = {
+                id: recipe.id,
+                image_url: mainPhotoPresigned.fields.key, // Используем ключ из presigned данных
+                instructions: instructions
+            };
+    
+            await RecipesService.updateRecipe(recipeWithPhotos);
+    
+            return recipeWithPhotos;
+    
         } catch (error) {
-            setError(error)
-            console.error("Ошибка при добавлении рецепта:", error)
-            return null
+            console.error("Ошибка при добавлении рецепта:", error);
+            // Дополнительные действия: очистка ресурсов, уведомление пользователя
+            throw error; // Пробрасываем ошибку для обработки в UI
         }
-    }
+    };
 
     const getRecipesByAuthorId = async (authorId) => {
         try {
