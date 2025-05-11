@@ -1,93 +1,100 @@
-"use client";
+"use client"
+
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Container from "@/components/Container";
+import { useFavorites } from "@/context/FavoritesContext";
+import Container from "@/components/layout/Container";
 import { useRecipes } from "@/context/RecipeContext";
-import { useUsers } from "@/context/UserContext";
 import Loader from "@/components/ui/Loader";
 import Image from "next/image";
+import AuthorCard from "@/components/ui/recipe-page/AuthorCard";
+import { Bookmark } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import CopyLinkButton from "@/components/ui/CopyLinkButton";
+import RecipeInfoCards from "@/components/ui/recipe-page/RecipeInfoCards";
+import RecipeIngridients from "@/components/ui/recipe-page/RecipeIngridients";
+import RecipeInstruction from "@/components/ui/recipe-page/RecipeInstruction";
 
 export default function RecipePage({ params }) {
-    const router = useRouter();
-    const { getRecipeById } = useRecipes();
-    const { getUserById } = useUsers();
-    const [recipe, setRecipe] = useState(null);
-    const [author, setAuthor] = useState(null);
-    const { id } = React.use(params);
+  const { getRecipeById } = useRecipes();
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+  const [recipe, setRecipe] = useState(null);
+  const [isSaved, setIsSaved] = useState(false);
+  
+  const { id } = React.use(params);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const recipeData = await getRecipeById(Number(id));
-            if (recipeData) {
-                setRecipe(recipeData);
-                const authorData = await getUserById(recipeData.authorId);
-                setAuthor(authorData);
-            }
-        };
-        fetchData();
-    }, [id, getRecipeById, getUserById]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const recipeData = await getRecipeById(Number(id));
+      if (recipeData) {
+        setRecipe(recipeData);
+        setIsSaved(isFavorite(recipeData.id));
+      }
+    };
+    fetchData();
+  }, [id, isFavorite]);
 
-    if (!recipe) {
-        return <Loader />;
+  const handleSave = () => {
+    if (isSaved) {
+      removeFavorite(recipe.id);
+    } else {
+      addFavorite(recipe);
     }
+    setIsSaved(!isSaved);
+  };
 
-    return (
-        <Container className="py-8 min-h-screen">
-            <button 
-                onClick={() => router.back()}
-                className="mb-6 text-blue-600 hover:text-blue-800 transition-colors"
-            >
-                ← Назад
-            </button>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="relative aspect-square rounded-lg overflow-hidden">
-                    <Image
-                        src={recipe.preview}
-                        alt={recipe.title}
-                        fill
-                        className="object-cover"
-                    />
-                </div>
-                <div className="p-6">
-                    <h1 className="text-3xl font-bold mb-4 text-gray-800">{recipe.title}</h1>
-                    <p className="text-lg text-gray-600 mb-6">{recipe.shortDescription}</p>
-                    
-                    {author && (
-                        <div className="flex items-center mb-6">
-                            <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
-                                <Image
-                                    src={author.avatar}
-                                    alt={author.name}
-                                    fill
-                                    className="object-cover"
-                                />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-600">Автор рецепта</p>
-                                <p className="font-medium">{author.name}</p>
-                            </div>
-                        </div>
-                    )}
+  if (!recipe) {
+    return <Loader />;
+  }
 
-                    <div className="border-t border-b py-6 my-6">
-                        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Ингредиенты:</h2>
-                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {recipe.ingredients.map((ingredient, index) => (
-                                <li key={index} className="flex items-center space-x-2">
-                                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                    <span className="text-gray-700">{ingredient}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    <div className="prose max-w-none">
-                        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Приготовление:</h2>
-                        <p className="text-gray-700 whitespace-pre-line">{recipe.recipe}</p>
-                    </div>
-                </div>
+  return (
+    <Container>
+      <article className="py-8">
+        <div className="max-w-3xl mx-auto space-y-8 bg-secondary/60 rounded-lg pb-4">
+          {/* Фотография и кнопки */}
+          <div className="relative aspect-[16/9] rounded-t-lg overflow-hidden">
+            <Image
+              src={recipe.image_url || '/images/image-dummy.svg'}
+              alt={recipe.title}
+              fill
+              className="object-cover"
+              priority
+              unoptimized={true}
+            />
+            <div className="absolute top-4 right-4 flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="bg-background/80 backdrop-blur rounded-full"
+                onClick={handleSave}
+              >
+                <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-primary' : ''}`} />
+              </Button>
+              <CopyLinkButton
+                link={`${window.location.origin}/recipe/${id}`}
+                tooltipText="Скопировать ссылку на рецепт"
+              />
             </div>
-        </Container>
-    );
-}
+          </div>
+
+          {/* Заголовок */}
+          <div className="space-y-2 m-4">
+            <h1 className="text-3xl font-bold tracking-tight">{recipe.title}</h1>
+            <p className="text-lg text-muted-foreground">{recipe.short_description}</p>
+          </div>
+
+          {/* Информация о рецепте */}
+          <RecipeInfoCards recipe={recipe} />
+
+          {/* Карточка автора */}
+          <AuthorCard author={recipe.author} />
+
+          {/* Ингредиенты */}
+          <RecipeIngridients recipe={recipe} />
+
+          {/* Инструкция */}
+          <RecipeInstruction recipe={recipe} />
+        </div>
+      </article>
+    </Container>
+  );
+} 

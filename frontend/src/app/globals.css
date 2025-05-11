@@ -1,9 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-
-
+@layer components {
+  .glass-header {
+    @apply bg-white/70 dark:bg-gray-900/70;
+    @apply backdrop-blur-md;
+    @apply border-b border-gray-200/20 dark:border-gray-700/20;
+    @apply shadow-sm;
+  }
+}
 
 @layer base {
     :root {
@@ -61,8 +69,6 @@
       --chart-5: 340 75% 55%;
     }
   }
-
-
 
 .loader {
   width: 100px;

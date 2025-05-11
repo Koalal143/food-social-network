@@ -10,9 +10,10 @@ services:
     depends_on:
       - backend
       - frontend
+      - minio
     networks:
       - app_network
-
+      - minio_network
   frontend:
     build: ./frontend
     ports:
@@ -21,6 +22,7 @@ services:
       - backend
     networks:
       - app_network
+      - minio_network
     restart: unless-stopped
 
   backend:
@@ -31,30 +33,22 @@ services:
         - SERVER__PORT=8000
     ports:
       - "8000:8000"
-    environment:
-      - SERVER__HOST=0.0.0.0
-      - SERVER__PORT=8000
-      - POSTGRES__USER=postgres
-      - POSTGRES__PASSWORD=postgres
-      - POSTGRES__HOST=db
-      - POSTGRES__PORT=5432
-      - POSTGRES__DB=food_social_network
-      - REDIS__HOST=redis
-      - REDIS__PORT=6379
-      - JWT__SECRET_KEY=your-super-secret-key-in-production
-      - MODE=dev
+    env_file:
+      - backend/.env
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     volumes:
       - ./backend/alembic:/app/alembic
-    restart: unless-stopped
     networks:
       - app_network
       - db_network
       - redis_network
+      - minio_network
 
   db:
     image: postgres:15
@@ -90,13 +84,57 @@ services:
     networks:
       - redis_network
 
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    env_file:
+      - backend/.env
+    environment:
+      - MINIO_ROOT_USER=${S3_STORAGE__ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${S3_STORAGE__SECRET_KEY}
+    command: minio server --console-address ':9001' /data &
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - minio_network
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set myminio http://minio:9000 $S3_STORAGE__ACCESS_KEY $S3_STORAGE__SECRET_KEY;
+      mc mb myminio/images;
+
+      exit 0;
+      "
+    env_file:
+      - backend/.env
+    networks:
+      - minio_network
+
 networks:
   db_network:
     driver: bridge
   redis_network:
     driver: bridge
+  minio_network:
+    driver: bridge
+  app_network:
+    driver: bridge
 
 volumes:
   alembic_data:
   postgres_data:
-  redis_data: 
+  redis_data:
+  minio_data:

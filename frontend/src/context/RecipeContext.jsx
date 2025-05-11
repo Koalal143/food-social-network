@@ -1,67 +1,11 @@
-"use client"
+import { createContext, useContext } from "react"
 
-import { createContext, useContext, useState, useEffect } from "react"
-import RecipesService from "@/services/recipes.service"
+export const RecipeContext = createContext()
 
-const RecipeContext = createContext()
-
-export function RecipeProvider({ children }) {
-    const [recipes, setRecipes] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
-
-    const fetchRecipes = async () => {
-        try {
-            const data = await RecipesService.getAllReceipts()
-            setRecipes(data)
-        } catch (error) {
-            setError(error)
-            console.error("Ошибка при загрузке рецептов:", error)
-        } finally {
-            setLoading(false)
-        }
+export const useRecipes = () => {
+    const context = useContext(RecipeContext)
+    if (!context) {
+        throw new Error('useRecipes must be used within an RecipesProvider')
     }
-
-    const getRecipeById = async (id) => {
-        try {
-            return await RecipesService.getReceiptById(id);
-        } catch (error) {
-            setError(error);
-            console.error("Ошибка при загрузке рецепта:", error);
-            return null;
-        }
-    };
-
-    const addRecipe = async (newRecipe) => {
-        try {
-            const updatedRecipes = await RecipesService.addReceipt(newRecipe)
-            setRecipes(updatedRecipes)
-            return updatedRecipes
-        } catch (error) {
-            setError(error)
-            console.error("Ошибка при добавлении рецепта:", error)
-            return null
-        }
-    }
-
-    useEffect(() => {
-        fetchRecipes()
-    }, [])
-
-    return (
-        <RecipeContext.Provider
-            value={{
-                recipes,
-                loading,
-                error,
-                fetchRecipes,
-                getRecipeById,
-                addRecipe
-            }}
-        >
-            {children}
-        </RecipeContext.Provider>
-    )
+    return context
 }
-
-export const useRecipes = () => useContext(RecipeContext)

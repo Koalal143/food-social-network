@@ -1,14 +1,24 @@
+import { BASE_API } from "../constants/backend-urls";
+import { ERROR_MESSAGES } from "@/constants/errors";
+import { NetworkError } from "@/utils/errors";
+import AuthService from "./auth.service";
+
 export default class UsersService {
     static async getAllUsers() {
         try {
-            const response = await fetch('/users.json');
-            if (!response.ok) throw new Error('Ошибка при загрузке пользователей');
-            const data = await response.json();
-            console.log('Users loaded:', data);
-            return data;
+            const response = await AuthService.makeAuthenticatedRequest(`${BASE_API}/v1/users`);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
+            }
+
+            return await response.json();
         } catch (error) {
-            console.error('Ошибка:', error);
-            return [];
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+            }
+            throw error;
         }
     }
 

@@ -40,9 +40,18 @@ class RedisConfig(BaseModel):
 
 
 class ServerConfig(BaseModel):
+    url: str
     host: str
     port: int
     allowed_origins: list[str]
+
+
+class S3Config(BaseModel):
+    host: str
+    port: int
+    access_key: str
+    secret_key: str
+    endpoint_url: str
 
 
 class Settings(BaseSettings):
@@ -56,6 +65,7 @@ class Settings(BaseSettings):
     project_name: str = "Food Social Network"
     server: ServerConfig
     postgres: PostgresConfig
+    s3_storage: S3Config
     jwt: JWTConfig
     redis: RedisConfig
     mode: Literal["dev", "test", "prod"] = Field(default="prod", description="Application mode")

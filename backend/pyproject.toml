@@ -5,17 +5,18 @@ description = "Food Social Network API"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.109.0",
-    "uvicorn[standard]>=0.27.0",
-    "sqlalchemy>=2.0.25",
+    "aiobotocore==2.21.1",
     "alembic>=1.13.1",
+    "asyncpg>=0.29.0",
+    "fastapi>=0.109.0",
+    "passlib[argon2]>=1.7.4",
     "pydantic[email]>=2.5.3",
     "pydantic-settings>=2.1.0",
-    "asyncpg>=0.29.0",
-    "redis>=5.2.1",
     "python-jose>=3.4.0",
-    "passlib[argon2]>=1.7.4",
     "python-multipart>=0.0.20",
+    "redis>=5.2.1",
+    "sqlalchemy>=2.0.25",
+    "uvicorn[standard]>=0.27.0",
 ]
 
 [dependency-groups]
@@ -23,16 +24,18 @@ dev = [
     "mypy>=1.15.0",
     "pre-commit>=4.2.0",
     "ruff>=0.1.13",
+    "types-aiobotocore[essential]==2.21.1",
+    "uv-sort>=0.5.1",
 ]
 test = [
+    "httpx>=0.26.0",
     "pytest>=7.4.4",
     "pytest-asyncio>=0.23.3",
-    "httpx>=0.26.0",
 ]
 
 [tool.ruff]
 target-version = "py311"
-exclude = ["venv", ".venv", ".env"]
+exclude = ["venv", ".venv", ".env", "src/types/external"]
 
 line-length = 120
 lint.select = ["ALL"]
@@ -64,13 +67,15 @@ lint.ignore = [
     "TD003",
     "FIX002", # too verbose descriptions of todos
     "S101",   # prohibited assert statement
-    "INP001",
     "ARG001", # unused function argument
     "ANN401", # disallow Any type
     "RUF001", # string contrains ambigious o
 ]
 format.skip-magic-trailing-comma = false
 
+[tool.ruff.lint.per-file-ignores]
+"alembic/*" = ["INP001"]
+"tests/*" = ["ANN", "INP001"]
 
 [tool.mypy]
 python_version = "3.12"

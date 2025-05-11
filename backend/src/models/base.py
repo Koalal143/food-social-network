@@ -1,7 +1,9 @@
 import datetime
 
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, MetaData
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+from src.core.config import settings
 
 
 class Base(DeclarativeBase):
@@ -20,3 +22,6 @@ class Base(DeclarativeBase):
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}(id={self.id})>"
+
+
+Base.metadata = MetaData(naming_convention=settings.postgres.naming_convention)

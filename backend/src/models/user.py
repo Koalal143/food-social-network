@@ -7,6 +7,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models.base import Base
 
 if TYPE_CHECKING:
+    from src.models.favorite_recipes import FavoriteRecipe
+    from src.models.recipe import Recipe
     from src.models.token import RefreshToken
     from src.models.user_profile import UserProfile
 
@@ -23,3 +25,5 @@ class User(Base):
 
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
     profile: Mapped["UserProfile"] = relationship(back_populates="user", uselist=False)
+    recipes: Mapped[list["Recipe"]] = relationship(back_populates="author")
+    favorite_recipes: Mapped[list["FavoriteRecipe"]] = relationship(back_populates="user")
