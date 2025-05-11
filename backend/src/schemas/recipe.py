@@ -52,7 +52,7 @@ class BaseRecipeSchema(BaseModel):
 
 
 class _InstructionsMixin(BaseSchema):
-    instructions: list[RecipeInstruction]
+    instructions: list[RecipeInstruction] | None
 
 
 class _IngredientsMixin(BaseSchema):
