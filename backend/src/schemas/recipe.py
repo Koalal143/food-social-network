@@ -60,7 +60,7 @@ class _IngredientsMixin(BaseSchema):
 
 
 class _TagsMixin(BaseSchema):
-    tags: list[RecipeTag]
+    tags: list[RecipeTag] = Field(max_length=15)
 
 
 class _IsPublishedMixin(BaseSchema):
