@@ -70,7 +70,7 @@ class _IsPublishedMixin(BaseSchema):
 
 
 class RecipeReadShort(BaseRecipeSchema):
-    pass
+    id: PositiveInt
 
 
 class RecipeRead(
