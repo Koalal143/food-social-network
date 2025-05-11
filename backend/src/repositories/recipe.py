@@ -26,11 +26,18 @@ class RecipeRepository:
         )
 
     def _get_with_author_short(self, recipe_id: int) -> Select[tuple[Recipe]]:
-        return self._main_query(recipe_id=recipe_id).options(
-            joinedload(Recipe.author)
-            .load_only(User.id, User.username)
-            .joinedload(User.profile)
-            .load_only(UserProfile.avatar_url)
+        return (
+            select(Recipe)
+            .where(Recipe.id == recipe_id)
+            .options(
+                selectinload(Recipe.ingredients),
+                selectinload(Recipe.instructions),
+                selectinload(Recipe.tags),
+                joinedload(Recipe.author)
+                .load_only(User.id, User.username)
+                .joinedload(User.profile)
+                .load_only(UserProfile.avatar_url),
+            )
         )
 
     async def get_by_id(self, recipe_id: int) -> Recipe | None:
@@ -39,16 +46,7 @@ class RecipeRepository:
         return result.first()
 
     async def get_all(self, skip: int = 0, limit: int = 100, **filters: Any) -> tuple[int, Sequence[Recipe]]:
-        stmt = (
-            select(Recipe)
-            .options(
-                selectinload(Recipe.ingredients),
-                selectinload(Recipe.instructions),
-                selectinload(Recipe.tags),
-            )
-            .offset(skip)
-            .limit(limit)
-        )
+        stmt = select(Recipe).offset(skip).limit(limit)
         if filters:
             stmt = stmt.filter_by(**filters)
         result = await self.session.scalars(stmt)
