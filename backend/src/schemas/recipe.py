@@ -18,7 +18,7 @@ class IngredientUpdate(Ingredient):
 
 
 class RecipeInstruction(BaseSchema):
-    step_number: PositiveInt
+    step_number: PositiveInt = Field(le=25)
     description: str = Field(max_length=1000, examples=["Boil water", "Добавьте соль"])
     image_url: str | None = Field(default=None)
 
@@ -52,7 +52,7 @@ class BaseRecipeSchema(BaseModel):
 
 
 class _InstructionsMixin(BaseSchema):
-    instructions: list[RecipeInstruction] | None = Field(default=None)
+    instructions: list[RecipeInstruction] | None = Field(default=None, max_length=25)
 
 
 class _IngredientsMixin(BaseSchema):
