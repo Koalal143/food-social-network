@@ -14,7 +14,14 @@ from src.exceptions import (
     RecipeOwnershipError,
 )
 from src.schemas.direct_upload import DirectUpload
-from src.schemas.recipe import RecipeCreate, RecipeInstructionsUploadUrls, RecipeRead, RecipeReadFull, RecipeUpdate
+from src.schemas.recipe import (
+    RecipeCreate,
+    RecipeInstructionsUploadUrls,
+    RecipeRead,
+    RecipeReadFull,
+    RecipeReadShort,
+    RecipeUpdate,
+)
 from src.services.recipe import RecipeService
 from src.services.recipe_instructions import RecipeInstructionsService
 from src.utils.examples_factory import json_example_factory, json_examples_factory
@@ -100,7 +107,7 @@ async def get_recipes(
     response: Response,
     offset: Annotated[int, Query(ge=0, description="Смещение для пагинации")] = 0,
     limit: Annotated[int, Query(ge=1, le=50, description="Количество рецептов на странице")] = 10,
-) -> list[RecipeRead]:
+) -> list[RecipeReadShort]:
     recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
     total, recipes = await recipe_service.get_all(skip=offset, limit=limit)
     response.headers["X-Total-Count"] = str(total)
