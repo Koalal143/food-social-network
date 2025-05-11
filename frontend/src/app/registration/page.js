@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Container from "@/components/layout/Container";
-import RegistrationForm from "@/components/shared/RegistrationForm";
+import RegistrationForm from "@/components/shared/forms/RegistrationForm";
 
 export default function RegistrationPage() {
   return (

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Container from "@/components/layout/Container";
-import LoginForm from "@/components/shared/LoginForm";
+import LoginForm from "@/components/shared/forms/LoginForm";
 
 export default function LoginPage() {
   return (
