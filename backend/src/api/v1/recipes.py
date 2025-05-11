@@ -7,7 +7,7 @@ from src.core.security import CurrentUserDependency, get_current_user
 from src.dependencies import S3StorageDependency, UnitOfWorkDependency
 from src.exceptions import AppHTTPException, AttachInstructionStepError, RecipeNotFoundError, RecipeOwnershipError
 from src.schemas.direct_upload import DirectUpload
-from src.schemas.recipe import RecipeCreate, RecipeInstructionsUploadUrls, RecipeRead, RecipeUpdate
+from src.schemas.recipe import RecipeCreate, RecipeInstructionsUploadUrls, RecipeRead, RecipeReadFull, RecipeUpdate
 from src.services.recipe import RecipeService
 from src.services.recipe_instructions import RecipeInstructionsService
 from src.utils.examples_factory import json_example_factory, json_examples_factory
@@ -41,6 +41,15 @@ _recipe_example = {
     "tags": [{"name": "Итальянская кухня"}, {"name": "Ужин"}],
 }
 
+_recipe_full_example = {
+    **_recipe_example,
+    "author": {
+        "id": 1,
+        "username": "john_doe",
+        "profile": {"avatar_url": "https://example.com/images/avatars/1.jpg"},
+    },
+}
+
 
 @router.get(
     "/{recipe_id}",
@@ -49,7 +58,7 @@ _recipe_example = {
     responses={
         status.HTTP_200_OK: {
             "description": "Successful response with recipe details",
-            "content": json_example_factory(_recipe_example),
+            "content": json_example_factory(_recipe_full_example),
         },
         status.HTTP_404_NOT_FOUND: {
             "description": "Recipe not found",
@@ -63,7 +72,7 @@ async def get_recipe(
     recipe_id: Annotated[int, Path(title="Recipe ID", ge=1)],
     uow: UnitOfWorkDependency,
     s3_storage: S3StorageDependency,
-) -> RecipeRead:
+) -> RecipeReadFull:
     recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
     try:
         return await recipe_service.get_by_id(recipe_id=recipe_id)
@@ -76,7 +85,7 @@ async def get_recipe(
     summary="Get list of recipes",
     description=(
         "Returns a list of recipes with pagination. The total count of recipes is returned in the X-Total-Count header."
-    )
+    ),
 )
 async def get_recipes(
     uow: UnitOfWorkDependency,
@@ -125,7 +134,7 @@ async def create_recipe(
     responses={
         status.HTTP_200_OK: {
             "description": "Recipe updated successfully",
-            "content": json_example_factory(_recipe_example),
+            "content": json_example_factory(_recipe_full_example),
         },
         status.HTTP_403_FORBIDDEN: {
             "description": "Forbidden - Recipe belongs to another user",
@@ -147,7 +156,7 @@ async def update_recipe(
     current_user: CurrentUserDependency,
     uow: UnitOfWorkDependency,
     s3_storage: S3StorageDependency,
-) -> RecipeRead:
+) -> RecipeReadFull:
     recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
     try:
         return await recipe_service.update(user=current_user, recipe_id=recipe_id, recipe_update=recipe_data)
