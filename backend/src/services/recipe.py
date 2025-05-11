@@ -17,6 +17,7 @@ from src.schemas.recipe import (
     RecipeInstruction,
     RecipeRead,
     RecipeReadFull,
+    RecipeReadShort,
     RecipeTag,
     RecipeUpdate,
 )
@@ -47,6 +48,13 @@ class RecipeService:
 
         return recipe_schema
 
+    async def _to_recipe_short_schema(self, recipe: Recipe) -> RecipeReadShort:
+        if recipe.image_url:
+            recipe.image_url = await self.s3_storage.get_file_url(
+                self._recipe_bucket_name, recipe.image_url, expires_in=3600
+            )
+        return RecipeReadShort.model_validate(recipe, from_attributes=True)
+
     async def _to_recipe_full_schema(self, recipe: Recipe) -> RecipeReadFull:
         recipe_schema = await self._to_recipe_schema(recipe)
         author = UserReadShort.model_validate(recipe.author, from_attributes=True)
@@ -66,9 +74,9 @@ class RecipeService:
 
         return await self._to_recipe_full_schema(recipe)
 
-    async def get_all(self, skip: int = 0, limit: int = 10) -> tuple[int, Sequence[RecipeRead]]:
+    async def get_all(self, skip: int = 0, limit: int = 10) -> tuple[int, Sequence[RecipeReadShort]]:
         count, recipes = await self.uow.recipes.get_all(skip=skip, limit=limit)
-        recipe_schemas = [await self._to_recipe_schema(recipe) for recipe in recipes]
+        recipe_schemas = [await self._to_recipe_short_schema(recipe) for recipe in recipes]
 
         return count, recipe_schemas
 
