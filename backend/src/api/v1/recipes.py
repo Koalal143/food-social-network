@@ -144,7 +144,7 @@ async def create_recipe(
             "content": json_example_factory(_recipe_full_example),
         },
         status.HTTP_400_BAD_REQUEST: {
-            "description": "Can't publish recipe without instructions",
+            "description": "Can't publish recipe without instructions or image",
             "content": json_examples_factory(
                 {
                     "No instructions": {
@@ -156,7 +156,7 @@ async def create_recipe(
                     "No image": {
                         "value": {
                             "detail": "Recipe can not be published without image",
-                            "error_key": "image_required_to_publish_recipe",
+                            "error_key": "image_required_to_publish",
                         }
                     },
                 }
