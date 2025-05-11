@@ -156,7 +156,7 @@ async def create_recipe(
                     "No image": {
                         "value": {
                             "detail": "Recipe can not be published without image",
-                            "error_key": "image_is_required_to_publish_recipe",
+                            "error_key": "image_required_to_publish_recipe",
                         }
                     },
                 }

@@ -10,7 +10,7 @@ class RecipeOwnershipError(BaseAppError):
 
 
 class NoRecipeImageError(BaseAppError):
-    error_key = "image_is_required_to_publish_recipe"
+    error_key = "image_required_to_publish_recipe"
 
 
 class NoRecipeInstructionsError(BaseAppError):
