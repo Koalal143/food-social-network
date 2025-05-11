@@ -108,7 +108,7 @@ class RecipeService:
 
         await self._create_ingredients(recipe.id, recipe_create.ingredients)
 
-        if recipe_create.insructions:
+        if recipe_create.instructions:
             await self._create_instructions(recipe.id, recipe_create.instructions)
 
         await self._create_tags(recipe.id, recipe_create.tags)
