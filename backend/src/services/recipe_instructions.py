@@ -31,7 +31,7 @@ class RecipeInstructionsService:
             msg = "Can't attach image to duplicate steps"
             raise AttachInstructionStepError(msg)
 
-        urls = [f"recipe/{recipe_id}/instructions/{step}/step.png" for step in steps]
+        urls = [f"recipes/{recipe_id}/instructions/{step}/step.png" for step in steps]
         presigned_urls = []
         conditions = [
             {"acl": "private"},
