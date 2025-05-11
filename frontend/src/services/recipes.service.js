@@ -1,3 +1,7 @@
+import { BASE_API } from "@/constants/backend-urls";
+import AuthService from "./auth.service";
+import { tokenManager } from "@/utils/tokenManager";
+
 export default class RecipesService {
     static async getAllRecipes() {
         try {
@@ -22,16 +26,29 @@ export default class RecipesService {
         }
     }
 
-    static async addRecipe(newReceipt) {
+    static async addRecipe(recipe, options = {}) {
         try {
-            const response = await fetch('/recipes.json');
-            if (!response.ok) throw new Error('Ошибка при загрузке рецептов');
-            const receipts = await response.json();
-            const updatedReceipts = [...receipts, { ...newReceipt, id: receipts.length + 1 }];
-            return updatedReceipts;
+            await tokenManager.ensureValidToken();
+
+            console.log(recipe);
+
+            const accessToken = AuthService.getAccessToken()
+            const headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${accessToken}`
+            };
+            const response = await fetch(`${BASE_API}/v1/recipes`, {
+                method: 'POST',
+                headers: headers
+            })
+            if (!response.ok) {
+                // Обработка ошибок бэка
+            }
         } catch (error) {
-            console.error('Ошибка:', error);
-            return null;
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+            }
+            throw error;
         }
     }
 
