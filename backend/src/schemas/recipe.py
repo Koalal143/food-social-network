@@ -3,6 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
 from src.schemas.base import BaseReadSchema, BaseSchema
 from src.schemas.direct_upload import DirectUpload
+from src.schemas.user import UserReadShort
 from src.utils.partial_model import partial_model
 
 
@@ -69,7 +70,11 @@ class _IsPublishedMixin(BaseSchema):
 class RecipeRead(
     _InstructionsMixin, _IngredientsMixin, _TagsMixin, _IsPublishedMixin, BaseRecipeSchema, BaseReadSchema
 ):
-    pass
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True, extra="ignore")
+
+
+class RecipeReadFull(RecipeRead):
+    author: UserReadShort
 
 
 class RecipeCreate(_InstructionsMixin, _IngredientsMixin, _TagsMixin, BaseRecipeSchema):
