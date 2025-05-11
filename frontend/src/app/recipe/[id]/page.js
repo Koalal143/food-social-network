@@ -53,7 +53,7 @@ export default function RecipePage({ params }) {
           {/* Фотография и кнопки */}
           <div className="relative aspect-[16/9] rounded-t-lg overflow-hidden">
             <Image
-              src={recipe.image_url}
+              src={recipe.image_url || '/images/image-dummy.svg'}
               alt={recipe.title}
               fill
               className="object-cover"
