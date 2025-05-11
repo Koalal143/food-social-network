@@ -2,7 +2,12 @@ from collections.abc import Sequence
 
 from src.adapters.storage import S3Storage
 from src.db.uow import SQLAlchemyUnitOfWork
-from src.exceptions.recipe import NoRecipeImageError, RecipeNotFoundError, RecipeOwnershipError
+from src.exceptions.recipe import (
+    NoRecipeImageError,
+    NoRecipeInstructionsError,
+    RecipeNotFoundError,
+    RecipeOwnershipError,
+)
 from src.models.recipe import Recipe
 from src.models.user import User
 from src.schemas.direct_upload import DirectUpload
@@ -125,6 +130,10 @@ class RecipeService:
         if not existing_recipe.image_url and recipe_update.is_published:
             msg = "Recipe can not be published without image"
             raise NoRecipeImageError(msg)
+
+        if recipe_update.is_published and not (existing_recipe.instructions or recipe_update.instructions):
+            msg = "Recipe can not be published without instructions"
+            raise NoRecipeInstructionsError(msg)
 
         recipe_data = recipe_update.model_dump(exclude={"ingredients", "instructions", "tags"}, exclude_unset=True)
         if recipe_data:
