@@ -12,7 +12,7 @@ from pydantic import (
     field_validator,
 )
 
-from src.schemas.base import BaseReadSchema
+from src.schemas.base import BaseReadSchema, BaseSchema
 
 BANNED_USERNAMES = [
     "admin",
@@ -93,6 +93,16 @@ class UserRead(BaseReadSchema):
     is_superuser: bool
     profile: UserProfileRead | None = Field(default=None)
     last_login: datetime | None
+
+
+class UserProfileShort(BaseSchema):
+    avatar_url: str | None
+
+
+class UserReadShort(BaseSchema):
+    id: int
+    username: str
+    profile: UserProfileShort
 
 
 class UserLogin(BaseModel):
