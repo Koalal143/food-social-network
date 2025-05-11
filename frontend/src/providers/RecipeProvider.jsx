@@ -33,9 +33,7 @@ export default function RecipeProvider({ children }) {
 
     const addRecipe = async (newRecipe) => {
         try {
-            const updatedRecipes = await RecipesService.addRecipe(newRecipe)
-            setRecipes(updatedRecipes)
-            return updatedRecipes
+            await RecipesService.addRecipe(newRecipe)
         } catch (error) {
             setError(error)
             console.error("Ошибка при добавлении рецепта:", error)
