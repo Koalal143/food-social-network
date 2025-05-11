@@ -9,7 +9,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import RecipesList from '@/components/layout/RecipesList';
+import RecipesList from '@/components/shared/RecipesList';
 
 export default function SearchPage() {
   const router = useRouter();

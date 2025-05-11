@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../tabs"
-import RecipesList from "@/components/layout/RecipesList"
+import RecipesList from "@/components/shared/RecipesList"
 import { Button } from "../button"
 import { Plus, Search, ChefHat, Heart } from "lucide-react"
 import Link from "next/link"
