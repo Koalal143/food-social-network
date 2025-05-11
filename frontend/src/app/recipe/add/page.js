@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import Container from '@/components/layout/Container';
-import AddRecipeForm from '@/components/shared/AddRecipeForm';
+import Container from "@/components/layout/Container";
+import AddRecipeForm from "@/components/shared/forms/AddRecipeForm";
 
 export default function AddRecipePage() {
   return (
@@ -14,4 +14,4 @@ export default function AddRecipePage() {
       </Container>
     </div>
   );
-} 
+}
