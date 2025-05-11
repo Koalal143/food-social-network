@@ -37,6 +37,12 @@ export default function DesktopSidebar() {
                         Профиль
                     </Button>
                 </Link>
+                <Link href="/recipe-ai" passHref>
+                    <Button variant="ghost" className={`w-full justify-start ${isActive('/recipe-ai') ? 'bg-accent' : ''}`}>
+                        <Bot className="mr-2 h-4 w-4" />
+                        Шеф-помощник
+                    </Button>
+                </Link>
             </nav>
         </aside>
     );
