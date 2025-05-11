@@ -1,7 +1,7 @@
 from src.schemas.banned_email import BannedEmailDomainCreate, BannedEmailDomainRead
 from src.schemas.base import BaseReadSchema, BaseSchema
 from src.schemas.direct_upload import DirectUpload, DirectUploadFields
-from src.schemas.recipe import RecipeRead, RecipeReadFull
+from src.schemas.recipe import RecipeCreate, RecipeInstructionsUploadUrls, RecipeRead, RecipeReadFull, RecipeUpdate
 from src.schemas.token import Token, TokenPayload
 from src.schemas.user import (
     UserCreate,
@@ -20,8 +20,11 @@ __all__ = [
     "BaseSchema",
     "DirectUpload",
     "DirectUploadFields",
+    "RecipeCreate",
+    "RecipeInstructionsUploadUrls",
     "RecipeRead",
     "RecipeReadFull",
+    "RecipeUpdate",
     "Token",
     "TokenPayload",
     "UserCreate",
