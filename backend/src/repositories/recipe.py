@@ -1,19 +1,21 @@
 from collections.abc import Sequence
 from typing import Any
 
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import Select, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from src.models.recipe import Recipe
+from src.models.user import User
+from src.models.user_profile import UserProfile
 
 
 class RecipeRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def get_by_id(self, recipe_id: int) -> Recipe | None:
-        stmt = (
+    def _main_query(self, recipe_id: int) -> Select[tuple[Recipe]]:
+        return (
             select(Recipe)
             .where(Recipe.id == recipe_id)
             .options(
@@ -22,6 +24,17 @@ class RecipeRepository:
                 selectinload(Recipe.tags),
             )
         )
+
+    def _get_with_author_short(self, recipe_id: int) -> Select[tuple[Recipe]]:
+        return self._main_query(recipe_id=recipe_id).options(
+            joinedload(Recipe.author)
+            .load_only(User.id, User.username)
+            .joinedload(User.profile)
+            .load_only(UserProfile.avatar_url)
+        )
+
+    async def get_by_id(self, recipe_id: int) -> Recipe | None:
+        stmt = self._get_with_author_short(recipe_id=recipe_id)
         result = await self.session.scalars(stmt)
         return result.first()
 
@@ -50,9 +63,9 @@ class RecipeRepository:
         return db_recipe
 
     async def update(self, recipe_id: int, **fields: Any) -> Recipe | None:
-        stmt = update(Recipe).where(Recipe.id == recipe_id).values(**fields).returning(Recipe)
-        result = await self.session.scalars(stmt)
-        return result.first()
+        stmt = update(Recipe).where(Recipe.id == recipe_id).values(**fields)
+        await self.session.execute(stmt)
+        return await self.get_by_id(recipe_id=recipe_id)
 
     async def delete_by_id(self, recipe_id: int) -> None:
         stmt = delete(Recipe).where(Recipe.id == recipe_id)
