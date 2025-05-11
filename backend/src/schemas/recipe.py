@@ -52,7 +52,7 @@ class BaseRecipeSchema(BaseModel):
 
 
 class _InstructionsMixin(BaseSchema):
-    instructions: list[RecipeInstruction] | None
+    instructions: list[RecipeInstruction] | None = Field(default=None)
 
 
 class _IngredientsMixin(BaseSchema):
