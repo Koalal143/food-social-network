@@ -8,6 +8,7 @@ from src.dependencies import S3StorageDependency, UnitOfWorkDependency
 from src.exceptions import (
     AppHTTPException,
     AttachInstructionStepError,
+    NoRecipeImageError,
     NoRecipeInstructionsError,
     RecipeNotFoundError,
     RecipeOwnershipError,
@@ -144,10 +145,20 @@ async def create_recipe(
         },
         status.HTTP_400_BAD_REQUEST: {
             "description": "Can't publish recipe without instructions",
-            "content": json_example_factory(
+            "content": json_examples_factory(
                 {
-                    "detail": "Recipe can not be published without instructions",
-                    "error_key": "instructions_required_to_publish",
+                    "No instructions": {
+                        "value": {
+                            "detail": "Recipe can not be published without instructions",
+                            "error_key": "instructions_required_to_publish",
+                        }
+                    },
+                    "No image": {
+                        "value": {
+                            "detail": "Recipe can not be published without image",
+                            "error_key": "image_is_required_to_publish_recipe",
+                        }
+                    },
                 }
             ),
         },
@@ -179,7 +190,7 @@ async def update_recipe(
         raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
     except RecipeOwnershipError as e:
         raise AppHTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e), error_key=e.error_key) from None
-    except NoRecipeInstructionsError as e:
+    except (NoRecipeInstructionsError, NoRecipeImageError) as e:
         raise AppHTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e), error_key=e.error_key) from None
 
 
