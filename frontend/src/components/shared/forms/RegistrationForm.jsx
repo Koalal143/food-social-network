@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/form";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import { Button } from "../../ui/button";
+import { Input } from "../../ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
