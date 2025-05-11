@@ -56,7 +56,7 @@ class _InstructionsMixin(BaseSchema):
 
 
 class _IngredientsMixin(BaseSchema):
-    ingredients: list[Ingredient]
+    ingredients: list[Ingredient] = Field(max_length=50)
 
 
 class _TagsMixin(BaseSchema):
