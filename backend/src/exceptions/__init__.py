@@ -7,6 +7,7 @@ from src.exceptions.auth import (
 )
 from src.exceptions.banned_email import EmailDomainAlreadyBannedError
 from src.exceptions.base import BaseAppError
+from src.exceptions.favorite_recipe import RecipeAlreadyInFavoritesError, RecipeNotInFavoritesError
 from src.exceptions.http import AppHTTPException
 from src.exceptions.image import ImageTooLargeError, WrongImageFormatError
 from src.exceptions.recipe import (
@@ -33,7 +34,9 @@ __all__ = [
     "JWTSignatureExpiredError",
     "NoRecipeImageError",
     "NoRecipeInstructionsError",
+    "RecipeAlreadyInFavoritesError",
     "RecipeNotFoundError",
+    "RecipeNotInFavoritesError",
     "RecipeOwnershipError",
     "UserEmailAlreadyExistsError",
     "UserNicknameAlreadyExistsError",
