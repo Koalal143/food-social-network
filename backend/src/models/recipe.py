@@ -7,6 +7,7 @@ from src.enums.recipe_difficulty import RecipeDifficultyEnum
 from src.models.base import Base
 
 if TYPE_CHECKING:
+    from src.models.favorite_recipes import FavoriteRecipe
     from src.models.recipe_ingredient import RecipeIngredient
     from src.models.recipe_instructions import RecipeInstruction
     from src.models.recipe_tag import RecipeTag
@@ -28,3 +29,4 @@ class Recipe(Base):
     ingredients: Mapped[list["RecipeIngredient"]] = relationship(back_populates="recipe")
     instructions: Mapped[list["RecipeInstruction"]] = relationship(back_populates="recipe")
     tags: Mapped[list["RecipeTag"]] = relationship(back_populates="recipe")
+    favorite_recipes: Mapped[list["FavoriteRecipe"]] = relationship(back_populates="recipe")
