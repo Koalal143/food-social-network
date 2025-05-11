@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
 import Container from "@/components/layout/Container";
 import { useRecipes } from "@/context/RecipeContext";
-import { useUser } from "@/context/UserContext";
 import Loader from "@/components/ui/Loader";
 import Image from "next/image";
 import AuthorCard from "@/components/ui/recipe-page/AuthorCard";
@@ -17,10 +16,8 @@ import RecipeInstruction from "@/components/ui/recipe-page/RecipeInstruction";
 
 export default function RecipePage({ params }) {
   const { getRecipeById } = useRecipes();
-  const { getUserById } = useUser();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const [recipe, setRecipe] = useState(null);
-  const [author, setAuthor] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
   
   const { id } = React.use(params);
@@ -31,12 +28,10 @@ export default function RecipePage({ params }) {
       if (recipeData) {
         setRecipe(recipeData);
         setIsSaved(isFavorite(recipeData.id));
-        const authorData = await getUserById(recipeData.authorId);
-        setAuthor(authorData);
       }
     };
     fetchData();
-  }, [id, getRecipeById, getUserById, isFavorite]);
+  }, [id, isFavorite]);
 
   const handleSave = () => {
     if (isSaved) {
@@ -47,7 +42,7 @@ export default function RecipePage({ params }) {
     setIsSaved(!isSaved);
   };
 
-  if (!recipe || !author) {
+  if (!recipe) {
     return <Loader />;
   }
 
@@ -58,11 +53,12 @@ export default function RecipePage({ params }) {
           {/* Фотография и кнопки */}
           <div className="relative aspect-[16/9] rounded-t-lg overflow-hidden">
             <Image
-              src={recipe.preview}
+              src={recipe.image_url}
               alt={recipe.title}
               fill
               className="object-cover"
               priority
+              unoptimized={true}
             />
             <div className="absolute top-4 right-4 flex gap-2">
               <Button
@@ -83,14 +79,14 @@ export default function RecipePage({ params }) {
           {/* Заголовок */}
           <div className="space-y-2 m-4">
             <h1 className="text-3xl font-bold tracking-tight">{recipe.title}</h1>
-            <p className="text-lg text-muted-foreground">{recipe.shortDescription}</p>
+            <p className="text-lg text-muted-foreground">{recipe.short_description}</p>
           </div>
 
           {/* Информация о рецепте */}
           <RecipeInfoCards recipe={recipe} />
 
           {/* Карточка автора */}
-          <AuthorCard author={author} />
+          <AuthorCard author={recipe.author} />
 
           {/* Ингредиенты */}
           <RecipeIngridients recipe={recipe} />

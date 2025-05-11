@@ -39,9 +39,9 @@ export default function RecipeCard({ recipe }) {
                             <div className="flex items-center gap-2 text-white">
                                 <Clock className="w-4 h-4" />
                                 <span className="text-sm">{recipe.time}</span>
-                                <span className="mx-1">|</span>
+                                {/* <span className="mx-1">|</span>
                                 <User className="w-4 h-4" />
-                                <span className="text-sm">{recipe.servings} порций</span>
+                                <span className="text-sm">{recipe.servings} порций</span> */}
                             </div>
                         </div>
                     </div>
@@ -55,10 +55,10 @@ export default function RecipeCard({ recipe }) {
                                 <div className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
                                     {recipe.difficulty}
                                 </div>
-                                <div className="flex items-center gap-1 text-yellow-500">
+                                {/* <div className="flex items-center gap-1 text-yellow-500">
                                     <Star className="w-4 h-4 fill-yellow-500" />
                                     <span className="text-sm">4.8</span>
-                                </div>
+                                </div> */}
                             </div>
                             <button 
                                 className={`px-3 py-1 ${
