@@ -65,14 +65,15 @@ export default function LoginForm() {
               name="identifier"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email или юзернейм</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">Email или юзернейм</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Введите email или юзернейм"
+                      className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -81,17 +82,18 @@ export default function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Пароль</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">Пароль</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="Введите пароль"
+                        className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
                         {...field}
                       />
                       <button
                         type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
@@ -102,13 +104,13 @@ export default function LoginForm() {
                       </button>
                     </div>
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
             <Button 
               type="submit" 
-              className="w-full"
+              className="w-full bg-orange-400 hover:bg-orange-500 text-white font-medium"
               disabled={isLoading}
             >
               {isLoading ? "Вход..." : "Войти"}

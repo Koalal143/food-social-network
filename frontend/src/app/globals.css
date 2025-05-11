@@ -126,3 +126,52 @@
       background-position: -2px -4px , 2px 2px , 1px 1px;
     }
 }
+
+.egg-float {
+  @apply absolute;
+  width: 120px;
+  height: 90px;
+  animation: float linear infinite;
+  transform-origin: center;
+}
+
+.egg-white {
+  @apply absolute inset-0;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(200, 200, 200, 0.8);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.egg-yolk {
+  @apply absolute;
+  width: 45px;
+  height: 45px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 35% 35%,
+    rgb(255, 226, 89) 0%,
+    rgb(255, 174, 0) 50%,
+    rgb(255, 145, 0) 100%
+  );
+  border-radius: 50%;
+  box-shadow: inset -2px -2px 6px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(120vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-20vh) rotate(360deg);
+    opacity: 0;
+  }
+}
