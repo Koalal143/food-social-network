@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from src.adapters.storage import S3Storage
 from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions.recipe import AttachInstructionStepError
-from src.schemas.recipe import RecipeInstructionsUploadUrls
+from src.schemas.recipe import MAX_RECIPE_INSTRUCTIONS_COUNT, RecipeInstructionsUploadUrls
 
 
 class RecipeInstructionsService:
@@ -15,16 +15,12 @@ class RecipeInstructionsService:
     async def generate_instructions_post_urls(
         self, recipe_id: int, steps: Sequence[int]
     ) -> list[RecipeInstructionsUploadUrls]:
-        instructions_total_count = await self.uow.recipe_instructions.get_instructions_count_by_recipe_id(
-            recipe_id=recipe_id,
-        )
-
-        if any(elem > instructions_total_count for elem in steps):
-            msg = "Can't attach image to one of steps, because it's greater than the last instruction step"
+        if any(elem > MAX_RECIPE_INSTRUCTIONS_COUNT for elem in steps):
+            msg = f"Can't attach image to one of steps, because it's greater than {MAX_RECIPE_INSTRUCTIONS_COUNT}"
             raise AttachInstructionStepError(msg)
 
-        if len(steps) > instructions_total_count:
-            msg = "Can't attach image to more steps than total instructions count"
+        if len(steps) > MAX_RECIPE_INSTRUCTIONS_COUNT:
+            msg = f"Can't attach image to more steps than {MAX_RECIPE_INSTRUCTIONS_COUNT}"
             raise AttachInstructionStepError(msg)
 
         if len(set(steps)) < len(steps):
