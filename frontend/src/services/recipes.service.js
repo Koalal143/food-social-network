@@ -3,6 +3,37 @@ import AuthService from "./auth.service";
 import { tokenManager } from "@/utils/tokenManager";
 
 export default class RecipesService {
+    static async getPaginatedRecipes(offset = 0, limit = 10) {
+        try {
+            console.log(`Fetching recipes with offset=${offset}, limit=${limit}`);
+            
+            const url = new URL(`${BASE_API}/v1/recipes`);
+            url.searchParams.append('offset', offset.toString());
+            url.searchParams.append('limit', limit.toString());
+            
+            const response = await fetch(url.toString());
+            
+            if (!response.ok) throw new Error('Ошибка при загрузке рецептов');
+            
+            const data = await response.json();
+            
+            // Получаем total count из заголовков и преобразуем в число
+            const totalCountHeader = response.headers.get('X-Total-Count');
+            console.log(response.headers);
+            
+            console.log('X-Total-Count raw header:', totalCountHeader);
+            
+            // Возвращаем данные и явно возвращаем totalCount
+            return {
+                data: data,
+                totalCount: totalCountHeader
+            };
+        } catch (error) {
+            console.error('Ошибка при загрузке рецептов с пагинацией:', error);
+            return { data: [], totalCount: 0 };
+        }
+    }
+
     static async getAllRecipes() {
         try {
             const response = await fetch('/recipes.json');

@@ -9,11 +9,36 @@ export default function RecipeProvider({ children }) {
     const [recipes, setRecipes] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [hasMore, setHasMore] = useState(true)
+    const [offset, setOffset] = useState(0)
+    const [totalCount, setTotalCount] = useState(0)
+    const LIMIT = 10
 
-    const fetchRecipes = async () => {
+    const fetchRecipes = async (resetExisting = false) => {
         try {
-            const data = await RecipesService.getAllRecipes()
-            setRecipes(data)
+            setLoading(true)
+            
+            // Если resetExisting = true, начинаем с нуля
+            const currentOffset = resetExisting ? 0 : offset
+            
+            const { data, totalCount } = await RecipesService.getPaginatedRecipes(currentOffset, LIMIT)
+            console.log('Received data:', { data: data.length, totalCount, currentOffset });
+            
+            // Обновляем состояние totalCount
+            setTotalCount(totalCount)
+            
+            // Обновляем состояние hasMore на основе полученного totalCount
+            // Проверяем, есть ли еще рецепты для загрузки
+            const newOffset = resetExisting ? LIMIT : currentOffset + LIMIT;
+            const moreAvailable = newOffset < totalCount;
+            console.log('More available?', { newOffset, totalCount, moreAvailable });
+            setHasMore(moreAvailable);
+            
+            // Обновляем рецепты: либо добавляем к существующим, либо заменяем
+            setRecipes(prev => resetExisting ? data : [...prev, ...data])
+            
+            // Обновляем смещение для следующего запроса
+            setOffset(newOffset);
         } catch (error) {
             setError(error)
             console.error("Ошибка при загрузке рецептов:", error)
@@ -21,6 +46,10 @@ export default function RecipeProvider({ children }) {
             setLoading(false)
         }
     }
+
+    useEffect(() => {
+        fetchRecipes(true)
+    }, [])
 
     const getRecipeById = async (id) => {
         try {
@@ -124,16 +153,14 @@ export default function RecipeProvider({ children }) {
         }
     };
 
-    useEffect(() => {
-        fetchRecipes()
-    }, [])
-
     return (
         <RecipeContext.Provider
             value={{
                 recipes,
                 loading,
                 error,
+                hasMore,
+                totalCount,
                 fetchRecipes,
                 getRecipeById,
                 addRecipe,
