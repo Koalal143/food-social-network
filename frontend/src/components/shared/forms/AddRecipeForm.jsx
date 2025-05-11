@@ -41,14 +41,23 @@ const AddRecipeForm = () => {
   });
 
   useEffect(() => {
-    instructionFields.forEach((field, index) => {
-      setValue(`instructions.${index}.step_number`, index + 1);
-    });
+    const timer = setTimeout(() => {
+      instructionFields.forEach((_, index) => {
+        setValue(`instructions.${index}.step_number`, index + 1, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      });
+    }, 0);
+  
+    return () => clearTimeout(timer);
   }, [instructionFields, setValue]);
   
   const handleAddInstruction = () => {
-    const nextStepNumber = instructionFields.length + 1;
-    appendInstruction({ step_number: nextStepNumber, description: '', photo: null });
+    if (instructionFields.length < 25) {
+      const nextStepNumber = instructionFields.length + 1;
+      appendInstruction({ step_number: nextStepNumber, description: '', photo: null });
+    }
   };
   
   const { toast } = useToast();
@@ -177,7 +186,12 @@ const AddRecipeForm = () => {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => appendIngredient({ name: '', quantity: '' })}
+              onClick={() => {
+                if (ingredientFields.length < 50) {
+                  appendIngredient({ name: '', quantity: '' });
+                }
+              }}
+              disabled={ingredientFields.length >= 50}
             >
               <Plus className="w-4 h-4 mr-2" />
               Добавить ингредиент
@@ -222,6 +236,7 @@ const AddRecipeForm = () => {
               variant="outline"
               size="sm"
               onClick={handleAddInstruction}
+              disabled={instructionFields.length >= 25}
             >
               <Plus className="w-4 h-4 mr-2" />
               Добавить шаг
@@ -232,7 +247,7 @@ const AddRecipeForm = () => {
           {instructionFields.map((field, index) => (
             <div key={field.id} className="flex items-start gap-2">
               <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-medium mt-2">
-                {field.step_number}
+                {index + 1}
               </div>
               <div className="flex-1 space-y-2">
                 <Textarea
@@ -241,42 +256,40 @@ const AddRecipeForm = () => {
                   rows={2}
                 />
                 <div className="flex items-center gap-2">
-                  <Input
-                    {...register(`instructions.${index}.photo`)}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        field.photo = file;
-                      }
-                    }}
-                    className="w-full"
-                    placeholder="Загрузите фото для шага"
+                  <Controller
+                    name={`instructions.${index}.photo`}
+                    control={control}
+                    render={({ field }) => (
+                      <div className="flex flex-col gap-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              field.onChange(file); // Обновляем значение в форме
+                            }
+                          }}
+                          className="w-full"
+                          placeholder="Загрузите фото для шага"
+                        />
+                      </div>
+                    )}
                   />
-                  {field.photo && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        field.photo = null;
-                      }}
-                      className="text-destructive hover:text-destructive/80"
-                    >
-                      Удалить фото
-                    </Button>
-                  )}
+                    {field.photo && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setValue(`instructions.${index}.photo`, null);
+                        }}
+                        className="text-destructive hover:text-destructive/80"
+                      >
+                        Удалить фото
+                      </Button>
+                    )}
                 </div>
-                {field.photo && (
-                  <div className="relative aspect-video rounded-lg overflow-hidden">
-                    <img
-                      src={URL.createObjectURL(field.photo)}
-                      alt={`Фото шага ${field.step_number}`}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                )}
               </div>
               {instructionFields.length > 1 && (
                 <Button
