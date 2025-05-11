@@ -12,6 +12,7 @@ from src.exceptions.image import ImageTooLargeError, WrongImageFormatError
 from src.exceptions.recipe import (
     AttachInstructionStepError,
     NoRecipeImageError,
+    NoRecipeInstructionsError,
     RecipeNotFoundError,
     RecipeOwnershipError,
 )
@@ -31,6 +32,7 @@ __all__ = [
     "JWTSignatureExpired",
     "JWTSignatureExpiredError",
     "NoRecipeImageError",
+    "NoRecipeInstructionsError",
     "RecipeNotFoundError",
     "RecipeOwnershipError",
     "UserEmailAlreadyExistsError",
