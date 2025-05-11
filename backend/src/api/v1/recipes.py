@@ -231,7 +231,7 @@ async def delete_recipe(
 
 
 @router.get(
-    "/{recipe_id}/image",
+    "/{recipe_id}/image/upload-url",
     summary="Get URL for uploading recipe image",
     description="Returns a pre-signed URL for uploading a recipe image. "
     "Authentication required. Only the owner of the recipe or a superuser can get the URL.",
