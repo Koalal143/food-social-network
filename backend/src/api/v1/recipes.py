@@ -15,6 +15,7 @@ from src.exceptions import (
 )
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.recipe import (
+    MAX_RECIPE_INSTRUCTIONS_COUNT,
     RecipeCreate,
     RecipeInstructionsUploadUrls,
     RecipeRead,
@@ -282,18 +283,18 @@ async def get_upload_image_url(
             "description": "Invalid step numbers",
             "content": json_examples_factory(
                 {
-                    "Step greater than total": {
+                    "Step greater than maximum": {
                         "value": {
                             "detail": (
                                 "Can't attach image to one of steps, because "
-                                "it's greater than the last instruction step"
+                                f"it's greater than {MAX_RECIPE_INSTRUCTIONS_COUNT}"
                             ),
                             "error_key": "attach_instruction_step",
                         }
                     },
                     "Too many steps": {
                         "value": {
-                            "detail": "Can't attach image to more steps than total instructions count",
+                            "detail": f"Can't attach image to more steps than {MAX_RECIPE_INSTRUCTIONS_COUNT}",
                             "error_key": "attach_instruction_step",
                         }
                     },

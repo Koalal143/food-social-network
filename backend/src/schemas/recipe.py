@@ -6,6 +6,8 @@ from src.schemas.direct_upload import DirectUpload
 from src.schemas.user import UserReadShort
 from src.utils.partial_model import partial_model
 
+MAX_RECIPE_INSTRUCTIONS_COUNT = 25
+
 
 class Ingredient(BaseSchema):
     name: str = Field(max_length=135, examples=["Tomato", "Чеснок"])
@@ -18,7 +20,7 @@ class IngredientUpdate(Ingredient):
 
 
 class RecipeInstruction(BaseSchema):
-    step_number: PositiveInt = Field(le=25)
+    step_number: PositiveInt = Field(le=MAX_RECIPE_INSTRUCTIONS_COUNT)
     description: str = Field(max_length=1000, examples=["Boil water", "Добавьте соль"])
     image_url: str | None = Field(default=None)
 
@@ -52,7 +54,7 @@ class BaseRecipeSchema(BaseModel):
 
 
 class _InstructionsMixin(BaseSchema):
-    instructions: list[RecipeInstruction] | None = Field(default=None, max_length=25)
+    instructions: list[RecipeInstruction] | None = Field(default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT)
 
 
 class _IngredientsMixin(BaseSchema):
@@ -65,7 +67,6 @@ class _TagsMixin(BaseSchema):
 
 class _IsPublishedMixin(BaseSchema):
     is_published: bool = Field(default=False, description="Is the recipe published or not")
-
 
 
 class RecipeReadShort(BaseRecipeSchema):
