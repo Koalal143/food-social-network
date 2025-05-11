@@ -4,7 +4,9 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/button';
-import { HeartCrack, Eye, Bookmark, Clock, User } from 'lucide-react';
+import { HeartCrack, Eye, Bookmark, Clock } from 'lucide-react';
+import minutesToHuman from '@/utils/minutesToHuman';
+import { DIFFICULTY } from '@/constants/difficulty';
 import { useSwipeable } from 'react-swipeable';
 
 const RecipeSwipeCard = ({ recipe, onLike, onDislike, onViewRecipe }) => {
@@ -58,11 +60,12 @@ const RecipeSwipeCard = ({ recipe, onLike, onDislike, onViewRecipe }) => {
       >
         <div className="absolute inset-0">
           <Image
-            src={recipe.preview}
+            src={recipe.image_url || '/images/image-dummy.svg'}
             alt={recipe.title}
             fill
             className="object-cover"
             priority
+            unoptimized={true}
           />
           <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/80 to-transparent" />
         </div>
@@ -75,16 +78,15 @@ const RecipeSwipeCard = ({ recipe, onLike, onDislike, onViewRecipe }) => {
           <div className="flex items-center gap-4 mb-4">
             <div className="flex items-center gap-2 text-sm">
               <Clock className="w-4 h-4" />
-              <span>{recipe.time}</span>
+              <span>{minutesToHuman(recipe.cook_time_minutes)}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <User className="w-4 h-4" />
-              <span>{recipe.servings} порций</span>
+              <span>{DIFFICULTY[recipe.difficulty]}</span>
             </div>
           </div>
 
           <p className="text-sm mb-6 opacity-90 line-clamp-3">
-            {recipe.shortDescription}
+            {recipe.short_description}
           </p>
           
           <div className="flex justify-center gap-4">

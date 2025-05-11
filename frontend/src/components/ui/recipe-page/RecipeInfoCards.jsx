@@ -1,4 +1,6 @@
-import { Clock, User, Heart } from "lucide-react"
+import { Clock, Heart } from "lucide-react"
+import minutesToHuman from "@/utils/minutesToHuman"
+import { DIFFICULTY } from "@/constants/difficulty"
 
 export default function RecipeInfoCards({ recipe }) {
     return (
@@ -7,7 +9,7 @@ export default function RecipeInfoCards({ recipe }) {
               <Clock className="w-6 h-6 text-primary" />
               <div>
                 <h3 className="text-sm font-medium">Время</h3>
-                <p className="text-sm text-muted-foreground">{recipe.cook_time_minutes}</p>
+                <p className="text-sm text-muted-foreground">{minutesToHuman(recipe.cook_time_minutes)}</p>
               </div>
             </div>
             {/* <div className="bg-card p-4 rounded-lg flex items-center gap-3">
@@ -21,7 +23,7 @@ export default function RecipeInfoCards({ recipe }) {
               <Heart className="w-6 h-6 text-primary" />
               <div>
                 <h3 className="text-sm font-medium">Сложность</h3>
-                <p className="text-sm text-muted-foreground capitalize">{recipe.difficulty}</p>
+                <p className="text-sm text-muted-foreground capitalize">{DIFFICULTY[recipe.difficulty]}</p>
               </div>
             </div>
         </div>
