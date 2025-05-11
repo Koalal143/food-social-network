@@ -11,9 +11,11 @@ from src.schemas.recipe import (
     RecipeCreate,
     RecipeInstruction,
     RecipeRead,
+    RecipeReadFull,
     RecipeTag,
     RecipeUpdate,
 )
+from src.schemas.user import UserReadShort
 
 
 class RecipeService:
@@ -40,13 +42,24 @@ class RecipeService:
 
         return recipe_schema
 
-    async def get_by_id(self, recipe_id: int) -> RecipeRead:
+    async def _to_recipe_full_schema(self, recipe: Recipe) -> RecipeReadFull:
+        recipe_schema = await self._to_recipe_schema(recipe)
+        author = UserReadShort.model_validate(recipe.author, from_attributes=True)
+        if author.profile.avatar_url:
+            author.profile.avatar_url = await self.s3_storage.get_file_url(
+                self._recipe_bucket_name, recipe.author.profile.avatar_url, expires_in=3600
+            )
+        new_recipe_schema = recipe_schema.model_dump()
+        new_recipe_schema["author"] = author.model_dump()
+        return RecipeReadFull.model_validate(new_recipe_schema)
+
+    async def get_by_id(self, recipe_id: int) -> RecipeReadFull:
         recipe = await self.uow.recipes.get_by_id(recipe_id)
         if not recipe:
             msg = f"Recipe with id {recipe_id} not found"
             raise RecipeNotFoundError(msg)
 
-        return await self._to_recipe_schema(recipe)
+        return await self._to_recipe_full_schema(recipe)
 
     async def get_all(self, skip: int = 0, limit: int = 10) -> tuple[int, Sequence[RecipeRead]]:
         count, recipes = await self.uow.recipes.get_all(skip=skip, limit=limit)
@@ -99,7 +112,7 @@ class RecipeService:
         created_recipe = await self.uow.recipes.get_by_id(recipe.id)
         return await self._to_recipe_schema(created_recipe)
 
-    async def update(self, user: User, recipe_id: int, recipe_update: RecipeUpdate) -> RecipeRead:
+    async def update(self, user: User, recipe_id: int, recipe_update: RecipeUpdate) -> RecipeReadFull:
         existing_recipe = await self.uow.recipes.get_by_id(recipe_id)
         if not existing_recipe:
             msg = f"Recipe with id {recipe_id} not found"
@@ -130,9 +143,8 @@ class RecipeService:
             await self._create_tags(recipe_id, recipe_update.tags)
 
         await self.uow.commit()
-        await self.uow.session.refresh(existing_recipe)
 
-        return await self._to_recipe_schema(existing_recipe)
+        return await self.get_by_id(existing_recipe.id)
 
     async def delete(self, user: User, recipe_id: int) -> None:
         existing_recipe = await self.uow.recipes.get_by_id(recipe_id)
