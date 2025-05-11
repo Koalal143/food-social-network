@@ -5,7 +5,13 @@ from pydantic import PositiveInt
 
 from src.core.security import CurrentUserDependency, get_current_user
 from src.dependencies import S3StorageDependency, UnitOfWorkDependency
-from src.exceptions import AppHTTPException, AttachInstructionStepError, RecipeNotFoundError, RecipeOwnershipError
+from src.exceptions import (
+    AppHTTPException,
+    AttachInstructionStepError,
+    NoRecipeInstructionsError,
+    RecipeNotFoundError,
+    RecipeOwnershipError,
+)
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.recipe import RecipeCreate, RecipeInstructionsUploadUrls, RecipeRead, RecipeReadFull, RecipeUpdate
 from src.services.recipe import RecipeService
@@ -136,6 +142,15 @@ async def create_recipe(
             "description": "Recipe updated successfully",
             "content": json_example_factory(_recipe_full_example),
         },
+        status.HTTP_400_BAD_REQUEST: {
+            "description": "Can't publish recipe without instructions",
+            "content": json_example_factory(
+                {
+                    "detail": "Recipe can not be published without instructions",
+                    "error_key": "instructions_required_to_publish",
+                }
+            ),
+        },
         status.HTTP_403_FORBIDDEN: {
             "description": "Forbidden - Recipe belongs to another user",
             "content": json_example_factory(
@@ -164,6 +179,8 @@ async def update_recipe(
         raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
     except RecipeOwnershipError as e:
         raise AppHTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e), error_key=e.error_key) from None
+    except NoRecipeInstructionsError as e:
+        raise AppHTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e), error_key=e.error_key) from None
 
 
 @router.delete(
