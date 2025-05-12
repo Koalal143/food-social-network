@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query, Response, status
 from pydantic import PositiveInt
 
-from src.core.security import CurrentUserDependency, get_current_user
+from src.core.security import CurrentUserDependency, CurrentUserOrNoneDependency, get_current_user
 from src.dependencies import S3StorageDependency, UnitOfWorkDependency
 from src.exceptions import (
     AppHTTPException,
@@ -87,10 +87,12 @@ async def get_recipe(
     recipe_id: Annotated[int, Path(title="Recipe ID", ge=1)],
     uow: UnitOfWorkDependency,
     s3_storage: S3StorageDependency,
+    current_user: CurrentUserOrNoneDependency,
 ) -> RecipeReadFull:
     recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
     try:
-        return await recipe_service.get_by_id(recipe_id=recipe_id)
+        user_id = current_user.id if current_user else None
+        return await recipe_service.get_by_id(recipe_id=recipe_id, user_id=user_id)
     except RecipeNotFoundError as e:
         raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
 

@@ -22,6 +22,7 @@ from src.schemas.recipe import (
     RecipeUpdate,
 )
 from src.schemas.user import UserReadShort
+from src.typings.recipe_with_favorite import RecipeWithFavorite
 
 
 class RecipeService:
@@ -55,7 +56,7 @@ class RecipeService:
             )
         return RecipeReadShort.model_validate(recipe, from_attributes=True)
 
-    async def _to_recipe_full_schema(self, recipe: Recipe) -> RecipeReadFull:
+    async def _to_recipe_full_schema(self, recipe: RecipeWithFavorite) -> RecipeReadFull:
         recipe_schema = await self._to_recipe_schema(recipe)
         author = UserReadShort.model_validate(recipe.author, from_attributes=True)
         if author.profile.avatar_url:
@@ -66,8 +67,8 @@ class RecipeService:
         new_recipe_schema["author"] = author.model_dump()
         return RecipeReadFull.model_validate(new_recipe_schema)
 
-    async def get_by_id(self, recipe_id: int) -> RecipeReadFull:
-        recipe = await self.uow.recipes.get_by_id(recipe_id)
+    async def get_by_id(self, recipe_id: int, user_id: int | None = None) -> RecipeReadFull:
+        recipe = await self.uow.recipes.get_by_id(recipe_id, user_id=user_id)
         if not recipe:
             msg = f"Recipe with id {recipe_id} not found"
             raise RecipeNotFoundError(msg)
