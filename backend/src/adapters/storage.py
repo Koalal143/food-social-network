@@ -5,7 +5,7 @@ from typing import Any
 from aiobotocore.session import get_session
 
 from src.core.config import settings
-from src.types.external.aiobotocore_s3.client import S3Client
+from src.typings.external.aiobotocore_s3.client import S3Client
 
 
 class S3StorageClientManager:
