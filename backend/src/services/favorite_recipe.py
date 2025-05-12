@@ -1,9 +1,8 @@
-
 from src.adapters.storage import S3Storage
 from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions.favorite_recipe import RecipeAlreadyInFavoritesError, RecipeNotInFavoritesError
 from src.exceptions.recipe import RecipeNotFoundError
-from src.models.favorite_recipes import FavoriteRecipe
+from src.models.recipe import Recipe
 from src.models.user import User
 from src.schemas.favorite_recipe import FavoriteRecipeCreate, FavoriteRecipeRead
 from src.schemas.recipe import RecipeReadShort
@@ -15,27 +14,23 @@ class FavoriteRecipeService:
         self.s3_storage = s3_storage
         self._recipe_bucket_name = "images"
 
-    async def _to_favorite_recipe_schema(self, favorite_recipe: FavoriteRecipe) -> FavoriteRecipeRead:
-        favorite_schema = FavoriteRecipeRead.model_validate(favorite_recipe)
-        recipe = favorite_recipe.recipe
+    async def _to_recipe_schema(self, favorite_recipe: Recipe) -> FavoriteRecipeRead:
+        recipe = RecipeReadShort.model_validate(favorite_recipe)
         if recipe.image_url:
             recipe.image_url = await self.s3_storage.get_file_url(
                 self._recipe_bucket_name, recipe.image_url, expires_in=3600
             )
 
-        favorite_schema.recipe = RecipeReadShort.model_validate(recipe)
-        return favorite_schema
+        return recipe
 
     async def get_user_favorites(
         self, user_id: int, skip: int = 0, limit: int = 10
-    ) -> tuple[int, list[FavoriteRecipeRead]]:
-        count, favorites = await self.uow.favorite_recipes.get_all_by_user(
-            user_id=user_id, skip=skip, limit=limit
-        )
+    ) -> tuple[int, list[RecipeReadShort]]:
+        count, favorites = await self.uow.favorite_recipes.get_all_by_user(user_id=user_id, skip=skip, limit=limit)
 
-        favorite_schemas = [await self._to_favorite_recipe_schema(favorite) for favorite in favorites]
+        favorite_recipes = [await self._to_recipe_schema(favorite.recipe) for favorite in favorites]
 
-        return count, favorite_schemas
+        return count, favorite_recipes
 
     async def add_to_favorites(self, user: User, favorite_data: FavoriteRecipeCreate) -> FavoriteRecipeRead:
         recipe_id = favorite_data.recipe_id
@@ -52,8 +47,7 @@ class FavoriteRecipeService:
         favorite = await self.uow.favorite_recipes.create(user_id=user.id, recipe_id=recipe_id)
         await self.uow.commit()
 
-        favorite = await self.uow.favorite_recipes.get_by_id(favorite.id)
-        return await self._to_favorite_recipe_schema(favorite)
+        return favorite
 
     async def remove_from_favorites(self, user: User, recipe_id: int) -> None:
         recipe = await self.uow.recipes.get_by_id(recipe_id)
