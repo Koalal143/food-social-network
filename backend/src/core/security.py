@@ -37,6 +37,20 @@ async def get_current_user(
             ) from e
 
 
+async def get_current_user_or_none(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+    uow: UnitOfWorkDependency,
+    redis: RedisDependency,
+) -> User | None:
+    if not credentials:
+        return None
+    return await get_current_user(
+        credentials=credentials,
+        uow=uow,
+        redis=redis,
+    )
+
+
 async def get_superuser(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
@@ -50,4 +64,5 @@ async def get_superuser(
 
 
 CurrentUserDependency = Annotated[User, Depends(get_current_user)]
+CurrentUserOrNoneDependency = Annotated[User | None, Depends(get_current_user_or_none)]
 SuperUserDependency = Annotated[User, Depends(get_superuser)]
