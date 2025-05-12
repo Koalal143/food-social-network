@@ -21,6 +21,7 @@ class FavoriteRecipeRepository:
             select(FavoriteRecipe)
             .where(FavoriteRecipe.user_id == user_id)
             .options(joinedload(FavoriteRecipe.recipe))
+            .order_by(FavoriteRecipe.created_at.desc())
             .offset(skip)
             .limit(limit)
         )
