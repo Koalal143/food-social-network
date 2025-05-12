@@ -10,7 +10,7 @@ from src.core.config import settings
 from src.core.redis import redis_manager
 from src.db.manager import database_session_function
 from src.db.uow import SQLAlchemyUnitOfWork
-from src.types.external.aiobotocore_s3.client import S3Client
+from src.typings.external.aiobotocore_s3.client import S3Client
 
 SessionDependency = Annotated[AsyncSession, Depends(database_session_function)]
 
