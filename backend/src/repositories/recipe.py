@@ -5,9 +5,11 @@ from sqlalchemy import Select, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
+from src.models.favorite_recipes import FavoriteRecipe
 from src.models.recipe import Recipe
 from src.models.user import User
 from src.models.user_profile import UserProfile
+from src.typings.recipe_with_favorite import RecipeWithFavorite
 
 
 class RecipeRepository:
@@ -40,8 +42,34 @@ class RecipeRepository:
             )
         )
 
-    async def get_by_id(self, recipe_id: int) -> Recipe | None:
+    def _add_is_favorite_subquery(self, query: Select, user_id: int | None) -> Select:
+        """Add a subquery to check if recipe is in user's favorites."""
+        if user_id is None:
+            return query
+
+        favorite_subquery = (
+            select(1)
+            .where(FavoriteRecipe.recipe_id == Recipe.id, FavoriteRecipe.user_id == user_id)
+            .exists()
+            .label("is_on_favorites")
+        )
+
+        return query.add_columns(favorite_subquery)
+
+    async def get_by_id(self, recipe_id: int, user_id: int | None = None) -> RecipeWithFavorite | None:
         stmt = self._get_with_author_short(recipe_id=recipe_id)
+
+        if user_id is not None:
+            stmt = self._add_is_favorite_subquery(stmt, user_id)
+            result = await self.session.execute(stmt)
+            row = result.first()
+            if row is None:
+                return None
+
+            recipe, is_on_favorites = row
+            recipe.is_on_favorites = is_on_favorites
+            return recipe
+
         result = await self.session.scalars(stmt)
         return result.first()
 
