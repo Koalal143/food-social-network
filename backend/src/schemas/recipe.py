@@ -81,6 +81,7 @@ class RecipeRead(
 
 class RecipeReadFull(RecipeRead):
     author: UserReadShort
+    is_on_favorites: bool = Field(default=False, description="Is the recipe in user's favorites")
 
 
 class RecipeCreate(_InstructionsMixin, _IngredientsMixin, _TagsMixin, BaseRecipeSchema):
