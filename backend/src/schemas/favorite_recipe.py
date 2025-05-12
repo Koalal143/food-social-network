@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 
-from src.schemas.base import BaseReadSchema
+from src.schemas.base import BaseSchema
 from src.schemas.recipe import RecipeReadShort
 
 
-class FavoriteRecipeRead(BaseReadSchema):
+class FavoriteRecipeRead(BaseSchema):
     user_id: int
     recipe: RecipeReadShort
 
