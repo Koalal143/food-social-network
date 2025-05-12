@@ -32,6 +32,7 @@ class RecipeInstructionsService:
         conditions = [
             {"acl": "private"},
             ["starts-with", "$Content-Type", "image/"],
+            ["starts-with", "$key", f"recipes/{recipe_id}/instructions/"],
             ["content-length-range", 1, 5 * 1024 * 1024],
         ]
         for index, url in enumerate(urls):
