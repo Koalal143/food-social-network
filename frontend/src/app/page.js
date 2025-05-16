@@ -31,7 +31,6 @@ export default function App() {
         onLoadMore={handleLoadMore}
       />
       
-      {/* Запасная кнопка для загрузки при отказе автоматики */}
       {hasMore && !loading && (
         <button 
           onClick={handleLoadMore}

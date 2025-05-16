@@ -17,16 +17,14 @@ export default class RecipesService {
             
             const data = await response.json();
             
-            // Получаем total count из заголовков и преобразуем в число
             const totalCountHeader = response.headers.get('X-Total-Count');
             console.log(response.headers);
             
             console.log('X-Total-Count raw header:', totalCountHeader);
             
-            // Возвращаем данные и явно возвращаем totalCount
             return {
                 data: data,
-                totalCount: totalCountHeader
+                totalCount: parseInt(totalCountHeader, 10) || 0
             };
         } catch (error) {
             console.error('Ошибка при загрузке рецептов с пагинацией:', error);

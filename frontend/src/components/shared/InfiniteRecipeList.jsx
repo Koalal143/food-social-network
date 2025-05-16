@@ -7,30 +7,22 @@ export default function InfiniteRecipesList({ recipes, loading, hasMore, onLoadM
   const loadMoreRef = useRef(null);
 
   useEffect(() => {
-    // Для отладки
-    console.log('InfiniteRecipesList state:', { hasMore, loading, recipesCount: recipes.length });
-    
-    // Создаем Intersection Observer
     const observer = new IntersectionObserver(
       (entries) => {
-        // Если элемент становится видимым и есть еще элементы для загрузки
         if (entries[0].isIntersecting && hasMore && !loading) {
           console.log('Load more element is visible, loading more recipes...');
           onLoadMore();
         }
       },
       { threshold: 0.1, rootMargin: '100px' }
-    ) // Порог срабатывания с дополнительным отступом
+    )
 
-    // Подключаем observer к элементу для отслеживания
-    if (loadMoreRef.current) {
+    if (loadMoreRef.current && hasMore) {
       observer.observe(loadMoreRef.current);
     }
 
-    // Сохраняем observer для последующей очистки
     observerRef.current = observer;
 
-    // Очистка при размонтировании
     return () => {
       if (observerRef.current && loadMoreRef.current) {
         observerRef.current.unobserve(loadMoreRef.current);
@@ -46,12 +38,10 @@ export default function InfiniteRecipesList({ recipes, loading, hasMore, onLoadM
         ))}
       </div>
       
-      {/* Элемент-триггер для загрузки следующих рецептов */}
       <div ref={loadMoreRef} className="w-full h-10 flex justify-center">
         {loading && <LoadingSpinner />}
       </div>
       
-      {/* Сообщение, когда все рецепты загружены */}
       {!hasMore && recipes.length > 0 && (
         <p className="text-center text-gray-500 py-4">
           Вы просмотрели все доступные рецепты

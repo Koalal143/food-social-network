@@ -18,26 +18,28 @@ export default function RecipeProvider({ children }) {
         try {
             setLoading(true)
             
-            // Если resetExisting = true, начинаем с нуля
             const currentOffset = resetExisting ? 0 : offset
             
             const { data, totalCount } = await RecipesService.getPaginatedRecipes(currentOffset, LIMIT)
             console.log('Received data:', { data: data.length, totalCount, currentOffset });
             
-            // Обновляем состояние totalCount
             setTotalCount(totalCount)
             
-            // Обновляем состояние hasMore на основе полученного totalCount
-            // Проверяем, есть ли еще рецепты для загрузки
             const newOffset = resetExisting ? LIMIT : currentOffset + LIMIT;
             const moreAvailable = newOffset < totalCount;
             console.log('More available?', { newOffset, totalCount, moreAvailable });
             setHasMore(moreAvailable);
             
-            // Обновляем рецепты: либо добавляем к существующим, либо заменяем
-            setRecipes(prev => resetExisting ? data : [...prev, ...data])
+            setRecipes(prev => {
+                if (resetExisting) return data;
+
+                const existingIds = prev.map(recipe => recipe.id);
+                
+                const uniqueNewRecipes = data.filter(recipe => !existingIds.includes(recipe.id));
+                
+                return [...prev, ...uniqueNewRecipes];
+            });
             
-            // Обновляем смещение для следующего запроса
             setOffset(newOffset);
         } catch (error) {
             setError(error)
