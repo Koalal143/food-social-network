@@ -125,7 +125,7 @@ class RecipeService:
 
     async def search(
         self, params: RecipeSearchQuery, offset: int = 0, limit: int = 10
-    ) -> list[RecipeReadShort]:
+    ) -> tuple[int, list[RecipeReadShort]]:
         search = RecipeIndex.search()
 
         must_queries = []
@@ -162,9 +162,11 @@ class RecipeService:
             search = search.sort(params.sort_by)
 
         result = await search.execute()
+        total = result.hits.total.value
         recipe_ids = [hit.to_dict()["id"] for hit in result]
         recipes = await self.uow.recipes.get_by_ids(recipe_ids=recipe_ids)
-        return [RecipeReadShort.model_validate(recipe, from_attributes=True) for recipe in recipes]
+        recipes_short = [RecipeReadShort.model_validate(recipe, from_attributes=True) for recipe in recipes]
+        return total, recipes_short
 
     async def create(self, user: User, recipe_create: RecipeCreate) -> RecipeRead:
         recipe_data = recipe_create.model_dump(exclude={"ingredients", "instructions", "tags"})
