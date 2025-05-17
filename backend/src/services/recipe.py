@@ -1,5 +1,8 @@
 from collections.abc import Sequence
 
+from elasticsearch.dsl import Q
+
+from src.adapters.search.indexes import RecipeIndex
 from src.adapters.storage import S3Storage
 from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions.recipe import (
@@ -18,6 +21,7 @@ from src.schemas.recipe import (
     RecipeRead,
     RecipeReadFull,
     RecipeReadShort,
+    RecipeSearchQuery,
     RecipeTag,
     RecipeUpdate,
 )
@@ -111,6 +115,55 @@ class RecipeService:
         if tags_data:
             await self.uow.recipe_tags.bulk_create(tags_data)
 
+    async def _update_elasticsearch_index(self, recipe: Recipe) -> None:
+        unprepared_schema = RecipeRead.model_validate(recipe, from_attributes=True)
+        schema = unprepared_schema.model_dump(exclude={"updated_at", "instructions", "image_url"})
+        schema["tags"] = [schema["tags"][i]["name"] for i in range(len(schema["tags"]))]
+        schema["ingredients"] = [schema["ingredients"][i]["name"] for i in range(len(schema["ingredients"]))]
+        recipe_index = RecipeIndex(**schema)
+        await recipe_index.save()
+
+    async def search(self, params: RecipeSearchQuery) -> list[RecipeReadShort]:
+        search = RecipeIndex.search()
+
+        must_queries = []
+        must_not_queries = []
+        filter_queries = []
+
+        if params.query:
+            must_queries.append(Q("multi_match", query=params.query, fields=["title", "short_description"]))
+
+        if params.tags:
+            filter_queries.append(Q("terms", tags=params.tags))
+
+        if params.include_ingredients:
+            include_ingredients_list = [Q("match", ingredients=ingredient) for ingredient in params.include_ingredients]
+            must_queries.extend(include_ingredients_list)
+
+        if params.exclude_ingredients:
+            exclude_ingredients_list = [Q("match", ingredients=ingredient) for ingredient in params.exclude_ingredients]
+            must_not_queries.extend(exclude_ingredients_list)
+
+        if params.cook_time_from is not None or params.cook_time_to is not None:
+            cook_range = {}
+            if params.cook_time_from is not None:
+                cook_range["gte"] = params.cook_time_from
+            if params.cook_time_to is not None:
+                cook_range["lte"] = params.cook_time_to
+            filter_queries.append(Q("range", cook_time_minutes=cook_range))
+
+        query = Q("bool", must=must_queries, must_not=must_not_queries, filter=filter_queries)
+
+        search = search.query(query)
+
+        # Сортировка
+        if params.sort_by:
+            search = search.sort(params.sort_by)
+        result = await search.execute()
+        recipe_ids = [hit.to_dict()["id"] for hit in result]
+        recipes = await self.uow.recipes.get_by_ids(recipe_ids=recipe_ids)
+        return [RecipeReadShort.model_validate(recipe, from_attributes=True) for recipe in recipes]
+
     async def create(self, user: User, recipe_create: RecipeCreate) -> RecipeRead:
         recipe_data = recipe_create.model_dump(exclude={"ingredients", "instructions", "tags"})
         recipe = await self.uow.recipes.create(is_published=False, author_id=user.id, **recipe_data)
@@ -125,6 +178,7 @@ class RecipeService:
         await self.uow.commit()
 
         created_recipe = await self.uow.recipes.get_by_id(recipe.id)
+        await self._update_elasticsearch_index(created_recipe)
         return await self._to_recipe_schema(created_recipe)
 
     async def update(self, user: User, recipe_id: int, recipe_update: RecipeUpdate) -> RecipeReadFull:
@@ -163,7 +217,11 @@ class RecipeService:
 
         await self.uow.commit()
 
-        return await self.get_by_id(existing_recipe.id)
+        updated_recipe = await self.uow.recipes.get_by_id(recipe_id, user_id=user.id)
+
+        await self._update_elasticsearch_index(updated_recipe)
+
+        return await self._to_recipe_full_schema(updated_recipe)
 
     async def delete(self, user: User, recipe_id: int) -> None:
         existing_recipe = await self.uow.recipes.get_by_id(recipe_id)
@@ -182,6 +240,9 @@ class RecipeService:
         await self.uow.recipes.delete_by_id(recipe_id)
 
         await self.uow.commit()
+
+        await RecipeIndex.delete(id=recipe_id)
+        await RecipeIndex.save()
 
     async def get_image_upload_url(self, user: User, recipe_id: int) -> DirectUpload:
         existing_recipe = await self.uow.recipes.get_by_id(recipe_id)
