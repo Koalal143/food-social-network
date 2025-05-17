@@ -27,10 +27,10 @@ class RecipeRepository:
             )
         )
 
-    def _get_with_author_short(self, recipe_id: int) -> Select[tuple[Recipe]]:
+    def _get_with_author_short(self, recipe_ids: Sequence[int]) -> Select[tuple[Recipe]]:
         return (
             select(Recipe)
-            .where(Recipe.id == recipe_id)
+            .where(Recipe.id.in_(recipe_ids))
             .options(
                 selectinload(Recipe.ingredients),
                 selectinload(Recipe.instructions),
@@ -50,6 +50,7 @@ class RecipeRepository:
         favorite_subquery = (
             select(1)
             .where(FavoriteRecipe.recipe_id == Recipe.id, FavoriteRecipe.user_id == user_id)
+            .correlate(Recipe)
             .exists()
             .label("is_on_favorites")
         )
@@ -57,7 +58,7 @@ class RecipeRepository:
         return query.add_columns(favorite_subquery)
 
     async def get_by_id(self, recipe_id: int, user_id: int | None = None) -> RecipeWithFavorite | None:
-        stmt = self._get_with_author_short(recipe_id=recipe_id)
+        stmt = self._get_with_author_short(recipe_ids=[recipe_id])
 
         if user_id is not None:
             stmt = self._add_is_favorite_subquery(stmt, user_id)
@@ -72,6 +73,11 @@ class RecipeRepository:
 
         result = await self.session.scalars(stmt)
         return result.first()
+
+    async def get_by_ids(self, recipe_ids: Sequence[int]) -> Sequence[Recipe] | None:
+        stmt = self._get_with_author_short(recipe_ids=recipe_ids)
+        result = await self.session.scalars(stmt)
+        return result.all()
 
     async def get_all(self, skip: int = 0, limit: int = 100, **filters: Any) -> tuple[int, Sequence[Recipe]]:
         stmt = select(Recipe).offset(skip).limit(limit)
