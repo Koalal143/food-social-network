@@ -13,21 +13,35 @@ import CopyLinkButton from "@/components/ui/CopyLinkButton";
 import RecipeInfoCards from "@/components/ui/recipe-page/RecipeInfoCards";
 import RecipeIngridients from "@/components/ui/recipe-page/RecipeIngridients";
 import RecipeInstruction from "@/components/ui/recipe-page/RecipeInstruction";
+import { useToast } from "@/hooks/use-toast";
+import { handleApiError } from "@/utils/errorHandler";
+import NotFound from "@/app/not-found";
 
 export default function RecipePage({ params }) {
-  const { getRecipeById } = useRecipes();
+  const { getRecipeById, error, loading } = useRecipes();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const [recipe, setRecipe] = useState(null);
+  const { toast } = useToast()
   const [isSaved, setIsSaved] = useState(false);
   
   const { id } = React.use(params);
 
   useEffect(() => {
     const fetchData = async () => {
-      const recipeData = await getRecipeById(Number(id));
-      if (recipeData) {
-        setRecipe(recipeData);
-        setIsSaved(isFavorite(recipeData.id));
+      try {
+        const recipeData = await getRecipeById(Number(id));
+        if (recipeData) {
+          setRecipe(recipeData);
+          setIsSaved(isFavorite(recipeData.id));
+        }
+      } catch (error) {
+        const { message, type } = handleApiError(error);
+        
+        toast({
+          variant: type,
+          title: "Ошибка",
+          description: message,
+        });
       }
     };
     fetchData();
@@ -41,9 +55,18 @@ export default function RecipePage({ params }) {
     }
     setIsSaved(!isSaved);
   };
+  
+  
+  if (loading) {
+    return <Loader />
+  }
+  
+  if (error) {
+    return <NotFound />
+  }
 
   if (!recipe) {
-    return <Loader />;
+    return <Loader />
   }
 
   return (

@@ -22,3 +22,9 @@ export class ValidationError extends CustomError {
         super(message, 'ValidationError');
     }
 } 
+
+export class NotFoundError extends CustomError {
+    constructor(message) {
+        super(message, 'NotFoundError')
+    }
+}

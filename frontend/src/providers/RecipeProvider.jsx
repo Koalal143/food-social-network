@@ -21,20 +21,17 @@ export default function RecipeProvider({ children }) {
             const currentOffset = resetExisting ? 0 : offset
             
             const { data, totalCount } = await RecipesService.getPaginatedRecipes(currentOffset, LIMIT)
-            console.log('Received data:', { data: data.length, totalCount, currentOffset });
             
             setTotalCount(totalCount)
             
             const newOffset = resetExisting ? LIMIT : currentOffset + LIMIT;
             const moreAvailable = newOffset < totalCount;
-            console.log('More available?', { newOffset, totalCount, moreAvailable });
             setHasMore(moreAvailable);
             
             setRecipes(prev => {
                 if (resetExisting) return data;
 
                 const existingIds = prev.map(recipe => recipe.id);
-                
                 const uniqueNewRecipes = data.filter(recipe => !existingIds.includes(recipe.id));
                 
                 return [...prev, ...uniqueNewRecipes];
@@ -43,7 +40,6 @@ export default function RecipeProvider({ children }) {
             setOffset(newOffset);
         } catch (error) {
             setError(error)
-            console.error("Ошибка при загрузке рецептов:", error)
         } finally {
             setLoading(false)
         }
@@ -55,17 +51,20 @@ export default function RecipeProvider({ children }) {
 
     const getRecipeById = async (id) => {
         try {
+            setLoading(true)
+
             return await RecipesService.getRecipeById(id);
         } catch (error) {
             setError(error);
             console.error("Ошибка при загрузке рецепта:", error);
-            return null;
+            throw error
+        } finally {
+            setLoading(false)
         }
     };
 
     const addRecipe = async (formData) => {
         try {
-            // 1. Создаем базовый объект рецепта
             const newRecipe = {
                 title: formData.title,
                 short_description: formData.short_description,
@@ -75,15 +74,12 @@ export default function RecipeProvider({ children }) {
                 ingredients: formData.ingredients
             };
     
-            // 2. Создаем рецепт в базе данных
             const recipe = await RecipesService.addRecipe(newRecipe);
     
-            // 3. Загружаем основное фото
             const mainPhotoPresigned = await RecipesService.getUploadImageUrl(recipe.id);
             await S3Service.uploadImage(mainPhotoPresigned, formData.main_photo[0]);
     
-            // 4. Обработка фото для шагов инструкций
-            let presignedPostDatas = []; // Объявляем переменную в общей области видимости
+            let presignedPostDatas = [];
             const stepsWithPhotos = formData.instructions
                 .filter(instruction => instruction.photo !== null && instruction.photo !== undefined)
                 .map(instruction => instruction.step_number);
@@ -95,7 +91,6 @@ export default function RecipeProvider({ children }) {
                         stepsWithPhotos
                     );
     
-                    // Параллельная загрузка изображений шагов
                     await Promise.all(
                         presignedPostDatas.map(async (presignedData) => {
                             const instruction = formData.instructions.find(
@@ -109,12 +104,10 @@ export default function RecipeProvider({ children }) {
                     );
                 } catch (error) {
                     console.error('Ошибка при загрузке изображений шагов:', error);
-                    // Дополнительная логика: откат создания рецепта при необходимости
                     throw error;
                 }
             }
     
-            // 5. Формируем инструкции с URL изображений
             const instructions = formData.instructions.map(instruction => {
                 const presignedData = presignedPostDatas.find(
                     item => item.step_number === instruction.step_number
@@ -123,14 +116,13 @@ export default function RecipeProvider({ children }) {
                 return {
                     step_number: instruction.step_number,
                     description: instruction.description,
-                    image_url: presignedData?.fields?.key || null // Безопасный доступ к полям
+                    image_url: presignedData?.fields?.key || null
                 };
             });
     
-            // 6. Обновляем рецепт с финальными данными
             const recipeWithPhotos = {
                 id: recipe.id,
-                image_url: mainPhotoPresigned.fields.key, // Используем ключ из presigned данных
+                image_url: mainPhotoPresigned.fields.key,
                 instructions: instructions
             };
     
@@ -140,8 +132,7 @@ export default function RecipeProvider({ children }) {
     
         } catch (error) {
             console.error("Ошибка при добавлении рецепта:", error);
-            // Дополнительные действия: очистка ресурсов, уведомление пользователя
-            throw error; // Пробрасываем ошибку для обработки в UI
+            throw error;
         }
     };
 
