@@ -123,7 +123,9 @@ class RecipeService:
         recipe_index = RecipeIndex(**schema)
         await recipe_index.save()
 
-    async def search(self, params: RecipeSearchQuery) -> list[RecipeReadShort]:
+    async def search(
+        self, params: RecipeSearchQuery, offset: int = 0, limit: int = 10
+    ) -> list[RecipeReadShort]:
         search = RecipeIndex.search()
 
         must_queries = []
@@ -154,11 +156,11 @@ class RecipeService:
 
         query = Q("bool", must=must_queries, must_not=must_not_queries, filter=filter_queries)
 
-        search = search.query(query)
+        search = search.query(query).extra(from_=offset, size=limit)
 
-        # Сортировка
         if params.sort_by:
             search = search.sort(params.sort_by)
+
         result = await search.execute()
         recipe_ids = [hit.to_dict()["id"] for hit in result]
         recipes = await self.uow.recipes.get_by_ids(recipe_ids=recipe_ids)
