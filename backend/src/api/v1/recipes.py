@@ -21,6 +21,7 @@ from src.schemas.recipe import (
     RecipeRead,
     RecipeReadFull,
     RecipeReadShort,
+    RecipeSearchQuery,
     RecipeUpdate,
 )
 from src.services.recipe import RecipeService
@@ -64,6 +65,26 @@ _recipe_full_example = {
         "profile": {"avatar_url": "https://example.com/images/avatars/1.jpg"},
     },
 }
+
+
+@router.get(
+    "/search",
+    summary="Search recipes",
+    description="Search recipes by different criteria using Elasticsearch",
+    responses={
+        200: {"headers": {"X-Total-Count": {"description": "Total number of found recipes", "type": "integer"}}}
+    },
+)
+async def search_recipes(
+    query: Annotated[RecipeSearchQuery, Query()],
+    uow: UnitOfWorkDependency,
+    s3_storage: S3StorageDependency,
+    response: Response,
+) -> list[RecipeReadShort]:
+    es_service = RecipeService(uow=uow, s3_storage=s3_storage)
+    total, recipes = await es_service.search(query)
+    response.headers["X-Total-Count"] = str(total)
+    return recipes
 
 
 @router.get(
