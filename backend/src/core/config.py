@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     s3_storage: S3Config
     jwt: JWTConfig
     redis: RedisConfig
-    elastic: ElasticSearchConfig
+    elasticsearch: ElasticSearchConfig
     mode: Literal["dev", "test", "prod"] = Field(default="prod", description="Application mode")
 
 
