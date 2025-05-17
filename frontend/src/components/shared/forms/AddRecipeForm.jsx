@@ -63,11 +63,20 @@ const AddRecipeForm = () => {
   const { toast } = useToast();
 
   const onSubmit = (data) => {
-    addRecipe(data)
-    toast({
-      title: "Рецепт успешно добавлен",
-      description: "Ваш рецепт был сохранен.",
-    });
+    try {
+      addRecipe(data)
+      toast({
+        title: "Рецепт успешно добавлен",
+        description: "Ваш рецепт был сохранен.",
+      });
+    } catch (error) {
+      const { message, type } = handleApiError(error);
+      toast({
+        variant: type,
+        title: "Ошибка",
+        description: message,
+      });
+    }
   };
 
   return (
