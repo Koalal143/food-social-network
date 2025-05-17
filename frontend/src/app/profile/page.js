@@ -12,6 +12,9 @@ import EditableProfilePhoto from '@/components/ui/profile/EditableProfilePhoto'
 import ProfileTabs from '@/components/ui/profile/ProfileTabs'
 import { handleApiError } from '@/utils/errorHandler'
 import Loader from '@/components/ui/Loader'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import ProtectedRoute from '@/components/auth/ProtectedRoute'
 
 export default function ProfilePage() {
     const { user, loading, updateProfile } = useAuth()
@@ -24,14 +27,7 @@ export default function ProfilePage() {
     const [error, setError] = useState(null)
 
     useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login')
-            return
-        }
-
         const loadData = async () => {
-            if (!user) return
-
             try {
                 setError(null)
                 const recipes = await getRecipesByAuthorId(user.id)
@@ -76,25 +72,32 @@ export default function ProfilePage() {
     }
 
     return (
-        <Container className="py-8">
-            <div className="space-y-8">
-                <div className="flex items-start justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight">Ваш профиль</h1>
-                </div>
+        <ProtectedRoute>
+            <Container className="py-8">
+                <div className="space-y-8">
+                    <div className="flex items-start justify-between">
+                        <h1 className="text-3xl font-bold tracking-tight">Ваш профиль</h1>
+                        <Link className='md:hidden' href='/recipe/add'>
+                            <Button>
+                                Добавить рецепт
+                            </Button>
+                        </Link>
+                    </div>
 
-                <div className="flex flex-col md:flex-row gap-8 items-start">
-                    <EditableProfilePhoto user={user} />
-                    <EditableProfileInfo
-                        user={user}
-                        onSave={handleUpdateProfile}
-                        className="flex-1 min-w-[300px]"
-                    />
-                </div>
+                    <div className="flex flex-col md:flex-row gap-8 items-start">
+                        <EditableProfilePhoto user={user} />
+                        <EditableProfileInfo
+                            user={user}
+                            onSave={handleUpdateProfile}
+                            className="flex-1 min-w-[300px]"
+                        />
+                    </div>
 
-                <div className="pt-4 border-t">
-                    <ProfileTabs recipes={userRecipes} favorites={favorites} />
+                    <div className="pt-4 border-t">
+                        <ProfileTabs recipes={userRecipes} favorites={favorites} />
+                    </div>
                 </div>
-            </div>
-        </Container>
+            </Container>
+        </ProtectedRoute>
     )
 }
