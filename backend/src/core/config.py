@@ -54,6 +54,13 @@ class S3Config(BaseModel):
     endpoint_url: str
 
 
+class ElasticSearchConfig(BaseModel):
+    host: str
+    port: int
+    user: str
+    password: str
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -68,6 +75,7 @@ class Settings(BaseSettings):
     s3_storage: S3Config
     jwt: JWTConfig
     redis: RedisConfig
+    elastic: ElasticSearchConfig
     mode: Literal["dev", "test", "prod"] = Field(default="prod", description="Application mode")
 
 
