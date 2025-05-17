@@ -41,6 +41,8 @@ export default function AuthProvider({ children }) {
     useEffect(() => {
         const initializeAuth = async () => {
             try {
+                setLoading(true)
+
                 const userData = await UsersService.getCurrentUser()
                 setUser(userData)
             } catch (error) {
