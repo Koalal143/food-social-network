@@ -42,6 +42,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
     volumes:
       - ./backend/alembic:/app/alembic
     networks:
@@ -49,6 +51,7 @@ services:
       - db_network
       - redis_network
       - minio_network
+      - elasticsearch_network
 
   db:
     image: postgres:15
@@ -83,6 +86,30 @@ services:
       retries: 5
     networks:
       - redis_network
+
+  elasticsearch:
+    image: bitnami/elasticsearch:9.0.1
+
+    environment:
+      - discovery.type=single-node
+      - security.enabled=true
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH__PASSWORD:-changeme}
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - ./elasticsearch_assets/elasticsearch.yml:/opt/bitnami/elasticsearch/config/elasticsearch.yml
+      - ./elasticsearch_assets/analysis:/opt/bitnami/elasticsearch/config/analysis
+      - elasticsearch_data:/bitnami/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - elasticsearch_network
 
   minio:
     image: minio/minio:latest
@@ -132,9 +159,12 @@ networks:
     driver: bridge
   app_network:
     driver: bridge
+  elasticsearch_network:
+    driver: bridge
 
 volumes:
   alembic_data:
   postgres_data:
   redis_data:
   minio_data:
+  elasticsearch_data:
