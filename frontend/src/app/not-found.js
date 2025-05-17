@@ -4,7 +4,7 @@ import Container from '@/components/layout/Container';
 
 export default function NotFound() {
   return (
-    <Container className="flex flex-col items-center justify-center min-h-screen py-8">
+    <Container className="flex flex-col items-center justify-center py-8">
       <div className="max-w-md text-center">
         <Image
           src="/images/error-404.png"
