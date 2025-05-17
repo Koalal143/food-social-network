@@ -25,16 +25,16 @@ export default function DesktopSidebar() {
                         Рекомендации
                     </Button>
                 </Link>
-                <Link href="/profile" passHref>
-                    <Button variant="ghost" className={`w-full justify-start ${isActive('/profile') ? 'bg-accent' : ''}`}>
-                        <User className="mr-2 h-4 w-4" />
-                        Профиль
-                    </Button>
-                </Link>
                 <Link href="/recipe-ai" passHref>
                     <Button variant="ghost" className={`w-full justify-start ${isActive('/recipe-ai') ? 'bg-accent' : ''}`}>
                         <Bot className="mr-2 h-4 w-4" />
                         Шеф-помощник
+                    </Button>
+                </Link>
+                <Link href="/profile" passHref>
+                    <Button variant="ghost" className={`w-full justify-start ${isActive('/profile') ? 'bg-accent' : ''}`}>
+                        <User className="mr-2 h-4 w-4" />
+                        Профиль
                     </Button>
                 </Link>
             </nav>
