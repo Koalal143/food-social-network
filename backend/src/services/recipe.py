@@ -124,7 +124,8 @@ class RecipeService:
         await recipe_index.save()
 
     async def search(
-        self, params: RecipeSearchQuery, offset: int = 0, limit: int = 10
+        self,
+        params: RecipeSearchQuery,
     ) -> tuple[int, list[RecipeReadShort]]:
         search = RecipeIndex.search()
 
@@ -156,7 +157,7 @@ class RecipeService:
 
         query = Q("bool", must=must_queries, must_not=must_not_queries, filter=filter_queries)
 
-        search = search.query(query).extra(from_=offset, size=limit)
+        search = search.query(query).extra(from_=params.offset, size=params.limit)
 
         if params.sort_by:
             search = search.sort(params.sort_by)
