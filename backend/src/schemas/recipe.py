@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
@@ -93,3 +95,13 @@ class RecipeUpdate(_IsPublishedMixin, BaseRecipeSchema):
     instructions: list[RecipeInstructionUpdate]
     ingredients: list[IngredientUpdate]
     tags: list[RecipeTagUpdate]
+
+
+class RecipeSearchQuery(BaseModel):
+    query: str | None = Field(default=None, description="Query for searching by title and short_description fields")
+    tags: list[str] | None = Field(default=None)
+    include_ingredients: list[str] | None = Field(default=None)
+    exclude_ingredients: list[str] | None = Field(default=None)
+    cook_time_from: int | None = Field(default=None, ge=0)
+    cook_time_to: int | None = Field(default=None, ge=0)
+    sort_by: Literal["-created_at", "created_at"] | None = Field(default=None)
