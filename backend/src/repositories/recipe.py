@@ -68,24 +68,106 @@ class RecipeRepository:
                 return None
 
             recipe, is_on_favorites = row
-            recipe.is_on_favorites = is_on_favorites
+            recipe.is_on_favorites = bool(is_on_favorites)
             return recipe
 
         result = await self.session.scalars(stmt)
-        return result.first()
+        recipe = result.first()
+        recipe.is_on_favorites = False
+        return recipe
 
     async def get_by_ids(self, recipe_ids: Sequence[int]) -> Sequence[Recipe] | None:
         stmt = self._get_with_author_short(recipe_ids=recipe_ids)
         result = await self.session.scalars(stmt)
         return result.all()
 
-    async def get_all(self, skip: int = 0, limit: int = 100, **filters: Any) -> tuple[int, Sequence[Recipe]]:
+    async def _get_recipes_with_filters(
+        self,
+        user_id: int | None = None,
+        skip: int = 0,
+        limit: int = 100,
+        additional_filters: list[Any] | None = None,
+        **filters: Any,
+    ) -> tuple[Select, list[RecipeWithFavorite]]:
         stmt = select(Recipe).offset(skip).limit(limit)
         if filters:
             stmt = stmt.filter_by(**filters)
-        result = await self.session.scalars(stmt)
-        count = await self.session.scalar(select(func.count(Recipe.id)).filter_by(**filters))
-        return count or 0, result.all()
+
+        if additional_filters:
+            for filter_condition in additional_filters:
+                stmt = stmt.where(filter_condition)
+
+        recipes: list[RecipeWithFavorite] = []
+        if user_id is not None:
+            stmt = self._add_is_favorite_subquery(stmt, user_id)
+            result = await self.session.execute(stmt)
+            for element in result.all():
+                recipe, is_on_favorites = element
+                recipe.is_on_favorites = bool(is_on_favorites)
+                recipes.append(recipe)
+        else:
+            result = await self.session.execute(stmt)
+            for recipe in result.scalars().all():
+                recipe.is_on_favorites = False
+                recipes.append(recipe)
+
+        return stmt, recipes
+
+    async def _get_count_with_filters(
+        self,
+        additional_filters: list[Any] | None = None,
+        **filters: Any
+    ) -> int:
+        count_stmt = select(func.count(Recipe.id)).filter_by(**filters)
+
+        if additional_filters:
+            for filter_condition in additional_filters:
+                count_stmt = count_stmt.where(filter_condition)
+
+        count = await self.session.scalar(count_stmt)
+        return count or 0
+
+    async def get_all(
+        self,
+        user_id: int | None = None,
+        skip: int = 0,
+        limit: int = 100,
+        **filters: Any,
+    ) -> tuple[int, Sequence[RecipeWithFavorite]]:
+        _, recipes = await self._get_recipes_with_filters(
+            user_id=user_id,
+            skip=skip,
+            limit=limit,
+            **filters
+        )
+
+        count = await self._get_count_with_filters(**filters)
+        return count, recipes
+
+    async def get_by_author_username(
+        self,
+        author_username: str,
+        user_id: int | None = None,
+        skip: int = 0,
+        limit: int = 100,
+        **filters: Any,
+    ) -> tuple[int, Sequence[RecipeWithFavorite]]:
+        author_filter = Recipe.author.has(User.username == author_username)
+
+        _, recipes = await self._get_recipes_with_filters(
+            user_id=user_id,
+            skip=skip,
+            limit=limit,
+            additional_filters=[author_filter],
+            **filters
+        )
+
+        count = await self._get_count_with_filters(
+            additional_filters=[author_filter],
+            **filters
+        )
+
+        return count, recipes
 
     async def create(self, **fields: Any) -> Recipe:
         db_recipe = Recipe(**fields)
