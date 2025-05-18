@@ -73,17 +73,17 @@ class _IsPublishedMixin(BaseSchema):
 
 class RecipeReadShort(BaseRecipeSchema):
     id: PositiveInt
+    is_on_favorites: bool = Field(default=False, description="Is the recipe in user's favorites")
 
 
 class RecipeRead(
-    _InstructionsMixin, _IngredientsMixin, _TagsMixin, _IsPublishedMixin, BaseRecipeSchema, BaseReadSchema
+    _InstructionsMixin, _IngredientsMixin, _TagsMixin, _IsPublishedMixin, RecipeReadShort, BaseReadSchema
 ):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True, extra="ignore")
 
 
 class RecipeReadFull(RecipeRead):
     author: UserReadShort
-    is_on_favorites: bool = Field(default=False, description="Is the recipe in user's favorites")
 
 
 class RecipeCreate(_InstructionsMixin, _IngredientsMixin, _TagsMixin, BaseRecipeSchema):
