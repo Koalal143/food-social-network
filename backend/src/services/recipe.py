@@ -35,8 +35,8 @@ class RecipeService:
         self.s3_storage = s3_storage
         self._recipe_bucket_name = "images"
 
-    async def _to_recipe_schema(self, recipe: Recipe) -> RecipeRead:
-        recipe_schema = RecipeRead.model_validate(recipe)
+    async def _to_recipe_schema(self, recipe: Recipe) -> RecipeReadFull:
+        recipe_schema = RecipeReadFull.model_validate(recipe)
 
         if recipe.image_url:
             recipe_schema.image_url = await self.s3_storage.get_file_url(

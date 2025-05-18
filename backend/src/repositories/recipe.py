@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Any
 
-from sqlalchemy import Select, delete, func, select, update
+from sqlalchemy import Select, delete, exists, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -48,10 +48,10 @@ class RecipeRepository:
             return query
 
         favorite_subquery = (
-            select(1)
+            select(exists(FavoriteRecipe.id))
             .where(FavoriteRecipe.recipe_id == Recipe.id, FavoriteRecipe.user_id == user_id)
             .correlate(Recipe)
-            .exists()
+            .scalar_subquery()
             .label("is_on_favorites")
         )
 
