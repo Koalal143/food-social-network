@@ -6,17 +6,18 @@ import minutesToHuman from "@/utils/minutesToHuman";
 import { useState } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
 import { DIFFICULTY } from "@/constants/difficulty";
+import { Button } from "../ui/button";
 
 export default function RecipeCard({ recipe }) {
-    const { isFavorite, addFavorite, removeFavorite } = useFavorites();
-    const [isSaved, setIsSaved] = useState(isFavorite(recipe.id));
+    const { addFavorite, removeFavorite } = useFavorites();
+    const [isSaved, setIsSaved] = useState(recipe.is_on_favorites);
 
     const handleSave = (e) => {
-        e.preventDefault();
+        e.preventDefault()
         if (isSaved) {
             removeFavorite(recipe.id);
         } else {
-            addFavorite(recipe);
+            addFavorite(recipe.id);
         }
         setIsSaved(!isSaved);
     };

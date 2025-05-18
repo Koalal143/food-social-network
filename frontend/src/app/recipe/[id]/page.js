@@ -19,10 +19,10 @@ import NotFound from "@/app/not-found";
 
 export default function RecipePage({ params }) {
   const { getRecipeById, error, loading } = useRecipes();
-  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
-  const [recipe, setRecipe] = useState(null);
+  const { addFavorite, removeFavorite } = useFavorites();
+  const [ recipe, setRecipe ] = useState(null);
   const { toast } = useToast()
-  const [isSaved, setIsSaved] = useState(false);
+  const [ isSaved, setIsSaved ] = useState(false);
   
   const { id } = React.use(params);
 
@@ -31,8 +31,9 @@ export default function RecipePage({ params }) {
       try {
         const recipeData = await getRecipeById(Number(id));
         if (recipeData) {
+          console.log(recipeData);
           setRecipe(recipeData);
-          setIsSaved(isFavorite(recipeData.id));
+          setIsSaved(recipeData.is_on_favorites);
         }
       } catch (error) {
         const { message, type } = handleApiError(error);
@@ -45,13 +46,13 @@ export default function RecipePage({ params }) {
       }
     };
     fetchData();
-  }, [id, isFavorite]);
+  }, [id]);
 
   const handleSave = () => {
     if (isSaved) {
       removeFavorite(recipe.id);
     } else {
-      addFavorite(recipe);
+      addFavorite(recipe.id);
     }
     setIsSaved(!isSaved);
   };

@@ -9,7 +9,7 @@ export default function FavoritesProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setFavorites(FavoritesService.getFavorites())
+    setFavorites(FavoritesService.getPaginationFavorites())
     setLoading(false)
   }, [])
 
@@ -23,18 +23,13 @@ export default function FavoritesProvider({ children }) {
     setFavorites(updatedFavorites)
   }
 
-  const isFavorite = (recipeId) => {
-    return FavoritesService.isFavorite(recipeId)
-  }
-
   return (
     <FavoritesContext.Provider 
       value={{ 
         favorites,
         loading,
         addFavorite,
-        removeFavorite,
-        isFavorite
+        removeFavorite
       }}
     >
       {children}

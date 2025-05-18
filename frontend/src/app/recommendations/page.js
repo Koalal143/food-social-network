@@ -14,7 +14,7 @@ export default function RecommendationsPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const { recipes, loading } = useRecipes();
-  const { addFavorite, isFavorite } = useFavorites();
+  const { addFavorite } = useFavorites();
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
 
@@ -47,10 +47,7 @@ export default function RecommendationsPage() {
     showNextRecipe();
   };
 
-  const handleLike = (recipe) => {
-    if (!isFavorite(recipe.id)) {
-      addFavorite(recipe);
-    }
+  const handleSkip = () => {
     showNextRecipe();
   };
 
@@ -101,7 +98,7 @@ export default function RecommendationsPage() {
         {recipes.length > 0 && currentIndex < recipes.length ? (
           <RecipeSwipeCard
             recipe={recipes[currentIndex]}
-            onLike={handleLike}
+            onSkip={handleSkip}
             onDislike={handleDislike}
             onViewRecipe={handleViewRecipe}
           />

@@ -9,7 +9,7 @@ import { DIFFICULTY } from '@/constants/difficulty';
 import { useSwipeable } from 'react-swipeable';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
-const RecipeSwipeCard = ({ recipe, onLike, onDislike, onViewRecipe }) => {
+const RecipeSwipeCard = ({ recipe, onSkip, onDislike, onViewRecipe }) => {
   const [direction, setDirection] = useState(null);
   
   const variants = {
@@ -36,7 +36,7 @@ const RecipeSwipeCard = ({ recipe, onLike, onDislike, onViewRecipe }) => {
 
   const handleSkip = () => {
     setDirection('right');
-    onLike(recipe);
+    onSkip(recipe);
   };
 
   const handlers = useSwipeable({
