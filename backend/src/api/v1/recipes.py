@@ -125,15 +125,18 @@ async def get_recipe(
         "Returns a list of recipes with pagination. The total count of recipes is returned in the X-Total-Count header."
     ),
 )
-async def get_recipes(
+async def get_recipes(  # noqa: PLR0913
     uow: UnitOfWorkDependency,
     s3_storage: S3StorageDependency,
     response: Response,
+    current_user: CurrentUserOrNoneDependency,
     offset: Annotated[int, Query(ge=0, description="Смещение для пагинации")] = 0,
     limit: Annotated[int, Query(ge=1, le=50, description="Количество рецептов на странице")] = 10,
 ) -> list[RecipeReadShort]:
     recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
-    total, recipes = await recipe_service.get_all(skip=offset, limit=limit)
+    total, recipes = await recipe_service.get_all(
+        user_id=current_user.id if current_user else None, skip=offset, limit=limit
+    )
     response.headers["X-Total-Count"] = str(total)
     return list(recipes)
 
