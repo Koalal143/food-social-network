@@ -1,8 +1,8 @@
 from typing import Annotated
 
-from fastapi import APIRouter, File, UploadFile, status
+from fastapi import APIRouter, File, Path, Query, Response, UploadFile, status
 
-from src.core.security import CurrentUserDependency
+from src.core.security import CurrentUserDependency, CurrentUserOrNoneDependency
 from src.dependencies import S3StorageDependency, UnitOfWorkDependency
 from src.exceptions import (
     AppHTTPException,
@@ -12,8 +12,8 @@ from src.exceptions import (
 )
 from src.exceptions.image import ImageTooLargeError, WrongImageFormatError
 from src.models.user import User
-from src.schemas import UserRead, UserUpdate
-from src.services import UserAvatarService, UserService
+from src.schemas import RecipeReadShort, UserRead, UserUpdate
+from src.services import RecipeService, UserAvatarService, UserService
 from src.utils.examples_factory import json_example_factory, json_examples_factory
 
 router = APIRouter(
@@ -200,3 +200,26 @@ async def delete_user_avatar(
     async with uow:
         service = UserAvatarService(uow=uow, s3_client=s3_storage)
         await service.delete_avatar(current_user.id)
+
+
+@router.get(
+    "/{username}/recipes",
+    summary="Get user's recipes",
+    description="Returns a list of user's recipes with pagination. The total count of recipes is returned in the "
+    "X-Total-Count header.",
+)
+async def get_user_recipes(  # noqa: PLR0913
+    author_nickname: Annotated[str, Path(alias="username")],
+    current_user: CurrentUserOrNoneDependency,
+    uow: UnitOfWorkDependency,
+    s3_storage: S3StorageDependency,
+    response: Response,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=50)] = 10,
+) -> list[RecipeReadShort]:
+    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
+    total, recipes = await recipe_service.get_all_by_author_username(
+        author_nickname=author_nickname, skip=offset, limit=limit, user_id=current_user.id if current_user else None,
+    )
+    response.headers["X-Total-Count"] = str(total)
+    return list(recipes)
