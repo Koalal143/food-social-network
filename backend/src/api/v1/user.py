@@ -52,9 +52,9 @@ async def get_current_user(
 
 
 @router.get(
-    "/{user_id}",
-    summary="Get user by ID",
-    description="Returns a user by their ID.",
+    "/{username}",
+    summary="Get user by username",
+    description="Returns a user by their username.",
     responses={
         status.HTTP_404_NOT_FOUND: {
             "content": json_example_factory(
@@ -66,11 +66,11 @@ async def get_current_user(
         },
     },
 )
-async def get_user(user_id: int, uow: UnitOfWorkDependency, s3_client: S3StorageDependency) -> UserRead:
+async def get_user(username: str, uow: UnitOfWorkDependency, s3_client: S3StorageDependency) -> UserRead:
     async with uow:
         service = UserService(uow=uow, s3_client=s3_client)
         try:
-            user = await service.get(user_id)
+            user = await service.get_by_username(username)
         except UserNotFoundError as e:
             raise AppHTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
