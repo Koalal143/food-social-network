@@ -31,7 +31,6 @@ export default function RecipePage({ params }) {
       try {
         const recipeData = await getRecipeById(Number(id));
         if (recipeData) {
-          console.log(recipeData);
           setRecipe(recipeData);
           setIsSaved(recipeData.is_on_favorites);
         }

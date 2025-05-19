@@ -12,7 +12,7 @@ export default function RecipeProvider({ children }) {
     const [hasMore, setHasMore] = useState(true)
     const [offset, setOffset] = useState(0)
     const [totalCount, setTotalCount] = useState(0)
-    const LIMIT = 10
+    const LIMIT = 9
 
     const fetchRecipes = async (resetExisting = false) => {
         try {
@@ -138,7 +138,7 @@ export default function RecipeProvider({ children }) {
 
     const getRecipesByAuthorId = async (authorId) => {
         try {
-            return await RecipesService.getRecipesByAuthorId(authorId);
+            return await RecipesService.getPaginatedRecipesByUsername(authorId);
         } catch (error) {
             setError(error);
             console.error("Ошибка при загрузке рецептов автора:", error);
