@@ -5,11 +5,10 @@ import Loader from "@/components/ui/Loader";
 import InfiniteRecipesList from "@/components/shared/InfiniteRecipeList";
 
 export default function App() {
-  const { recipes, loading, hasMore, fetchRecipes, totalCount } = useRecipes();
+  const { recipes, loading, hasMore, fetchRecipes } = useRecipes();
 
   const handleLoadMore = () => {
     if (!loading && hasMore) {
-      console.log('Loading more recipes manually...');
       fetchRecipes();
     }
   };
