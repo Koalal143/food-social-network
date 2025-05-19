@@ -22,14 +22,11 @@ export default class UsersService {
         }
     }
 
-    static async getUserById(id) {
+    static async getUserByUsername(username) {
         try {
-            const response = await fetch('/users.json');
+            const response = await fetch(`${BASE_API}/v1/users/${username}`);
             if (!response.ok) throw new Error('Ошибка при загрузке пользователей');
-            const users = await response.json();
-            const user = users.find(user => user.id === id);
-            console.log('User found:', user);
-            return user;
+            return await response.json();
         } catch (error) {
             console.error('Ошибка:', error);
             return null;
