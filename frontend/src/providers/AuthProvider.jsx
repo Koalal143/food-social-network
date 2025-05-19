@@ -43,13 +43,13 @@ export default function AuthProvider({ children }) {
             try {
                 setLoading(true)
 
-                const userData = await UsersService.getCurrentUser()
+                const userData = await AuthService.getCurrentUser()
                 setUser(userData)
             } catch (error) {
                 if (error instanceof AuthError) {
                     try {
                         await AuthService.refreshToken()
-                        const userData = await UsersService.getCurrentUser()
+                        const userData = await AuthService.getCurrentUser()
                         setUser(userData)
                     } catch (refreshError) {
                         AuthService.logout()
