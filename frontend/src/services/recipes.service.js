@@ -5,13 +5,28 @@ import { tokenManager } from "@/utils/tokenManager";
 import { ERROR_MESSAGES } from "@/constants/errors";
 
 export default class RecipesService {
-    static async getPaginatedRecipes(offset = 0, limit = 10) {
+    static async getPaginatedRecipes(offset = 0, limit = 10, options={}) {
         try {
+            await tokenManager.ensureValidToken();
+
+            const accessToken = AuthService.getAccessToken();
+
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+
+            if (accessToken) {
+                headers['Authorization'] = `Bearer ${accessToken}`;
+            }
+
             const url = new URL(`${BASE_API}/v1/recipes`);
             url.searchParams.append('offset', offset.toString());
             url.searchParams.append('limit', limit.toString());
             
-            const response = await fetch(url.toString());
+            const response = await fetch(url.toString(), {
+                headers: headers
+            });
             
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -39,28 +54,23 @@ export default class RecipesService {
         }
     }
 
-    static async getAllRecipes() {
+    static async getRecipeById(id, options={}) {
         try {
-            const response = await fetch('/recipes.json');
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Ошибка при загрузке рецептов');
-            }
-            
-            return await response.json();
-        } catch (error) {            
-            if (error instanceof TypeError && error.message === 'Failed to fetch') {
-                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
-            }
-            
-            throw error;
-        }
-    }
+            await tokenManager.ensureValidToken();
 
-    static async getRecipeById(id) {
-        try {
-            const response = await fetch(`${BASE_API}/v1/recipes/${id}`);
+            const accessToken = AuthService.getAccessToken();
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+
+            if (accessToken) {
+                headers['Authorization'] = `Bearer ${accessToken}`;
+            }
+
+            const response = await fetch(`${BASE_API}/v1/recipes/${id}`, {
+                headers: headers
+            });
             
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -294,17 +304,31 @@ export default class RecipesService {
         }
     }
 
-    static async getRecipesByAuthorId(authorId) {
+    static async getPaginatedRecipesByUsername(username, offset = 0, limit = 10) {
         try {
-            const response = await fetch('/recipes.json');
+            const url = new URL(`${BASE_API}/v1/users/${username}/recipes`);
+            url.searchParams.append('offset', offset.toString());
+            url.searchParams.append('limit', limit.toString());
+            
+            const response = await fetch(url.toString());
             
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+                
+                if (response.status === 503) {
+                    throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+                }
+                
                 throw new Error(errorData.detail || 'Ошибка при загрузке рецептов');
             }
+
+            const data = await response.json();
+            const totalCountHeader = response.headers.get('X-Total-Count');
             
-            const recipes = await response.json();
-            return recipes.filter(recipe => recipe.authorId === authorId);
+            return {
+                data: data,
+                totalCount: parseInt(totalCountHeader, 10) || 0
+            };
         } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
@@ -314,211 +338,3 @@ export default class RecipesService {
         }
     }
 }
-
-// import { BASE_API } from "@/constants/backend-urls";
-// import AuthService from "./auth.service";
-// import { AuthError, NotFoundError, NetworkError } from "@/utils/errors";
-// import { tokenManager } from "@/utils/tokenManager";
-
-// export default class RecipesService {
-//     static async getPaginatedRecipes(offset = 0, limit = 10) {
-//         try {
-//             const url = new URL(`${BASE_API}/v1/recipes`);
-//             url.searchParams.append('offset', offset.toString());
-//             url.searchParams.append('limit', limit.toString());
-            
-//             const response = await fetch(url.toString());
-            
-//             if (!response.ok) throw new Error('Ошибка при загрузке рецептов');
-            
-//             const data = await response.json();
-            
-//             const totalCountHeader = response.headers.get('X-Total-Count');
-            
-//             return {
-//                 data: data,
-//                 totalCount: parseInt(totalCountHeader, 10) || 0
-//             };
-//         } catch (error) {
-//             console.error('Ошибка при загрузке рецептов с пагинацией:', error);
-//             return { data: [], totalCount: 0 };
-//         }
-//     }
-
-//     static async getAllRecipes() {
-//         try {
-//             const response = await fetch('/recipes.json');
-//             if (!response.ok) throw new Error('Ошибка при загрузке рецептов');
-//             return await response.json();
-//         } catch (error) {
-//             console.error('Ошибка:', error);
-//             return [];
-//         }
-//     }
-
-//     static async getRecipeById(id) {
-//         try {
-//             const response = await fetch(`${BASE_API}/v1/recipes/${id}`);
-//             if (!response.ok) {
-//                 const errorData = await response.json();
-
-//                 if (response.status === 404) {
-//                     if (errorData.error_key === 'recipe_not_found') {
-//                         throw new NotFoundError(ERROR_MESSAGES.recipe_not_found);
-//                     }
-//                     throw new NotFoundError(errorData.detail || ERROR_MESSAGES.recipe_not_found);
-//                 }
-//             }
-//             return response.json()
-//         } catch (error) {
-//             return null;
-//         }
-//     }
-
-//     static async addRecipe(recipe, options = {}) {
-//         try {
-//             await tokenManager.ensureValidToken();
-
-//             const accessToken = AuthService.getAccessToken()
-//             const headers = {
-//                 ...options.headers,
-//                 'Authorization': `Bearer ${accessToken}`,
-//                 'Content-Type': 'application/json'
-//             };
-//             const response = await fetch(`${BASE_API}/v1/recipes`, {
-//                 method: 'POST',
-//                 headers: headers,
-//                 body: JSON.stringify(recipe)
-//             })
-//             if (!response.ok) {
-//                 const errorData = await response.json();
-                
-//                 if (response.status === 401) {
-//                     if (errorData.error_key === 'token_expired') {
-//                         throw new AuthError(ERROR_MESSAGES.token_expired);
-//                     }
-//                     throw new AuthError(errorData.detail || ERROR_MESSAGES.invalid_credentials);
-//                 }
-//             }
-
-//             return response.json()
-//         } catch (error) {
-//             if (error instanceof TypeError && error.message === 'Failed to fetch') {
-//                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
-//             }
-//             throw error;
-//         }
-//     }
-
-//     static async getUploadImageUrl(recipeId, options = {}) {
-//         try {
-//             await tokenManager.ensureValidToken();
-
-//             const accessToken = AuthService.getAccessToken()
-//             const headers = {
-//                 ...options.headers,
-//                 'Authorization': `Bearer ${accessToken}`,
-//                 'Content-Type': 'application/json'
-//             };
-
-//             const response = await fetch(`${BASE_API}/v1/recipes/${recipeId}/image/upload-url`, {
-//                 method: 'GET',
-//                 headers: headers
-//             })
-
-//             if (!response.ok) {
-//                 const errorData = await response.json();
-                
-//                 if (response.status === 403) {
-//                     if (errorData.error_key === 'recipe_belongs_to_other_user') {
-//                         throw new AuthError(ERROR_MESSAGES.insufficient_permissions);
-//                     }
-//                     throw new AuthError(errorData.detail || ERROR_MESSAGES.insufficient_permissions);
-//                 }
-//             }
-
-//             return response.json()
-//         } catch (error) {
-//             if (error instanceof TypeError && error.message === 'Failed to fetch') {
-//                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
-//             }
-//             throw error;
-//         }
-//     }
-
-//     static async getUploadInstructionsUrls(recipeId, steps, options = {}) {
-//         try {
-//             await tokenManager.ensureValidToken();
-    
-//             const accessToken = AuthService.getAccessToken();
-//             const headers = {
-//                 ...options.headers,
-//                 'Authorization': `Bearer ${accessToken}`,
-//                 'accept': 'application/json'
-//             };
-    
-//             const url = new URL(`${BASE_API}/v1/recipes/${recipeId}/instructions/upload-urls`);
-//             steps.forEach(step => {
-//                 url.searchParams.append('steps', step);
-//             });
-    
-//             const response = await fetch(url.toString(), {
-//                 method: 'GET',
-//                 headers: headers
-//             });
-    
-//             if (!response.ok) {
-//                 const errorData = await response.json();
-                
-//                 if (response.status === 404) {
-//                     if (errorData.error_key === 'recipe_not_found') {
-//                         throw new AuthError(ERROR_MESSAGES.default);
-//                     }
-//                     throw new AuthError(errorData.detail || ERROR_MESSAGES.default);
-//                 }
-//             }
-    
-//             return await response.json();
-//         } catch (error) {
-//             if (error instanceof TypeError && error.message === 'Failed to fetch') {
-//                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
-//             }
-//             throw error;
-//         }
-//     }
-
-//     static async updateRecipe(recipeData, options={}) {
-//         try {
-//             await tokenManager.ensureValidToken();
-    
-//             const accessToken = AuthService.getAccessToken();
-//             const headers = {
-//                 ...options.headers,
-//                 'Authorization': `Bearer ${accessToken}`,
-//                 'accept': 'application/json',
-//                 'Content-Type': 'application/json'
-//             };
-
-//             const response = await fetch(`${BASE_API}/v1/recipes/${recipeData.id}`, {
-//                 method: 'PATCH',
-//                 headers: headers,
-//                 body: JSON.stringify(recipeData)
-//             });
-//             return await response.json();
-//         } catch (error) {
-//             throw error;
-//         }
-//     }
-
-//     static async getRecipesByAuthorId(authorId) {
-//         try {
-//             const response = await fetch('/recipes.json');
-//             if (!response.ok) throw new Error('Ошибка при загрузке рецептов');
-//             const recipes = await response.json();
-//             return recipes.filter(recipe => recipe.authorId === authorId);
-//         } catch (error) {
-//             console.error('Ошибка:', error);
-//             return [];
-//         }
-//     }
-// }
