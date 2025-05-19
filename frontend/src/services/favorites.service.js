@@ -3,7 +3,7 @@ import { tokenManager } from "@/utils/tokenManager";
 import AuthService from "./auth.service";
 
 export default class FavoritesService {
-    static async getPaginationFavorites(offset = 0, limit = 10, options={}) {
+    static async getPaginatedFavorites(offset = 0, limit = 10, options={}) {
         try {
             const url = new URL(`${BASE_API}/v1/favorite-recipes`);
             url.searchParams.append('offset', offset.toString());
@@ -98,9 +98,8 @@ export default class FavoritesService {
         };
 
         try {
-            const response = await fetch(`${BASE_API}/v1/favorite-recipes`, {
+            const response = await fetch(`${BASE_API}/v1/favorite-recipes/${recipeId}`, {
                 method: 'DELETE',
-                body: JSON.stringify({'recipe_id': recipeId}),
                 headers: headers
             })
 
