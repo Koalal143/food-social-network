@@ -219,7 +219,10 @@ async def get_user_recipes(  # noqa: PLR0913
 ) -> list[RecipeReadShort]:
     recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
     total, recipes = await recipe_service.get_all_by_author_username(
-        author_nickname=author_nickname, skip=offset, limit=limit, user_id=current_user.id if current_user else None,
+        author_nickname=author_nickname,
+        skip=offset,
+        limit=limit,
+        user_id=current_user.id if current_user else None,
     )
     response.headers["X-Total-Count"] = str(total)
     return list(recipes)
