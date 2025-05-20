@@ -16,6 +16,11 @@ class RecipeIngredientRepository:
         result = await self.session.scalars(stmt)
         return result.first()
 
+    async def get_by_ids(self, ingredients_ids: Sequence[int]) -> Sequence[RecipeIngredient]:
+        stmt = select(RecipeIngredient).where(RecipeIngredient.id.in_(ingredients_ids))
+        result = await self.session.scalars(stmt)
+        return result.all()
+
     async def get_all_for_recipe(self, recipe_id: int, skip: int = 0, limit: int = 100) -> Sequence[RecipeIngredient]:
         stmt = select(RecipeIngredient).where(RecipeIngredient.recipe_id == recipe_id).offset(skip).limit(limit)
         result = await self.session.execute(stmt)
