@@ -9,6 +9,7 @@ from src.repositories.recipe import RecipeRepository
 from src.repositories.recipe_ingredient import RecipeIngredientRepository
 from src.repositories.recipe_instruction import RecipeInstructionRepository
 from src.repositories.recipe_tag import RecipeTagRepository
+from src.repositories.shopping_list_item import ShoppingListItemRepository
 from src.repositories.token import RefreshTokenRepository
 from src.repositories.user import UserRepository
 from src.repositories.user_profile import UserProfileRepository
@@ -27,6 +28,7 @@ class SQLAlchemyUnitOfWork:
         self.recipe_instructions = RecipeInstructionRepository(self.session)
         self.recipe_tags = RecipeTagRepository(self.session)
         self.favorite_recipes = FavoriteRecipeRepository(self.session)
+        self.shopping_list_items = ShoppingListItemRepository(self.session)
 
     async def __aenter__(self) -> Self:
         return self
