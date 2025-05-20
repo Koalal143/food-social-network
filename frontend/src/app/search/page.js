@@ -10,56 +10,28 @@ import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import RecipesList from '@/components/shared/RecipesList';
+import { useSearch } from '@/context/SearchContext';
 
 export default function SearchPage() {
   const router = useRouter();
   const { searchHistory, addToHistory } = useSearchHistory();
-  const { recipes } = useRecipes();
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const { searchResults, searchLoading, searchError, searchQuery: contextSearchQuery, performSearch } = useSearch();
   const searchParams = useSearchParams();
-  const query = searchParams.get('q');
-  const debouncedQuery = useDebounce(query, 300);
+  const urlQuery = searchParams.get('q');
+  const debouncedQuery = useDebounce(urlQuery, 300);
 
   const handleBack = () => {
-    router.push('/search');
     router.push('/');
   };
 
   useEffect(() => {
     if (debouncedQuery) {
-      handleSearch(debouncedQuery);
+      performSearch(debouncedQuery);
+      addToHistory(debouncedQuery);
     } else {
-      setSearchResults([]);
+      performSearch('');
     }
-  }, [debouncedQuery]);
-
-  const handleSearch = async (query) => {
-    if (!query?.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    try {
-      setIsSearching(true);
-      addToHistory(query);
-
-      const results = recipes.filter(recipe => 
-        recipe.title.toLowerCase().includes(query.toLowerCase()) ||
-        recipe.shortDescription.toLowerCase().includes(query.toLowerCase())
-      );
-
-      setSearchResults(results);
-    } catch (err) {
-      toast({
-        title: "Ошибка поиска",
-        description: "Попробуйте повторить попытку позже",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
+  }, [debouncedQuery, performSearch, addToHistory]);
 
   return (
     <Container className="py-8">
@@ -73,7 +45,7 @@ export default function SearchPage() {
           На главную
         </Button>
 
-        {!query && searchHistory.length > 0 && (
+        {!urlQuery && searchHistory.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Недавние запросы</h3>
             <div className="flex flex-wrap gap-2">
@@ -90,16 +62,21 @@ export default function SearchPage() {
           </div>
         )}
 
-        {isSearching ? (
+        {searchLoading ? (
           <div className="flex justify-center py-8">
             <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           </div>
-        ) : query && searchResults.length > 0 ? (
+        ) : searchError ? (
+          <div className="text-center py-12 text-red-500">
+            <p className="text-xl">Ошибка при выполнении поиска:</p>
+            <p>{searchError}</p>
+          </div>
+        ) : contextSearchQuery && searchResults.length > 0 ? (
           <RecipesList recipes={searchResults}/>
-        ) : query ? (
+        ) : contextSearchQuery ? (
           <div className="text-center py-12">
             <p className="text-xl text-muted-foreground">
-              По вашему запросу ничего не найдено
+              По запросу "{contextSearchQuery}" ничего не найдено
             </p>
           </div>
         ) : (

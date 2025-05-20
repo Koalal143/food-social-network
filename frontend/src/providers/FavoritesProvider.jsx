@@ -1,6 +1,6 @@
 "use client"
 
-import { useState,useEffect } from "react"
+import { useState,useEffect, useCallback } from "react"
 import { FavoritesContext } from "@/context/FavoritesContext"
 import FavoritesService from "@/services/favorites.service"
 
@@ -12,7 +12,7 @@ export default function FavoritesProvider({ children }) {
     const [favoritesTotalCount, setFavoritesTotalCount] = useState(0) // Общее количество избранных
 
     // Получение избранных рецептов с пагинацией
-    const getFavorites = async (offset = 0, limit = 10) => {
+    const getFavorites = useCallback(async (offset = 0, limit = 10) => {
         try {
             // Устанавливаем статус загрузки для этой порции данных
             setFavoritesLoading(prev => ({ ...prev, [offset]: true }))
@@ -42,7 +42,7 @@ export default function FavoritesProvider({ children }) {
             // Сбрасываем статус загрузки для этого offset
             setFavoritesLoading(prev => ({ ...prev, [offset]: false }))
         }
-    }
+    }, []) // Пустой массив зависимостей
 
     // Добавление рецепта в избранное
     const addFavorite = (recipe) => {

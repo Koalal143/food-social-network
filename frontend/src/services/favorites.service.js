@@ -1,6 +1,8 @@
 import { BASE_API } from "@/constants/backend-urls";
 import { tokenManager } from "@/utils/tokenManager";
 import AuthService from "./auth.service";
+import { AuthError } from "@/utils/errors";
+import { ERROR_MESSAGES } from "@/constants/errors";
 
 export default class FavoritesService {
     static async getPaginatedFavorites(offset = 0, limit = 10, options={}) {

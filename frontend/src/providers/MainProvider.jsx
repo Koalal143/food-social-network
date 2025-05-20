@@ -5,6 +5,7 @@ import UserProvider from "./UserProvider"
 import FavoritesProvider from "./FavoritesProvider"
 import SearchHistoryProvider from "./SearchHistoryProvider"
 import AuthProvider from "./AuthProvider"
+import { SearchProvider } from "./SearchProvider"
 
 export default function MainProvider({ children }) {
     return (
@@ -13,7 +14,9 @@ export default function MainProvider({ children }) {
                 <UserProvider>
                     <FavoritesProvider>
                         <SearchHistoryProvider>
-                            {children}
+                            <SearchProvider>
+                                {children}
+                            </SearchProvider>
                         </SearchHistoryProvider>
                     </FavoritesProvider>
                 </UserProvider>

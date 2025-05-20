@@ -4,11 +4,13 @@ import { Search, X } from "lucide-react"
 import { Input } from "./input"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { useSearch } from '@/context/SearchContext'
 
 export default function SearchInput({ setShowMobileSearch }) {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [query, setQuery] = useState(searchParams.get('q') || '')
+    const { performSearch, clearSearchResults } = useSearch()
 
     useEffect(() => {
       setQuery(searchParams.get('q') || '')
@@ -31,7 +33,8 @@ export default function SearchInput({ setShowMobileSearch }) {
 
     const handleSearch = () => {
         if (query.trim()) {
-            router.push(`/search?q=${encodeURIComponent(query)}`)
+            performSearch(query.trim())
+            router.push(`/search?q=${encodeURIComponent(query.trim())}`)
         }
     }
 
@@ -42,6 +45,7 @@ export default function SearchInput({ setShowMobileSearch }) {
     const clearSearch = (e) => {
         e.stopPropagation() // Предотвращаем всплытие события
         setQuery('')
+        clearSearchResults()
         if (setShowMobileSearch) {
             setShowMobileSearch(false)
         }
