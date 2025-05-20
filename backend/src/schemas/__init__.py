@@ -3,6 +3,8 @@ from src.schemas.base import BaseReadSchema, BaseSchema
 from src.schemas.direct_upload import DirectUpload, DirectUploadFields
 from src.schemas.favorite_recipe import FavoriteRecipeCreate, FavoriteRecipeRead
 from src.schemas.recipe import (
+    IngredientCreate,
+    IngredientRead,
     RecipeCreate,
     RecipeInstructionsUploadUrls,
     RecipeRead,
@@ -30,6 +32,8 @@ __all__ = [
     "DirectUploadFields",
     "FavoriteRecipeCreate",
     "FavoriteRecipeRead",
+    "IngredientCreate",
+    "IngredientRead",
     "RecipeCreate",
     "RecipeInstructionsUploadUrls",
     "RecipeRead",

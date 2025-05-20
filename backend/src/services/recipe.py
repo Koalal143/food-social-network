@@ -15,7 +15,7 @@ from src.models.recipe import Recipe
 from src.models.user import User
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.recipe import (
-    Ingredient,
+    IngredientCreate,
     RecipeCreate,
     RecipeInstruction,
     RecipeRead,
@@ -91,13 +91,16 @@ class RecipeService:
         self, author_nickname: str, skip: int = 0, limit: int = 10, user_id: int | None = None
     ) -> tuple[int, Sequence[RecipeReadShort]]:
         count, recipes = await self.uow.recipes.get_by_author_username(
-            author_username=author_nickname, user_id=user_id, skip=skip, limit=limit,
+            author_username=author_nickname,
+            user_id=user_id,
+            skip=skip,
+            limit=limit,
         )
         recipe_schemas = [await self._to_recipe_short_schema(recipe) for recipe in recipes]
 
         return count, recipe_schemas
 
-    async def _create_ingredients(self, recipe_id: int, ingredients: list[Ingredient]) -> None:
+    async def _create_ingredients(self, recipe_id: int, ingredients: list[IngredientCreate]) -> None:
         ingredients_data = []
         for ingredient in ingredients:
             ingredient_dict = ingredient.model_dump()

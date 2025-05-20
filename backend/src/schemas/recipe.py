@@ -11,13 +11,17 @@ from src.utils.partial_model import partial_model
 MAX_RECIPE_INSTRUCTIONS_COUNT = 25
 
 
-class Ingredient(BaseSchema):
+class IngredientCreate(BaseSchema):
     name: str = Field(max_length=135, examples=["Tomato", "Чеснок"])
     quantity: str = Field(max_length=135, examples=["2 pieces", "два зубчика"])
 
 
+class IngredientRead(IngredientCreate):
+    id: int
+
+
 @partial_model
-class IngredientUpdate(Ingredient):
+class IngredientUpdate(IngredientCreate):
     pass
 
 
@@ -60,7 +64,7 @@ class _InstructionsMixin(BaseSchema):
 
 
 class _IngredientsMixin(BaseSchema):
-    ingredients: list[Ingredient] = Field(max_length=50)
+    ingredients: list[IngredientRead] = Field(max_length=50)
 
 
 class _TagsMixin(BaseSchema):
@@ -76,9 +80,7 @@ class RecipeReadShort(BaseRecipeSchema):
     is_on_favorites: bool = Field(default=False, description="Is the recipe in user's favorites")
 
 
-class RecipeRead(
-    _InstructionsMixin, _IngredientsMixin, _TagsMixin, _IsPublishedMixin, RecipeReadShort, BaseReadSchema
-):
+class RecipeRead(_InstructionsMixin, _IngredientsMixin, _TagsMixin, _IsPublishedMixin, RecipeReadShort, BaseReadSchema):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True, extra="ignore")
 
 
