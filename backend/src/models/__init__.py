@@ -5,6 +5,7 @@ from src.models.recipe import Recipe
 from src.models.recipe_ingredient import RecipeIngredient
 from src.models.recipe_instructions import RecipeInstruction
 from src.models.recipe_tag import RecipeTag
+from src.models.shopping_list_item import ShoppingListItem
 from src.models.token import RefreshToken
 from src.models.user import User
 from src.models.user_profile import UserProfile
@@ -18,6 +19,7 @@ __all__ = [
     "RecipeInstruction",
     "RecipeTag",
     "RefreshToken",
+    "ShoppingListItem",
     "User",
     "UserProfile",
 ]

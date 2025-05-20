@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from src.models.recipe_ingredient import RecipeIngredient
     from src.models.recipe_instructions import RecipeInstruction
     from src.models.recipe_tag import RecipeTag
+    from src.models.shopping_list_item import ShoppingListItem
     from src.models.user import User
 
 
@@ -30,3 +31,4 @@ class Recipe(Base):
     instructions: Mapped[list["RecipeInstruction"]] = relationship(back_populates="recipe")
     tags: Mapped[list["RecipeTag"]] = relationship(back_populates="recipe")
     favorite_recipes: Mapped[list["FavoriteRecipe"]] = relationship(back_populates="recipe")
+    shopping_list_items: Mapped[list["ShoppingListItem"]] = relationship(back_populates="recipe")

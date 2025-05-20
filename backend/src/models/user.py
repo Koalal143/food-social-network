@@ -9,6 +9,7 @@ from src.models.base import Base
 if TYPE_CHECKING:
     from src.models.favorite_recipes import FavoriteRecipe
     from src.models.recipe import Recipe
+    from src.models.shopping_list_item import ShoppingListItem
     from src.models.token import RefreshToken
     from src.models.user_profile import UserProfile
 
@@ -27,3 +28,4 @@ class User(Base):
     profile: Mapped["UserProfile"] = relationship(back_populates="user", uselist=False)
     recipes: Mapped[list["Recipe"]] = relationship(back_populates="author")
     favorite_recipes: Mapped[list["FavoriteRecipe"]] = relationship(back_populates="user")
+    shopping_list_items: Mapped[list["ShoppingListItem"]] = relationship(back_populates="user")
