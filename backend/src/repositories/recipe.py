@@ -43,7 +43,6 @@ class RecipeRepository:
         )
 
     def _add_is_favorite_subquery(self, query: Select, user_id: int | None) -> Select:
-        """Add a subquery to check if recipe is in user's favorites."""
         if user_id is None:
             return query
 
@@ -113,11 +112,7 @@ class RecipeRepository:
 
         return stmt, recipes
 
-    async def _get_count_with_filters(
-        self,
-        additional_filters: list[Any] | None = None,
-        **filters: Any
-    ) -> int:
+    async def _get_count_with_filters(self, additional_filters: list[Any] | None = None, **filters: Any) -> int:
         count_stmt = select(func.count(Recipe.id)).filter_by(**filters)
 
         if additional_filters:
@@ -134,12 +129,7 @@ class RecipeRepository:
         limit: int = 100,
         **filters: Any,
     ) -> tuple[int, Sequence[RecipeWithFavorite]]:
-        _, recipes = await self._get_recipes_with_filters(
-            user_id=user_id,
-            skip=skip,
-            limit=limit,
-            **filters
-        )
+        _, recipes = await self._get_recipes_with_filters(user_id=user_id, skip=skip, limit=limit, **filters)
 
         count = await self._get_count_with_filters(**filters)
         return count, recipes
@@ -155,17 +145,10 @@ class RecipeRepository:
         author_filter = Recipe.author.has(User.username == author_username)
 
         _, recipes = await self._get_recipes_with_filters(
-            user_id=user_id,
-            skip=skip,
-            limit=limit,
-            additional_filters=[author_filter],
-            **filters
+            user_id=user_id, skip=skip, limit=limit, additional_filters=[author_filter], **filters
         )
 
-        count = await self._get_count_with_filters(
-            additional_filters=[author_filter],
-            **filters
-        )
+        count = await self._get_count_with_filters(additional_filters=[author_filter], **filters)
 
         return count, recipes
 
