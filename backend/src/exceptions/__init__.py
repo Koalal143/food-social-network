@@ -17,6 +17,7 @@ from src.exceptions.recipe import (
     RecipeNotFoundError,
     RecipeOwnershipError,
 )
+from src.exceptions.recipe_ingredient import RecipeIngredientNotFoundError
 from src.exceptions.user import UserEmailAlreadyExistsError, UserNicknameAlreadyExistsError, UserNotFoundError
 
 __all__ = [
@@ -35,6 +36,7 @@ __all__ = [
     "NoRecipeImageError",
     "NoRecipeInstructionsError",
     "RecipeAlreadyInFavoritesError",
+    "RecipeIngredientNotFoundError",
     "RecipeNotFoundError",
     "RecipeNotInFavoritesError",
     "RecipeOwnershipError",
