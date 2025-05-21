@@ -21,7 +21,7 @@ class FavoriteRecipeService:
                 self._recipe_bucket_name, recipe.image_url, expires_in=3600
             )
 
-        recipe.is_favorite = True
+        recipe.is_on_favorites = True
         return recipe
 
     async def get_user_favorites(
