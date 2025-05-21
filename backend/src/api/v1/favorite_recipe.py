@@ -32,7 +32,7 @@ _favorite_recipe_example = {
 
 
 @router.get(
-    "/",
+    "",
     summary="Get user's favorite recipes",
     description="Returns a list of user's favorite recipes with pagination. "
     "The total count of recipes is returned in the X-Total-Count header. "
@@ -53,7 +53,7 @@ async def get_favorite_recipes(  # noqa: PLR0913
 
 
 @router.post(
-    "/",
+    "",
     status_code=status.HTTP_200_OK,
     summary="Add recipe to favorites",
     description="Adds a recipe to user's favorites. Authentication required.",
