@@ -203,32 +203,6 @@ async def delete_user_avatar(
 
 
 @router.get(
-    "/{username}/recipes",
-    summary="Get user's recipes by username",
-    description="Returns a list of user's recipes with pagination. The total count of recipes is returned in the "
-    "X-Total-Count header.",
-)
-async def get_user_recipes(  # noqa: PLR0913
-    author_nickname: Annotated[str, Path(alias="username")],
-    current_user: CurrentUserOrNoneDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
-    response: Response,
-    offset: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1, le=50)] = 10,
-) -> list[RecipeReadShort]:
-    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
-    total, recipes = await recipe_service.get_all_by_author_username(
-        author_nickname=author_nickname,
-        skip=offset,
-        limit=limit,
-        user_id=current_user.id if current_user else None,
-    )
-    response.headers["X-Total-Count"] = str(total)
-    return list(recipes)
-
-
-@router.get(
     "/me/recipes",
     summary="Get user's recipes",
     description=(
@@ -253,3 +227,29 @@ async def get_current_user_recipes(  # noqa: PLR0913
     )
     response.headers["X-Total-Count"] = str(total)
     return recipes
+
+
+@router.get(
+    "/{username}/recipes",
+    summary="Get user's recipes by username",
+    description="Returns a list of user's recipes with pagination. The total count of recipes is returned in the "
+    "X-Total-Count header.",
+)
+async def get_user_recipes(  # noqa: PLR0913
+    author_nickname: Annotated[str, Path(alias="username")],
+    current_user: CurrentUserOrNoneDependency,
+    uow: UnitOfWorkDependency,
+    s3_storage: S3StorageDependency,
+    response: Response,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=50)] = 10,
+) -> list[RecipeReadShort]:
+    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
+    total, recipes = await recipe_service.get_all_by_author_username(
+        author_nickname=author_nickname,
+        skip=offset,
+        limit=limit,
+        user_id=current_user.id if current_user else None,
+    )
+    response.headers["X-Total-Count"] = str(total)
+    return list(recipes)
