@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.models.favorite_recipes import FavoriteRecipe
+from src.models.recipe import Recipe
 
 
 class FavoriteRecipeRepository:
@@ -20,7 +21,16 @@ class FavoriteRecipeRepository:
         stmt = (
             select(FavoriteRecipe)
             .where(FavoriteRecipe.user_id == user_id)
-            .options(joinedload(FavoriteRecipe.recipe))
+            .options(
+                joinedload(FavoriteRecipe.recipe).load_only(
+                    Recipe.id,
+                    Recipe.title,
+                    Recipe.short_description,
+                    Recipe.image_url,
+                    Recipe.difficulty,
+                    Recipe.cook_time_minutes,
+                )
+            )
             .order_by(FavoriteRecipe.created_at.desc())
             .offset(skip)
             .limit(limit)
