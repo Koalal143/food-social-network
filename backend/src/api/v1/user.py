@@ -237,7 +237,6 @@ async def get_user_recipes(  # noqa: PLR0913
     )
 )
 async def get_current_user_recipes(  # noqa: PLR0913
-    author_nickname: Annotated[str, Path(alias="username")],
     current_user: CurrentUserDependency,
     uow: UnitOfWorkDependency,
     s3_storage: S3StorageDependency,
