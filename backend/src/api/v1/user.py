@@ -245,11 +245,11 @@ async def get_current_user_recipes(  # noqa: PLR0913
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
 ) -> list[RecipeReadShort]:
     recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
-    total, recipes = await recipe_service.get_all_by_author_username(
-        author_nickname=current_user.username,
+    total, recipes = await recipe_service.get_all_by_author_id(
+        author_id=current_user.id,
         skip=offset,
         limit=limit,
         user_id=current_user.id if current_user else None,
     )
     response.headers["X-Total-Count"] = str(total)
-    return list(recipes)
+    return recipes

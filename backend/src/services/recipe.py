@@ -91,10 +91,25 @@ class RecipeService:
         self, author_nickname: str, skip: int = 0, limit: int = 10, user_id: int | None = None
     ) -> tuple[int, Sequence[RecipeReadShort]]:
         count, recipes = await self.uow.recipes.get_by_author_username(
-            author_username=author_nickname, user_id=user_id, skip=skip, limit=limit,
+            author_username=author_nickname,
+            user_id=user_id,
+            skip=skip,
+            limit=limit,
         )
         recipe_schemas = [await self._to_recipe_short_schema(recipe) for recipe in recipes]
 
+        return count, recipe_schemas
+
+    async def get_all_by_author_id(
+        self, author_id: int, skip: int = 0, limit: int = 10, user_id: int | None = None
+    ) -> tuple[int, Sequence[RecipeReadShort]]:
+        count, recipes = await self.uow.recipes.get_by_author_id(
+            author_id=author_id,
+            user_id=user_id,
+            skip=skip,
+            limit=limit,
+        )
+        recipe_schemas = [await self._to_recipe_short_schema(recipe) for recipe in recipes]
         return count, recipe_schemas
 
     async def _create_ingredients(self, recipe_id: int, ingredients: list[Ingredient]) -> None:
