@@ -4,7 +4,7 @@ import { Search, X } from "lucide-react"
 import { Input } from "./input"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { useSearch } from '@/context/SearchContext'
+import { useSearch } from '@/providers/SearchProvider'
 
 export default function SearchInput({ setShowMobileSearch }) {
     const router = useRouter()

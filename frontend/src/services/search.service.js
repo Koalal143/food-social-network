@@ -1,7 +1,8 @@
 import { BASE_API } from "@/constants/backend-urls";
 import { tokenManager } from "@/utils/tokenManager";
 import AuthService from "./auth.service";
-import { AuthError, NetworkError, ERROR_MESSAGES } from "@/utils/errors";
+import { AuthError, NetworkError } from "@/utils/errors";
+import { ERROR_MESSAGES } from "@/constants/errors";
 
 export default class SearchService {
     static async searchRecipes(query, offset = 0, limit = 10) {
