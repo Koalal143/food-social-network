@@ -44,6 +44,7 @@ class FavoriteRecipeService:
         )
 
         favorite_recipes = [await self._to_recipe_with_like_schema(favorite.recipe) for favorite in favorites]
+        favorite_recipes = [await self._to_recipe_with_like_schema(favorite.recipe) for favorite in favorites]
 
         return count, favorite_recipes
 
