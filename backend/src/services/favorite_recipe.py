@@ -15,7 +15,6 @@ class FavoriteRecipeService:
         self._recipe_bucket_name = "images"
 
     async def _to_recipe_with_like_schema(self, favorite_recipe: Recipe) -> FavoriteRecipeRead:
-    async def _to_recipe_with_like_schema(self, favorite_recipe: Recipe) -> FavoriteRecipeRead:
         recipe = RecipeReadShort.model_validate(favorite_recipe)
         if recipe.image_url:
             recipe.image_url = await self.s3_storage.get_file_url(
