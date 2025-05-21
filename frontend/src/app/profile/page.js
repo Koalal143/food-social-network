@@ -59,10 +59,8 @@ export default function ProfilePage() {
             }
         }
 
-        if (user) {
-            loadInitialFavorites()
-        }
-    }, [getFavorites, user])
+        loadInitialFavorites()
+    }, [])
 
     const handleUpdateProfile = async (values) => {
         try {
