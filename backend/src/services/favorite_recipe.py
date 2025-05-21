@@ -15,6 +15,7 @@ class FavoriteRecipeService:
         self._recipe_bucket_name = "images"
 
     async def _to_recipe_with_like_schema(self, favorite_recipe: Recipe) -> FavoriteRecipeRead:
+    async def _to_recipe_with_like_schema(self, favorite_recipe: Recipe) -> FavoriteRecipeRead:
         recipe = RecipeReadShort.model_validate(favorite_recipe)
         if recipe.image_url:
             recipe.image_url = await self.s3_storage.get_file_url(
@@ -29,6 +30,7 @@ class FavoriteRecipeService:
     ) -> tuple[int, list[RecipeReadShort]]:
         count, favorites = await self.uow.favorite_recipes.get_all_by_user(user_id=user_id, skip=skip, limit=limit)
 
+        favorite_recipes = [await self._to_recipe_with_like_schema(favorite.recipe) for favorite in favorites]
         favorite_recipes = [await self._to_recipe_with_like_schema(favorite.recipe) for favorite in favorites]
 
         return count, favorite_recipes
@@ -48,6 +50,7 @@ class FavoriteRecipeService:
         favorite = await self.uow.favorite_recipes.create(user_id=user.id, recipe_id=recipe_id)
         await self.uow.commit()
 
+        return await self._to_recipe_with_like_schema(favorite)
         return await self._to_recipe_with_like_schema(favorite)
 
     async def remove_from_favorites(self, user: User, recipe_id: int) -> None:

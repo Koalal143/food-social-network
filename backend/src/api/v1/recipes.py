@@ -125,6 +125,7 @@ async def get_recipe(
         "Returns a list of recipes with pagination. The total count of recipes is returned in the X-Total-Count header."
     ),
 )
+@router.get("/", include_in_schema=False)
 async def get_recipes(  # noqa: PLR0913
     uow: UnitOfWorkDependency,
     s3_storage: S3StorageDependency,
