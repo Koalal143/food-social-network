@@ -8,12 +8,15 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import RecipesList from '@/components/shared/RecipesList';
-import { useSearch } from '@/providers/SearchProvider';
+import { useSearch } from '@/context/SearchContext';
 
 export default function SearchPage() {
   const router = useRouter();
   const { searchHistory, addToHistory } = useSearchHistory();
   const { searchResults, searchLoading, searchError, searchQuery: contextSearchQuery, performSearch } = useSearch();
+
+  console.log("Search Results:", searchResults);
+
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get('q');
   const debouncedQuery = useDebounce(urlQuery, 300);
@@ -34,8 +37,8 @@ export default function SearchPage() {
   return (
     <Container className="py-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <Button
-          variant="ghost"
+        <Button 
+          variant="ghost" 
           onClick={handleBack}
           className="flex items-center gap-2"
         >
@@ -43,22 +46,22 @@ export default function SearchPage() {
           На главную
         </Button>
 
-        {!urlQuery && searchHistory.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold">Недавние запросы</h3>
-            <div className="flex flex-wrap gap-2">
-              {searchHistory.map((item, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  onClick={() => router.push(`/search?q=${encodeURIComponent(item)}`)}
-                >
-                  {item}
-                </Button>
-              ))}
+          {!urlQuery && searchHistory.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold">Недавние запросы</h3>
+              <div className="flex flex-wrap gap-2">
+                {searchHistory.map((item, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    onClick={() => router.push(`/search?q=${encodeURIComponent(item)}`)}
+                  >
+                    {item}
+                  </Button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {searchLoading ? (
           <div className="flex justify-center py-8">
@@ -71,7 +74,7 @@ export default function SearchPage() {
           </div>
         ) : contextSearchQuery && searchResults.length > 0 ? (
           <RecipesList recipes={searchResults}/>
-        ) : contextSearchQuery && !searchResults ? (
+        ) : contextSearchQuery ? (
           <div className="text-center py-12">
             <p className="text-xl text-muted-foreground">
               По запросу "{contextSearchQuery}" ничего не найдено

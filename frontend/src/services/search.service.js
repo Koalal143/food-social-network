@@ -7,8 +7,8 @@ import { ERROR_MESSAGES } from "@/constants/errors";
 export default class SearchService {
     static async searchRecipes(query, offset = 0, limit = 10) {
         try {
-            const url = new URL(`${BASE_API}/v1/recipes/search`);
-            url.searchParams.append('query', query);
+            const url = new URL(`${BASE_API}/v1/search/recipes`); // Предполагаемый эндпоинт поиска
+            url.searchParams.append('q', query);
             url.searchParams.append('offset', offset.toString());
             url.searchParams.append('limit', limit.toString());
 
@@ -42,8 +42,8 @@ export default class SearchService {
           const totalCountHeader = response.headers.get('X-Total-Count');
 
           return {
-              data: data.results, // Предполагаем, что результаты в поле 'results'
-              totalCount: data.total // Предполагаем, что общее количество в поле 'total'
+              data: data, // data is the array of recipes
+              totalCount: parseInt(totalCountHeader, 10) // Get total count from header
           };
         } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
