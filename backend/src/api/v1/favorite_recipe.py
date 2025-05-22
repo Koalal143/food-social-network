@@ -56,7 +56,8 @@ async def get_favorite_recipes(  # noqa: PLR0913
     "",
     status_code=status.HTTP_200_OK,
     summary="Add recipe to favorites",
-    description="Adds a recipe to user's favorites. Authentication required.",
+    description="Adds a recipe to user's favorites. If the recipe is already in dislikes, "
+    "it will be automatically removed from there. Authentication required.",
     responses={
         status.HTTP_200_OK: {
             "description": "Recipe added to favorites successfully",
