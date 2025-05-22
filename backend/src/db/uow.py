@@ -4,6 +4,7 @@ from typing import Self
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.repositories.banned_email import BannedEmailRepository
+from src.repositories.disliked_recipe import DislikedRecipeRepository
 from src.repositories.favorite_recipe import FavoriteRecipeRepository
 from src.repositories.recipe import RecipeRepository
 from src.repositories.recipe_ingredient import RecipeIngredientRepository
@@ -27,6 +28,7 @@ class SQLAlchemyUnitOfWork:
         self.recipe_instructions = RecipeInstructionRepository(self.session)
         self.recipe_tags = RecipeTagRepository(self.session)
         self.favorite_recipes = FavoriteRecipeRepository(self.session)
+        self.disliked_recipes = DislikedRecipeRepository(self.session)
 
     async def __aenter__(self) -> Self:
         return self
