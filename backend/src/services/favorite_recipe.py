@@ -45,6 +45,9 @@ class FavoriteRecipeService:
             msg = f"Recipe with id {recipe_id} is already in favorites"
             raise RecipeAlreadyInFavoritesError(msg)
 
+        if await self.uow.disliked_recipes.exists(user_id=user.id, recipe_id=recipe_id):
+            await self.uow.disliked_recipes.delete(user_id=user.id, recipe_id=recipe_id)
+
         favorite = await self.uow.favorite_recipes.create(user_id=user.id, recipe_id=recipe_id)
         await self.uow.commit()
 
