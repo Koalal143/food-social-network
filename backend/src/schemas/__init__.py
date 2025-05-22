@@ -1,6 +1,7 @@
 from src.schemas.banned_email import BannedEmailDomainCreate, BannedEmailDomainRead
 from src.schemas.base import BaseReadSchema, BaseSchema
 from src.schemas.direct_upload import DirectUpload, DirectUploadFields
+from src.schemas.disliked_recipe import DislikedRecipeCreate, DislikedRecipeRead
 from src.schemas.favorite_recipe import FavoriteRecipeCreate, FavoriteRecipeRead
 from src.schemas.recipe import (
     RecipeCreate,
@@ -28,6 +29,8 @@ __all__ = [
     "BaseSchema",
     "DirectUpload",
     "DirectUploadFields",
+    "DislikedRecipeCreate",
+    "DislikedRecipeRead",
     "FavoriteRecipeCreate",
     "FavoriteRecipeRead",
     "RecipeCreate",
