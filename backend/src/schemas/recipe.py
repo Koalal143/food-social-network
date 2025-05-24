@@ -98,6 +98,9 @@ class RecipeReadShort(BaseRecipeSchema):
     is_on_favorites: bool = Field(default=False, description="Is the recipe in user's favorites")
     slug: str = Field(description="Recipe slug for URL")
 
+    @computed_field
+    def slug(self) -> str:
+        return create_recipe_slug(self.title, self.id)
 
 class RecipeRead(_IngredientsMixin, _TagsMixin, _IsPublishedMixin, RecipeReadShort, BaseReadSchema):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True, extra="ignore")
