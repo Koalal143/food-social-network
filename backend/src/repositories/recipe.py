@@ -27,10 +27,9 @@ class RecipeRepository:
             )
         )
 
-    def _get_with_author_short(self, recipe_ids: Sequence[int]) -> Select[tuple[Recipe]]:
+    def _get_with_author_short(self) -> Select[tuple[Recipe]]:
         return (
             select(Recipe)
-            .where(Recipe.id.in_(recipe_ids))
             .options(
                 selectinload(Recipe.ingredients),
                 selectinload(Recipe.instructions),
@@ -58,7 +57,7 @@ class RecipeRepository:
         return query.add_columns(favorite_subquery)
 
     async def get_by_id(self, recipe_id: int, user_id: int | None = None) -> RecipeWithFavorite | None:
-        stmt = self._get_with_author_short(recipe_ids=[recipe_id])
+        stmt = self._get_with_author_short().where(Recipe.id == recipe_id)
 
         if user_id is not None:
             stmt = self._add_is_favorite_subquery(stmt, user_id)
@@ -73,11 +72,12 @@ class RecipeRepository:
 
         result = await self.session.scalars(stmt)
         recipe = result.first()
-        recipe.is_on_favorites = False
+        if recipe:
+            recipe.is_on_favorites = False
         return recipe
 
     async def get_by_ids(self, recipe_ids: Sequence[int]) -> Sequence[Recipe] | None:
-        stmt = self._get_with_author_short(recipe_ids=recipe_ids)
+        stmt = self._get_with_author_short().where(Recipe.id.in_(recipe_ids))
         result = await self.session.scalars(stmt)
         return result.all()
 
@@ -218,3 +218,23 @@ class RecipeRepository:
         stmt = select(Recipe).where(Recipe.title == title)
         result = await self.session.scalars(stmt)
         return result.first()
+
+    async def get_by_slug(self, slug: str, user_id: int | None = None) -> RecipeWithFavorite | None:
+        stmt = self._get_with_author_short().where(Recipe.slug == slug)
+
+        if user_id is not None:
+            stmt = self._add_is_favorite_subquery(stmt, user_id)
+            result = await self.session.execute(stmt)
+            row = result.first()
+            if row is None:
+                return None
+
+            recipe, is_on_favorites = row
+            recipe.is_on_favorites = bool(is_on_favorites)
+            return recipe
+
+        result = await self.session.scalars(stmt)
+        recipe = result.first()
+        if recipe:
+            recipe.is_on_favorites = False
+        return recipe
