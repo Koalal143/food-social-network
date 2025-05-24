@@ -23,33 +23,33 @@ export default class RecipesService {
             const url = new URL(`${BASE_API}/v1/recipes`);
             url.searchParams.append('offset', offset.toString());
             url.searchParams.append('limit', limit.toString());
-            
+
             const response = await fetch(url.toString(), {
                 headers: headers
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                
+
                 if (response.status === 503) {
                     throw new NetworkError(ERROR_MESSAGES.service_unavailable);
                 }
-                
+
                 throw new Error(errorData.detail || 'Ошибка при загрузке рецептов');
             }
-            
+
             const data = await response.json();
             const totalCountHeader = response.headers.get('X-Total-Count');
-            
+
             return {
                 data: data,
                 totalCount: parseInt(totalCountHeader, 10) || 0
             };
-        } catch (error) {            
+        } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
-            
+
             throw error;
         }
     }
@@ -71,7 +71,7 @@ export default class RecipesService {
             const response = await fetch(`${BASE_API}/v1/recipes/by-slug/${slug}?source=${source}`, {
                 headers: headers
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
 
@@ -81,16 +81,16 @@ export default class RecipesService {
                     }
                     throw new NotFoundError(errorData.detail || ERROR_MESSAGES.recipe_not_found);
                 }
-                
+
                 throw new Error(errorData.detail || ERROR_MESSAGES.default);
             }
-            
+
             return await response.json();
-        } catch (error) {            
+        } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
-            
+
             throw error;
         }
     }
@@ -103,42 +103,42 @@ export default class RecipesService {
             if (!accessToken) {
                 throw new AuthError(ERROR_MESSAGES.not_authenticated);
             }
-            
+
             const headers = {
                 ...options.headers,
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             };
-            
+
             const response = await fetch(`${BASE_API}/v1/recipes`, {
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify(recipe)
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                
+
                 if (response.status === 401) {
                     if (errorData.error_key === 'token_expired') {
                         throw new AuthError(ERROR_MESSAGES.token_expired);
                     }
                     throw new AuthError(errorData.detail || ERROR_MESSAGES.invalid_credentials);
                 }
-                
+
                 if (response.status === 400) {
                     throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
                 }
-                
+
                 throw new Error(errorData.detail || ERROR_MESSAGES.default);
             }
 
             return await response.json();
-        } catch (error) {            
+        } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
-            
+
             throw error;
         }
     }
@@ -151,7 +151,7 @@ export default class RecipesService {
             if (!accessToken) {
                 throw new AuthError(ERROR_MESSAGES.not_authenticated);
             }
-            
+
             const headers = {
                 ...options.headers,
                 'Authorization': `Bearer ${accessToken}`,
@@ -165,31 +165,31 @@ export default class RecipesService {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                
+
                 if (response.status === 403) {
                     if (errorData.error_key === 'recipe_belongs_to_other_user') {
                         throw new AuthError(ERROR_MESSAGES.insufficient_permissions);
                     }
                     throw new AuthError(errorData.detail || ERROR_MESSAGES.insufficient_permissions);
                 }
-                
+
                 if (response.status === 404) {
                     throw new NotFoundError(ERROR_MESSAGES.recipe_not_found);
                 }
-                
+
                 if (response.status === 401) {
                     throw new AuthError(ERROR_MESSAGES.not_authenticated);
                 }
-                
+
                 throw new Error(errorData.detail || ERROR_MESSAGES.default);
             }
 
             return await response.json();
-        } catch (error) {            
+        } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
-            
+
             throw error;
         }
     }
@@ -197,55 +197,55 @@ export default class RecipesService {
     static async getUploadInstructionsUrls(recipeId, steps, options = {}) {
         try {
             await tokenManager.ensureValidToken();
-    
+
             const accessToken = AuthService.getAccessToken();
             if (!accessToken) {
                 throw new AuthError(ERROR_MESSAGES.not_authenticated);
             }
-            
+
             const headers = {
                 ...options.headers,
                 'Authorization': `Bearer ${accessToken}`,
                 'accept': 'application/json'
             };
-    
+
             const url = new URL(`${BASE_API}/v1/recipes/${recipeId}/instructions/upload-urls`);
             steps.forEach(step => {
                 url.searchParams.append('steps', step);
             });
-    
+
             const response = await fetch(url.toString(), {
                 method: 'GET',
                 headers: headers
             });
-    
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                
+
                 if (response.status === 404) {
                     if (errorData.error_key === 'recipe_not_found') {
                         throw new NotFoundError(ERROR_MESSAGES.recipe_not_found);
                     }
                     throw new NotFoundError(errorData.detail || ERROR_MESSAGES.not_found);
                 }
-                
+
                 if (response.status === 403) {
                     throw new AuthError(ERROR_MESSAGES.insufficient_permissions);
                 }
-                
+
                 if (response.status === 401) {
                     throw new AuthError(ERROR_MESSAGES.not_authenticated);
                 }
-                
+
                 throw new Error(errorData.detail || ERROR_MESSAGES.default);
             }
-    
+
             return await response.json();
-        } catch (error) {            
+        } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
-            
+
             throw error;
         }
     }
@@ -253,12 +253,12 @@ export default class RecipesService {
     static async updateRecipe(recipeData, options={}) {
         try {
             await tokenManager.ensureValidToken();
-    
+
             const accessToken = AuthService.getAccessToken();
             if (!accessToken) {
                 throw new AuthError(ERROR_MESSAGES.not_authenticated);
             }
-            
+
             const headers = {
                 ...options.headers,
                 'Authorization': `Bearer ${accessToken}`,
@@ -271,35 +271,35 @@ export default class RecipesService {
                 headers: headers,
                 body: JSON.stringify(recipeData)
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                
+
                 if (response.status === 404) {
                     throw new NotFoundError(ERROR_MESSAGES.recipe_not_found);
                 }
-                
+
                 if (response.status === 403) {
                     throw new AuthError(ERROR_MESSAGES.insufficient_permissions);
                 }
-                
+
                 if (response.status === 401) {
                     throw new AuthError(ERROR_MESSAGES.not_authenticated);
                 }
-                
+
                 if (response.status === 400) {
                     throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
                 }
-                
+
                 throw new Error(errorData.detail || ERROR_MESSAGES.default);
             }
-            
+
             return await response.json();
-        } catch (error) {            
+        } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
-            
+
             throw error;
         }
     }
@@ -309,22 +309,22 @@ export default class RecipesService {
             const url = new URL(`${BASE_API}/v1/users/${username}/recipes`);
             url.searchParams.append('offset', offset.toString());
             url.searchParams.append('limit', limit.toString());
-            
+
             const response = await fetch(url.toString());
-            
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                
+
                 if (response.status === 503) {
                     throw new NetworkError(ERROR_MESSAGES.service_unavailable);
                 }
-                
+
                 throw new Error(errorData.detail || 'Ошибка при загрузке рецептов');
             }
 
             const data = await response.json();
             const totalCountHeader = response.headers.get('X-Total-Count');
-            
+
             return {
                 data: data,
                 totalCount: parseInt(totalCountHeader, 10) || 0
@@ -333,7 +333,57 @@ export default class RecipesService {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
-            
+
+            throw error;
+        }
+    }
+
+    static async getCurrentUserRecipes(offset = 0, limit = 10) {
+        try {
+            await tokenManager.ensureValidToken();
+
+            const accessToken = AuthService.getAccessToken();
+            if (!accessToken) {
+                throw new AuthError(ERROR_MESSAGES.not_authenticated);
+            }
+
+            const url = new URL(`${BASE_API}/v1/users/me/recipes`);
+            url.searchParams.append('offset', offset.toString());
+            url.searchParams.append('limit', limit.toString());
+
+            const response = await fetch(url.toString(), {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+
+                if (response.status === 503) {
+                    throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+                }
+
+                if (response.status === 401) {
+                    throw new AuthError(ERROR_MESSAGES.not_authenticated);
+                }
+
+                throw new Error(errorData.detail || 'Ошибка при загрузке рецептов пользователя');
+            }
+
+            const data = await response.json();
+            const totalCountHeader = response.headers.get('X-Total-Count');
+
+            return {
+                data: data,
+                totalCount: parseInt(totalCountHeader, 10) || 0
+            };
+        } catch (error) {
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+            }
+
             throw error;
         }
     }
