@@ -61,6 +61,12 @@ class ElasticSearchConfig(BaseModel):
     password: str
 
 
+class CookiePolicyConfig(BaseModel):
+    httponly: bool = True
+    samesite: str = "lax"
+    secure: bool = False
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -74,6 +80,7 @@ class Settings(BaseSettings):
     postgres: PostgresConfig
     s3_storage: S3Config
     jwt: JWTConfig
+    cookie_policy: CookiePolicyConfig
     redis: RedisConfig
     elasticsearch: ElasticSearchConfig
     mode: Literal["dev", "test", "prod"] = Field(default="prod", description="Application mode")
