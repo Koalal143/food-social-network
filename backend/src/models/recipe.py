@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
@@ -17,8 +17,12 @@ if TYPE_CHECKING:
 
 class Recipe(Base):
     __tablename__ = "recipes"
+    __table_args__ = (
+        Index("ix_recipes_slug", "slug"),
+    )
 
     title: Mapped[str] = mapped_column(String(135), nullable=False)
+    slug: Mapped[str] = mapped_column(String(110), nullable=False, unique=True)
     author_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     short_description: Mapped[str] = mapped_column(String(255), nullable=False)
     image_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
