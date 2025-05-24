@@ -27,6 +27,7 @@ from src.schemas.recipe import (
 )
 from src.schemas.user import UserReadShort
 from src.typings.recipe_with_favorite import RecipeWithFavorite
+from src.utils.slug import create_recipe_slug
 
 
 class RecipeService:
@@ -200,6 +201,9 @@ class RecipeService:
         recipe_data = recipe_create.model_dump(exclude={"ingredients", "instructions", "tags"})
         recipe = await self.uow.recipes.create(is_published=False, author_id=user.id, **recipe_data)
 
+        slug = create_recipe_slug(recipe_create.title, recipe.id)
+        await self.uow.recipes.update(recipe.id, slug=slug)
+
         await self._create_ingredients(recipe.id, recipe_create.ingredients)
 
         if recipe_create.instructions:
@@ -233,6 +237,8 @@ class RecipeService:
 
         recipe_data = recipe_update.model_dump(exclude={"ingredients", "instructions", "tags"}, exclude_unset=True)
         if recipe_data:
+            if "title" in recipe_data:
+                recipe_data["slug"] = create_recipe_slug(recipe_data["title"], recipe_id)
             await self.uow.recipes.update(recipe_id, **recipe_data)
 
         if recipe_update.ingredients is not None:
@@ -298,3 +304,11 @@ class RecipeService:
             expires_in=300,
         )
         return DirectUpload.model_validate(presigned_post_data)
+
+    async def get_by_slug(self, slug: str, user_id: int | None = None) -> RecipeReadFull:
+        recipe = await self.uow.recipes.get_by_slug(slug, user_id)
+        if not recipe:
+            msg = f"Recipe with slug '{slug}' not found"
+            raise RecipeNotFoundError(msg)
+
+        return await self._to_recipe_full_schema(recipe)
