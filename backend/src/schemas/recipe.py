@@ -1,14 +1,22 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, PositiveInt
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, PositiveInt, computed_field
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
 from src.schemas.base import BaseReadSchema, BaseSchema
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.user import UserReadShort
 from src.utils.partial_model import partial_model
+from src.utils.slug import create_recipe_slug
+from src.utils.validators import validate_recipe_title
 
 MAX_RECIPE_INSTRUCTIONS_COUNT = 25
+
+RecipeTitle = Annotated[
+    str,
+    Field(max_length=135, examples=["Pasta Carbonara", "Салат Цезарь"]),
+    AfterValidator(validate_recipe_title),
+]
 
 
 class Ingredient(BaseSchema):
@@ -48,7 +56,7 @@ class RecipeTagUpdate(RecipeTag):
 class BaseRecipeSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
-    title: str = Field(max_length=135, examples=["Pasta Carbonara", "Салат Цезарь"])
+    title: RecipeTitle
     short_description: str = Field(max_length=255, examples=["Рецепт салата Цезарь"])
     image_url: str | None = Field(None, max_length=255, examples=["https://example.com/image.jpg"])
     difficulty: RecipeDifficultyEnum = Field(examples=["EASY"])
@@ -75,10 +83,12 @@ class RecipeReadShort(BaseRecipeSchema):
     id: PositiveInt
     is_on_favorites: bool = Field(default=False, description="Is the recipe in user's favorites")
 
+    @computed_field
+    def slug(self) -> str:
+        return create_recipe_slug(self.title, self.id)
 
-class RecipeRead(
-    _InstructionsMixin, _IngredientsMixin, _TagsMixin, _IsPublishedMixin, RecipeReadShort, BaseReadSchema
-):
+
+class RecipeRead(_InstructionsMixin, _IngredientsMixin, _TagsMixin, _IsPublishedMixin, RecipeReadShort, BaseReadSchema):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True, extra="ignore")
 
 
