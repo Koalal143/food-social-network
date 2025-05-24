@@ -7,6 +7,7 @@ from src.core.config import settings
 from src.core.exception_handlers import http_exception_handler, request_validation_error_handler
 from src.core.lifespan import lifespan
 from src.exceptions.http import AppHTTPException
+from src.middlewares import AnonymousUserMiddleware, AnonymousUserMiddlewareConfig
 from src.utils.examples_factory import json_example_factory
 
 app = FastAPI(
@@ -30,6 +31,16 @@ app = FastAPI(
 
 app.add_exception_handler(AppHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, request_validation_error_handler)
+
+anonymous_config = AnonymousUserMiddlewareConfig(
+    cookie_secure=settings.cookie_policy.secure,
+    cookie_name=settings.cookie_policy.name,
+    cookie_path=settings.cookie_policy.path,
+    cookie_max_age=settings.cookie_policy.max_age,
+    cookie_httponly=settings.cookie_policy.httponly,
+    cookie_samesite=settings.cookie_policy.samesite,
+)
+app.add_middleware(AnonymousUserMiddleware, config=anonymous_config)
 
 app.add_middleware(
     CORSMiddleware,
