@@ -38,9 +38,6 @@ app.add_exception_handler(RequestValidationError, request_validation_error_handl
 
 anonymous_config = AnonymousUserMiddlewareConfig(
     cookie_secure=settings.cookie_policy.secure,
-    cookie_name=settings.cookie_policy.name,
-    cookie_path=settings.cookie_policy.path,
-    cookie_max_age=settings.cookie_policy.max_age,
     cookie_httponly=settings.cookie_policy.httponly,
     cookie_samesite=settings.cookie_policy.samesite,
 )
