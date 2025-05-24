@@ -161,6 +161,9 @@ class RecipeService:
             slug=create_recipe_slug(recipe_create.title), is_published=False, author_id=user.id, **recipe_data
         )
 
+        slug = create_recipe_slug(recipe_create.title, recipe.id)
+        await self.uow.recipes.update(recipe.id, slug=slug)
+
         await self._create_ingredients(recipe.id, recipe_create.ingredients)
 
         if recipe_create.instructions:

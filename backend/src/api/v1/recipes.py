@@ -221,6 +221,37 @@ async def get_recipe_by_slug(
 
 
 @router.get(
+    "/by-slug/{slug}",
+    summary="Get recipe by slug",
+    description="Returns detailed information about a recipe using its URL-friendly slug identifier.",
+    responses={
+        status.HTTP_200_OK: {
+            "description": "Successful response with recipe details",
+            "content": json_example_factory({**_recipe_full_example, "slug": "pasta-karbonara-1"}),
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "description": "Recipe not found",
+            "content": json_example_factory(
+                {"detail": "Recipe with slug 'non-existent-recipe-999' not found", "error_key": "recipe_not_found"}
+            ),
+        },
+    },
+)
+async def get_recipe_by_slug(
+    slug: Annotated[str, Path(title="Recipe slug", description="URL-friendly recipe identifier")],
+    uow: UnitOfWorkDependency,
+    s3_storage: S3StorageDependency,
+    current_user: CurrentUserOrNoneDependency,
+) -> RecipeReadFull:
+    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
+    try:
+        user_id = current_user.id if current_user else None
+        return await recipe_service.get_by_slug(slug=slug, user_id=user_id)
+    except RecipeNotFoundError as e:
+        raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
+
+
+@router.get(
     "/",
     summary="Get list of recipes",
     description=(
