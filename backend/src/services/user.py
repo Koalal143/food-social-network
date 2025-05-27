@@ -1,42 +1,54 @@
 from datetime import UTC, datetime
 
-from src.adapters.storage import S3Storage
-from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions.auth import InactiveOrNotExistingUserError, IncorrectCredentialsError, SuspiciousEmailError
 from src.exceptions.user import UserEmailAlreadyExistsError, UserNicknameAlreadyExistsError, UserNotFoundError
 from src.models.user import User
+from src.repositories.interfaces import (
+    BannedEmailRepositoryProtocol,
+    UserAvatarRepositoryProtocol,
+    UserProfileRepositoryProtocol,
+    UserRepositoryProtocol,
+)
 from src.schemas.user import UserProfileUpdate, UserRead
 from src.services.security import SecurityService
 
 
 class UserService:
-    def __init__(self, uow: SQLAlchemyUnitOfWork, s3_client: S3Storage) -> None:
-        self.uow = uow
-        self.s3_client = s3_client
+    def __init__(
+        self,
+        user_repository: UserRepositoryProtocol,
+        user_profile_repository: UserProfileRepositoryProtocol,
+        banned_email_repository: BannedEmailRepositoryProtocol,
+        user_avatar_repository: UserAvatarRepositoryProtocol,
+    ) -> None:
+        self.user_repository = user_repository
+        self.user_profile_repository = user_profile_repository
+        self.banned_email_repository = banned_email_repository
+        self.user_avatar_repository = user_avatar_repository
 
     async def get(self, user_id: int) -> UserRead:
-        user = await self.uow.users.get_with_profile(user_id)
+        user = await self.user_repository.get_with_profile(user_id)
         if not user:
             msg = "User not found"
             raise UserNotFoundError(msg)
         return await self._to_user_model(user)
 
     async def get_by_email(self, email: str) -> UserRead:
-        user = await self.uow.users.get_by_email(email)
+        user = await self.user_repository.get_by_email(email)
         if not user:
             msg = "User not found"
             raise UserNotFoundError(msg)
         return await self._to_user_model(user)
 
     async def get_by_username(self, username: str) -> UserRead:
-        user = await self.uow.users.get_by_username(username)
+        user = await self.user_repository.get_by_username(username)
         if not user:
             msg = "User not found"
             raise UserNotFoundError(msg)
         return await self._to_user_model(user)
 
     async def create(self, *, username: str, email: str, hashed_password: str) -> UserRead:
-        existing = await self.uow.users.check_username_email_exists(username, email)
+        existing = await self.user_repository.check_username_email_exists(username, email)
         for user in existing:
             if user.username == username:
                 msg = "Username already taken"
@@ -47,28 +59,26 @@ class UserService:
 
         _, email_domain = email.split("@", 1)
 
-        if await self.uow.banned_emails.get_by_domain(email_domain):
+        if await self.banned_email_repository.get_by_domain(email_domain):
             msg = "Email is disposable"
             raise SuspiciousEmailError(msg)
 
-        user = await self.uow.users.create(
+        user = await self.user_repository.create(
             username=username,
             email=email,
             hashed_password=hashed_password,
         )
-        await self.uow.session.flush()
-        await self.uow.user_profiles.create(user_id=user.id)
-        await self.uow.commit()
+        await self.user_profile_repository.create(user_id=user.id)
 
-        user = await self.uow.users.get_with_profile(user.id)
+        user = await self.user_repository.get_with_profile(user.id)
         return await self._to_user_model(user)
 
     async def authenticate(self, *, email: str | None, username: str | None, password: str) -> UserRead:
         try:
             if email:
-                user = await self.uow.users.get_by_email(email)
+                user = await self.user_repository.get_by_email(email)
             else:
-                user = await self.uow.users.get_by_username(username)  # type: ignore[arg-type]
+                user = await self.user_repository.get_by_username(username)  # type: ignore[arg-type]
         except UserNotFoundError:
             msg = "Incorrect email/username or password"
             raise UserNotFoundError(msg) from None
@@ -89,9 +99,8 @@ class UserService:
         return await self._to_user_model(user)
 
     async def update_last_login(self, user_read: UserRead) -> UserRead:
-        await self.uow.users.update_last_login(user_read.id, datetime.now(tz=UTC))
-        await self.uow.commit()
-        user = await self.uow.users.get_with_profile(user_read.id)
+        await self.user_repository.update_last_login(user_read.id, datetime.now(tz=UTC))
+        user = await self.user_repository.get_with_profile(user_read.id)
         if not user:
             msg = "User not found after update_last_login"
             raise UserNotFoundError(msg)
@@ -100,27 +109,26 @@ class UserService:
     async def update(
         self, user_id: int, *, username: str | None = None, profile: UserProfileUpdate | None = None
     ) -> UserRead:
-        user = await self.uow.users.get_with_profile(user_id)
+        user = await self.user_repository.get_with_profile(user_id)
         if not user:
             msg = "User not found"
             raise UserNotFoundError(msg)
 
         if username is not None and username != user.username:
-            existing_user = await self.uow.users.get_by_username(username)
+            existing_user = await self.user_repository.get_by_username(username)
             if existing_user:
                 msg = "Username already taken"
                 raise UserNicknameAlreadyExistsError(msg)
-            await self.uow.users.update_username(user_id, username)
+            await self.user_repository.update_username(user_id, username)
 
         if profile and profile.about is not None:
-            await self.uow.user_profiles.update(user_id=user_id, about=profile.about)
+            await self.user_profile_repository.update(user_id=user_id, about=profile.about)
 
-        await self.uow.commit()
-        user = await self.uow.users.get_with_profile(user_id)
+        user = await self.user_repository.get_with_profile(user_id)
         return await self._to_user_model(user)
 
     async def _to_user_model(self, user: User) -> UserRead:
         model = UserRead.model_validate(user, from_attributes=True)
         if model.profile and model.profile.avatar_url:
-            model.profile.avatar_url = await self.s3_client.get_file_url("images", user.profile.avatar_url)
+            model.profile.avatar_url = await self.user_avatar_repository.get_avatar_presigned_url(user.id)
         return UserRead.model_validate(model, from_attributes=True)
