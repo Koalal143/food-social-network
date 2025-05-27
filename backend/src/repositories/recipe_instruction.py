@@ -64,6 +64,7 @@ class RecipeInstructionRepository:
             .returning(RecipeInstruction)
         )
         result = await self.session.scalars(stmt)
+        await self.session.flush()
         return result.first()
 
     async def delete_by_id(self, instruction_id: int) -> None:
