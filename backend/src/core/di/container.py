@@ -1,7 +1,7 @@
 from dishka import AsyncContainer, make_async_container
 from dishka.integrations.fastapi import FastapiProvider
 
-from src.di.providers import (
+from src.core.di.providers import (
     ConfigProvider,
     DatabaseProvider,
     ExternalProvider,
