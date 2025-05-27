@@ -79,7 +79,7 @@ class SearchService:
         return SearchQueryRead.model_validate(search_query, from_attributes=True)
 
     async def get_search_history(
-        self, user_id: int | None = None, anonymous_user_id: int | None = None, limit: int = 10
+        self, user_id: int | None = None, anonymous_user_id: int | None = None, limit: int = 10, offset: int = 0
     ) -> list[SearchQueryRead]:
         """
         Get search history for a user or anonymous user.
@@ -88,6 +88,7 @@ class SearchService:
             user_id: ID of authenticated user
             anonymous_user_id: ID of anonymous user
             limit: Maximum number of search queries to return (default: 10)
+            offset: Number of search queries to skip for pagination (default: 0)
 
         Returns:
             List of search queries ordered by creation date (newest first)
@@ -101,8 +102,10 @@ class SearchService:
             raise UserIdentityNotProvidedError(msg)
 
         if user_id:
-            search_queries = await self.recipe_search_repository.get_user_search_history(user_id, limit)
+            search_queries = await self.recipe_search_repository.get_user_search_history(user_id, limit, offset)
         else:
-            search_queries = await self.recipe_search_repository.get_anonymous_search_history(anonymous_user_id, limit)
+            search_queries = await self.recipe_search_repository.get_anonymous_search_history(
+                anonymous_user_id, limit, offset
+            )
 
         return [SearchQueryRead.model_validate(query, from_attributes=True) for query in search_queries]
