@@ -1,9 +1,9 @@
 from typing import Annotated
 
+from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import Depends, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from src.dependencies import RedisDependency, UnitOfWorkDependency
 from src.exceptions import (
     AppHTTPException,
     InactiveOrNotExistingUserError,
@@ -17,37 +17,34 @@ from src.services.token import TokenService
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
+@inject
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-    uow: UnitOfWorkDependency,
-    redis: RedisDependency,
+    token_service: FromDishka[TokenService],
 ) -> User:
-    async with uow:
-        token_service = TokenService(uow=uow, redis=redis)
-        try:
-            return await token_service.get_current_user(
-                token=credentials.credentials if credentials else None,
-            )
-        except (InvalidTokenError, InactiveOrNotExistingUserError, InvalidJWTError, JWTSignatureExpiredError) as e:
-            raise AppHTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=e.message,
-                error_key=e.error_key,
-                headers={"WWW-Authenticate": "Bearer"},
-            ) from e
+    try:
+        return await token_service.get_current_user(
+            token=credentials.credentials if credentials else None,
+        )
+    except (InvalidTokenError, InactiveOrNotExistingUserError, InvalidJWTError, JWTSignatureExpiredError) as e:
+        raise AppHTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=e.message,
+            error_key=e.error_key,
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
 
 
+@inject
 async def get_current_user_or_none(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-    uow: UnitOfWorkDependency,
-    redis: RedisDependency,
+    token_service: FromDishka[TokenService],
 ) -> User | None:
     if not credentials:
         return None
     return await get_current_user(
         credentials=credentials,
-        uow=uow,
-        redis=redis,
+        token_service=token_service,
     )
 
 
