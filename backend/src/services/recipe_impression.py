@@ -58,6 +58,9 @@ class RecipeImpressionService:
 
         return await self._to_recipe_impression_schema(impression)
 
+    async def merge_impressions(self, anonymous_user_id: int, user_id: int) -> None:
+        await self.recipe_impression_repository.merge_impressions(anonymous_user_id=anonymous_user_id, user_id=user_id)
+
     async def record_impression_for_anonymous(self, recipe_id: int, anonymous_user_id: int) -> RecipeImpressionRead:
         recipe = await self.recipe_repository.get_by_id(recipe_id)
         if not recipe:
