@@ -73,6 +73,7 @@ lint.ignore = [
     "ARG001", # unused function argument
     "ANN401", # disallow Any type
     "RUF001", # string contrains ambigious o
+    "PLR0913", # too many arguments in function signature
 ]
 format.skip-magic-trailing-comma = false
 
