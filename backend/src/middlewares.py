@@ -54,7 +54,7 @@ class AnonymousUserMiddleware(BaseHTTPMiddleware):
                         async with uow:
                             anonymous_user = await anonymous_user_service.create(
                                 AnonymousUserCreate(
-                                    cookie_id=anonymous_id, user_agent=request.headers.get("user-agent")
+                                    user_agent=request.headers.get("user-agent")
                                 )
                             )
                             anonymous_id = anonymous_user.cookie_id

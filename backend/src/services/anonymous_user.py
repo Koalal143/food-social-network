@@ -13,7 +13,7 @@ class AnonymousUserService:
         self,
         anonymous_user_create: AnonymousUserCreate,
     ) -> AnonymousUserRead:
-        anonymous_user_data = anonymous_user_create.model_dump(exclude={"cookie_id"})
+        anonymous_user_data = anonymous_user_create.model_dump()
         anonymous_user = await self.anonymous_user_repository.create(**anonymous_user_data)
         return AnonymousUserRead.model_validate(anonymous_user)
 
