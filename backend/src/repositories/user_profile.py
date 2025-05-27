@@ -17,10 +17,12 @@ class UserProfileRepository:
     async def create(self, user_id: int) -> UserProfile:
         profile = UserProfile(user_id=user_id)
         self.session.add(profile)
+        await self.session.flush()
         return profile
 
     async def update(self, user_id: int, **fields: Any) -> UserProfile:
         result = await self.session.scalars(
             update(UserProfile).where(UserProfile.user_id == user_id).values(**fields).returning(UserProfile)
         )
+        await self.session.flush()
         return result.first()
