@@ -6,7 +6,6 @@ from src.exceptions.recipe import (
     RecipeNotFoundError,
     RecipeOwnershipError,
 )
-from src.exceptions.recipe_search import UserIdentityNotProvidedError
 from src.models.recipe import Recipe
 from src.models.user import User
 from src.repositories.interfaces import (
@@ -14,7 +13,6 @@ from src.repositories.interfaces import (
     RecipeIngredientRepositoryProtocol,
     RecipeInstructionRepositoryProtocol,
     RecipeRepositoryProtocol,
-    RecipeSearchRepositoryProtocol,
     RecipeTagRepositoryProtocol,
 )
 from src.schemas.direct_upload import DirectUpload
@@ -25,11 +23,9 @@ from src.schemas.recipe import (
     RecipeRead,
     RecipeReadFull,
     RecipeReadShort,
-    RecipeSearchQuery,
     RecipeTag,
     RecipeUpdate,
 )
-from src.schemas.search_query import SearchQueryRead
 from src.schemas.user import UserReadShort
 from src.typings.recipe_with_favorite import RecipeWithFavorite
 from src.utils.slug import create_recipe_slug
@@ -43,14 +39,12 @@ class RecipeService:
         recipe_instruction_repository: RecipeInstructionRepositoryProtocol,
         recipe_tag_repository: RecipeTagRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
-        recipe_search_repository: RecipeSearchRepositoryProtocol,
     ) -> None:
         self.recipe_repository = recipe_repository
         self.recipe_ingredient_repository = recipe_ingredient_repository
         self.recipe_instruction_repository = recipe_instruction_repository
         self.recipe_tag_repository = recipe_tag_repository
         self.recipe_image_repository = recipe_image_repository
-        self.recipe_search_repository = recipe_search_repository
 
     async def _to_recipe_schema(self, recipe: Recipe) -> RecipeReadFull:
         recipe_schema = RecipeReadFull.model_validate(recipe)
@@ -158,39 +152,7 @@ class RecipeService:
         schema = unprepared_schema.model_dump(exclude={"updated_at", "instructions", "image_url"})
         await self.recipe_search_repository.index_recipe(schema)
 
-    async def search(
-        self,
-        params: RecipeSearchQuery,
-        user_id: int | None = None,
-        anonymous_user_id: int | None = None,
-    ) -> tuple[int, list[RecipeReadShort]]:
-        """
-        Search recipes by different criteria using search engine.
 
-        If user/anonymous_user is provided, it will be saved in the database for displaying user history.
-        """
-        if params.query and (user_id or anonymous_user_id):
-            should_save_query = False
-            save_user_id = None
-            save_anonymous_user_id = None
-
-            if user_id:
-                should_save_query = True
-                save_user_id = user_id
-            elif anonymous_user_id:
-                should_save_query = True
-                save_anonymous_user_id = anonymous_user_id
-            if should_save_query:
-                await self.recipe_search_repository.save_search_query(
-                    query_text=params.query,
-                    user_id=save_user_id,
-                    anonymous_user_id=save_anonymous_user_id,
-                )
-
-        total, recipe_ids = await self.recipe_search_repository.search_recipes(params)
-        recipes = await self.recipe_repository.get_by_ids(recipe_ids=recipe_ids)
-        recipes_short = [self._to_recipe_short_schema(recipe) for recipe in recipes]
-        return total, recipes_short
 
     async def create(self, user: User, recipe_create: RecipeCreate) -> RecipeRead:
         recipe_data = recipe_create.model_dump(exclude={"ingredients", "instructions", "tags"})
@@ -289,17 +251,3 @@ class RecipeService:
             raise RecipeNotFoundError(msg)
 
         return await self._to_recipe_full_schema(recipe)
-
-    async def get_search_history(
-        self, user_id: int | None = None, anonymous_user_id: int | None = None, limit: int = 10
-    ) -> list[SearchQueryRead]:
-        if not (user_id or anonymous_user_id):
-            msg = "Either user_id or anonymous_user_id must be provided"
-            raise UserIdentityNotProvidedError(msg)
-
-        if user_id:
-            search_queries = await self.recipe_search_repository.get_user_search_history(user_id, limit)
-        else:
-            search_queries = await self.recipe_search_repository.get_anonymous_search_history(anonymous_user_id, limit)
-
-        return [SearchQueryRead.model_validate(query, from_attributes=True) for query in search_queries]
