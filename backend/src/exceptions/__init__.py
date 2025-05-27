@@ -8,6 +8,7 @@ from src.exceptions.auth import (
 )
 from src.exceptions.banned_email import EmailDomainAlreadyBannedError
 from src.exceptions.base import BaseAppError
+from src.exceptions.consent import ConsentNotFoundError
 from src.exceptions.disliked_recipe import RecipeAlreadyDislikedError, RecipeNotDislikedError
 from src.exceptions.favorite_recipe import RecipeAlreadyInFavoritesError, RecipeNotInFavoritesError
 from src.exceptions.http import AppHTTPException
@@ -27,6 +28,7 @@ __all__ = [
     "AttachInstructionStepError",
     "BannedEmailError",
     "BaseAppError",
+    "ConsentNotFoundError",
     "EmailDomainAlreadyBannedError",
     "ImageTooLargeError",
     "InactiveOrNotExistingUserError",
