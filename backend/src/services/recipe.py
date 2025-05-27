@@ -6,7 +6,6 @@ from src.exceptions.recipe import (
     RecipeNotFoundError,
     RecipeOwnershipError,
 )
-from src.exceptions.recipe_search import UserIdentityNotProvidedError
 from src.models.recipe import Recipe
 from src.models.user import User
 from src.repositories.interfaces import (
@@ -14,7 +13,6 @@ from src.repositories.interfaces import (
     RecipeIngredientRepositoryProtocol,
     RecipeInstructionRepositoryProtocol,
     RecipeRepositoryProtocol,
-    RecipeSearchRepositoryProtocol,
     RecipeTagRepositoryProtocol,
 )
 from src.schemas.direct_upload import DirectUpload
@@ -28,7 +26,6 @@ from src.schemas.recipe import (
     RecipeTag,
     RecipeUpdate,
 )
-from src.schemas.search_query import SearchQueryRead
 from src.schemas.user import UserReadShort
 from src.typings.recipe_with_favorite import RecipeWithExtra
 from src.utils.slug import create_recipe_slug
@@ -42,14 +39,12 @@ class RecipeService:
         recipe_instruction_repository: RecipeInstructionRepositoryProtocol,
         recipe_tag_repository: RecipeTagRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
-        recipe_search_repository: RecipeSearchRepositoryProtocol,
     ) -> None:
         self.recipe_repository = recipe_repository
         self.recipe_ingredient_repository = recipe_ingredient_repository
         self.recipe_instruction_repository = recipe_instruction_repository
         self.recipe_tag_repository = recipe_tag_repository
         self.recipe_image_repository = recipe_image_repository
-        self.recipe_search_repository = recipe_search_repository
 
     async def _to_recipe_schema(self, recipe: Recipe) -> RecipeReadFull:
         recipe_schema = RecipeReadFull.model_validate(recipe)
@@ -257,17 +252,3 @@ class RecipeService:
             raise RecipeNotFoundError(msg)
 
         return await self._to_recipe_full_schema(recipe)
-
-    async def get_search_history(
-        self, user_id: int | None = None, anonymous_user_id: int | None = None, limit: int = 10
-    ) -> list[SearchQueryRead]:
-        if not (user_id or anonymous_user_id):
-            msg = "Either user_id or anonymous_user_id must be provided"
-            raise UserIdentityNotProvidedError(msg)
-
-        if user_id:
-            search_queries = await self.recipe_search_repository.get_user_search_history(user_id, limit)
-        else:
-            search_queries = await self.recipe_search_repository.get_anonymous_search_history(anonymous_user_id, limit)
-
-        return [SearchQueryRead.model_validate(query, from_attributes=True) for query in search_queries]
