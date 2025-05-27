@@ -10,6 +10,7 @@ from src.models.base import Base
 if TYPE_CHECKING:
     from src.models.consent import Consent
     from src.models.recipe_impression import RecipeImpression
+    from src.models.search_query import SearchQuery
 
 
 class AnonymousUser(Base):
@@ -23,5 +24,6 @@ class AnonymousUser(Base):
         back_populates="anonymous_user", cascade="all, delete-orphan"
     )
     consent: Mapped["Consent"] = relationship(back_populates="anonymous_user", uselist=False)
+    search_queries: Mapped[list["SearchQuery"]] = relationship(back_populates="anonymous_user")
 
     __table_args__ = (Index("ix_anonymous_users_created_at", "created_at"),)
