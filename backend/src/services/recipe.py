@@ -13,6 +13,7 @@ from src.repositories.interfaces import (
     RecipeIngredientRepositoryProtocol,
     RecipeInstructionRepositoryProtocol,
     RecipeRepositoryProtocol,
+    RecipeSearchRepositoryProtocol,
     RecipeTagRepositoryProtocol,
 )
 from src.schemas.direct_upload import DirectUpload
@@ -39,12 +40,14 @@ class RecipeService:
         recipe_instruction_repository: RecipeInstructionRepositoryProtocol,
         recipe_tag_repository: RecipeTagRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
+        recipe_search_repository: RecipeSearchRepositoryProtocol,
     ) -> None:
         self.recipe_repository = recipe_repository
         self.recipe_ingredient_repository = recipe_ingredient_repository
         self.recipe_instruction_repository = recipe_instruction_repository
         self.recipe_tag_repository = recipe_tag_repository
         self.recipe_image_repository = recipe_image_repository
+        self.recipe_search_repository = recipe_search_repository
 
     async def _to_recipe_schema(self, recipe: Recipe) -> RecipeReadFull:
         recipe_schema = RecipeReadFull.model_validate(recipe)
