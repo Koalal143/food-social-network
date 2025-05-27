@@ -1,4 +1,5 @@
 from src.repositories.banned_email import BannedEmailRepository
+from src.repositories.consent import ConsentRepository
 from src.repositories.disliked_recipe import DislikedRecipeRepository
 from src.repositories.favorite_recipe import FavoriteRecipeRepository
 from src.repositories.recipe import RecipeRepository
@@ -13,6 +14,7 @@ from src.repositories.user_profile import UserProfileRepository
 
 __all__ = [
     "BannedEmailRepository",
+    "ConsentRepository",
     "DislikedRecipeRepository",
     "FavoriteRecipeRepository",
     "RecipeImageRepository",
