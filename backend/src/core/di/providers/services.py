@@ -100,7 +100,6 @@ class ServiceProvider(Provider):
         recipe_instruction_repository: RecipeInstructionRepositoryProtocol,
         recipe_tag_repository: RecipeTagRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
-        recipe_search_repository: RecipeSearchRepositoryProtocol,
     ) -> RecipeService:
         return RecipeService(
             recipe_repository=recipe_repository,
@@ -108,7 +107,19 @@ class ServiceProvider(Provider):
             recipe_instruction_repository=recipe_instruction_repository,
             recipe_tag_repository=recipe_tag_repository,
             recipe_image_repository=recipe_image_repository,
+        )
+
+    @provide
+    def get_search_service(
+        self,
+        recipe_search_repository: RecipeSearchRepositoryProtocol,
+        recipe_repository: RecipeRepositoryProtocol,
+        recipe_image_repository: RecipeImageRepositoryProtocol,
+    ) -> SearchService:
+        return SearchService(
             recipe_search_repository=recipe_search_repository,
+            recipe_repository=recipe_repository,
+            recipe_image_repository=recipe_image_repository,
         )
 
     @provide
