@@ -1,3 +1,4 @@
+from src.exceptions.anonymous_user import AnonymousUserDoesNotExistError
 from src.exceptions.auth import (
     InactiveOrNotExistingUserError,
     IncorrectCredentialsError,
@@ -21,6 +22,7 @@ from src.exceptions.recipe import (
 from src.exceptions.user import UserEmailAlreadyExistsError, UserNicknameAlreadyExistsError, UserNotFoundError
 
 __all__ = [
+    "AnonymousUserDoesNotExistError",
     "AppHTTPException",
     "AttachInstructionStepError",
     "BannedEmailError",
