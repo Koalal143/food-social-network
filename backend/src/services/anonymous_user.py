@@ -1,5 +1,6 @@
 import uuid
 
+from src.exceptions.anonymous_user import AnonymousUserDoesNotExistError
 from src.repositories.interfaces import AnonymousUserRepositoryProtocol
 from src.schemas.anonymous_user import AnonymousUserCreate, AnonymousUserRead
 
@@ -31,13 +32,15 @@ class AnonymousUserService:
     async def get_by_id(self, anonymous_user_id: int) -> AnonymousUserRead | None:
         anonymous_user = await self.anonymous_user_repository.get_by_id(anonymous_user_id)
         if not anonymous_user:
-            return None
+            msg = f"Anonymous user with id {anonymous_user_id} not found"
+            raise AnonymousUserDoesNotExistError(msg)
         return AnonymousUserRead.model_validate(anonymous_user)
 
     async def get_by_cookie_id(self, cookie_id: uuid.UUID) -> AnonymousUserRead | None:
         anonymous_user = await self.anonymous_user_repository.get_by_cookie_id(cookie_id)
         if not anonymous_user:
-            return None
+            msg = f"Anonymous user with cookie_id {cookie_id} not found"
+            raise AnonymousUserDoesNotExistError(msg)
         return AnonymousUserRead.model_validate(anonymous_user)
 
     async def delete_by_id(self, anonymous_user_id: int) -> None:
