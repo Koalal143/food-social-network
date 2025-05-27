@@ -41,6 +41,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_search_queries_id"), "search_queries", ["id"], unique=False)
 
+
 def downgrade() -> None:
     op.drop_index(op.f("ix_search_queries_id"), table_name="search_queries")
     op.drop_table("search_queries")
