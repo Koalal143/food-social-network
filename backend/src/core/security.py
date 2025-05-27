@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from dishka.integrations.fastapi import FromDishka, inject
-from fastapi import Depends, status
+from fastapi import Depends, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.exceptions import (
@@ -11,7 +11,9 @@ from src.exceptions import (
     InvalidTokenError,
     JWTSignatureExpiredError,
 )
+from src.models.anonymous_user import AnonymousUser
 from src.models.user import User
+from src.services.anonymous_user import AnonymousUserService
 from src.services.token import TokenService
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -60,6 +62,18 @@ async def get_superuser(
     return current_user
 
 
+@inject
+async def get_anonymous_user_or_none(
+    request: Request,
+    anonymous_user_service: FromDishka[AnonymousUserService],
+) -> AnonymousUser | None:
+    anonymous_id = request.cookies.get("anonymous_id")
+    if not anonymous_id:
+        return None
+    return await anonymous_user_service.get_by_cookie_id(anonymous_id)
+
+
 CurrentUserDependency = Annotated[User, Depends(get_current_user)]
 CurrentUserOrNoneDependency = Annotated[User | None, Depends(get_current_user_or_none)]
 SuperUserDependency = Annotated[User, Depends(get_superuser)]
+AnonymousUserOrNoneDependency = Annotated[AnonymousUser | None, Depends(get_anonymous_user_or_none)]
