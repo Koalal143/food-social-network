@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -96,6 +96,19 @@ class RecipeImpressionRepository:
     async def delete(self, user_id: int, recipe_id: int) -> None:
         stmt = delete(RecipeImpression).where(
             RecipeImpression.user_id == user_id, RecipeImpression.recipe_id == recipe_id
+        )
+        await self.session.execute(stmt)
+        await self.session.flush()
+
+    async def merge_impressions(self, anonymous_user_id: int, user_id: int) -> None:
+        user_seen_recipe_ids_subq = select(Recipe.id).where(RecipeImpression.user_id == user_id).scalar_subquery()
+        stmt = (
+            update(RecipeImpression)
+            .where(
+                RecipeImpression.anonymous_user_id == anonymous_user_id,
+                RecipeImpression.recipe_id.not_in(user_seen_recipe_ids_subq),
+            )
+            .values(user_id=user_id, anonymous_user_id=None)
         )
         await self.session.execute(stmt)
         await self.session.flush()
