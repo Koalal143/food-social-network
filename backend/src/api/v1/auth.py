@@ -15,7 +15,7 @@ from src.exceptions.user import UserNotFoundError
 from src.models.user import User
 from src.schemas.token import Token
 from src.schemas.user import UserCreate, UserLogin, UserRead
-from src.services import RecipeImpressionService, SecurityService, TokenService, UserService
+from src.services import RecipeImpressionService, SearchService, SecurityService, TokenService, UserService
 from src.services.token import RefreshTokenService
 from src.utils.examples_factory import json_example_factory, json_examples_factory
 
@@ -115,6 +115,7 @@ async def login(
     user_service: FromDishka[UserService],
     token_service: FromDishka[TokenService],
     recipe_impression_service: FromDishka[RecipeImpressionService],
+    search_service: FromDishka[SearchService],
     anonymous_user: AnonymousUserOrNoneDependency,
     uow: FromDishka[SQLAlchemyUnitOfWork],
 ) -> Token:
@@ -147,6 +148,7 @@ async def login(
         await user_service.update_last_login(user)
         if anonymous_user:
             await recipe_impression_service.merge_impressions(anonymous_user.id, user.id)
+            await search_service.merge_search_queries(anonymous_user.id, user.id)
         await uow.commit()
         return tokens
 
