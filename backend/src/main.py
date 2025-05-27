@@ -1,9 +1,11 @@
+from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api import v1_router
 from src.core.config import settings
+from src.core.di import create_container
 from src.core.exception_handlers import http_exception_handler, request_validation_error_handler
 from src.core.lifespan import lifespan
 from src.exceptions.http import AppHTTPException
@@ -28,6 +30,9 @@ app = FastAPI(
         }
     },
 )
+
+container = create_container()
+setup_dishka(container=container, app=app)
 
 app.add_exception_handler(AppHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, request_validation_error_handler)
