@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.enums.recipe_get_source import RecipeGetSourceEnum
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 class RecipeImpression(Base):
     __tablename__ = "recipe_impressions"
+    __table_args__ = (UniqueConstraint("user_id", "recipe_id"), UniqueConstraint("anonymous_user_id", "recipe_id"))
 
     anonymous_user_id: Mapped[int | None] = mapped_column(
         ForeignKey("anonymous_users.id", ondelete="CASCADE"), nullable=True
