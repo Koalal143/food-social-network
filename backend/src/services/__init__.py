@@ -1,5 +1,6 @@
 from src.services.avatar import UserAvatarService
 from src.services.banned_email import BannedEmailService
+from src.services.consent import ConsentService
 from src.services.disliked_recipe import DislikedRecipeService
 from src.services.favorite_recipe import FavoriteRecipeService
 from src.services.recipe import RecipeService
@@ -11,6 +12,7 @@ from src.services.user import UserService
 
 __all__ = [
     "BannedEmailService",
+    "ConsentService",
     "DislikedRecipeService",
     "FavoriteRecipeService",
     "RecipeImpressionService",
