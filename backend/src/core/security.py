@@ -70,7 +70,8 @@ async def get_anonymous_user_or_none(
     anonymous_user_service: FromDishka[AnonymousUserService],
 ) -> AnonymousUser | None:
     anonymous_id = request.cookies.get("anonymous_id")
-    if not anonymous_id:
+    is_analytics_allowed = request.cookies.get("analytics_allowed") == "True"
+    if not anonymous_id or not is_analytics_allowed:
         return None
     try:
         return await anonymous_user_service.get_by_cookie_id(uuid.UUID(anonymous_id))
@@ -78,12 +79,7 @@ async def get_anonymous_user_or_none(
         return None
 
 
-def is_analytics_accepted(request: Request) -> bool:
-    return request.cookies.get("analytics_allowed") == "true"
-
-
 CurrentUserDependency = Annotated[User, Depends(get_current_user)]
 CurrentUserOrNoneDependency = Annotated[User | None, Depends(get_current_user_or_none)]
 SuperUserDependency = Annotated[User, Depends(get_superuser)]
 AnonymousUserOrNoneDependency = Annotated[AnonymousUser | None, Depends(get_anonymous_user_or_none)]
-ConsentDependency = Annotated[bool, Depends(is_analytics_accepted)]
