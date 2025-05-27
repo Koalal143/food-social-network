@@ -27,6 +27,7 @@ from src.schemas.recipe import (
     RecipeTag,
     RecipeUpdate,
 )
+from src.schemas.search_query import SearchQueryRead
 from src.schemas.user import UserReadShort
 from src.typings.recipe_with_favorite import RecipeWithExtra
 from src.utils.slug import create_recipe_slug
@@ -255,3 +256,17 @@ class RecipeService:
             raise RecipeNotFoundError(msg)
 
         return await self._to_recipe_full_schema(recipe)
+
+    async def get_search_history(
+        self, user_id: int | None = None, anonymous_user_id: int | None = None, limit: int = 10
+    ) -> list[SearchQueryRead]:
+        if not (user_id or anonymous_user_id):
+            msg = "Either user_id or anonymous_user_id must be provided"
+            raise ValueError(msg)
+
+        if user_id:
+            search_queries = await self.recipe_search_repository.get_user_search_history(user_id, limit)
+        else:
+            search_queries = await self.recipe_search_repository.get_anonymous_search_history(anonymous_user_id, limit)
+
+        return [SearchQueryRead.model_validate(query, from_attributes=True) for query in search_queries]
