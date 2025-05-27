@@ -29,15 +29,6 @@ export default function App() {
         hasMore={hasMore}
         onLoadMore={handleLoadMore}
       />
-      
-      {hasMore && !loading && (
-        <button 
-          onClick={handleLoadMore}
-          className="mx-auto block px-4 py-2 bg-primary text-white rounded-md mt-4"
-        >
-          Загрузить еще рецепты
-        </button>
-      )}
     </Container>
   );
 }
