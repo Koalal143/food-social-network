@@ -6,6 +6,7 @@ from src.exceptions.recipe import (
     RecipeNotFoundError,
     RecipeOwnershipError,
 )
+from src.exceptions.recipe_search import UserIdentityNotProvidedError
 from src.models.recipe import Recipe
 from src.models.user import User
 from src.repositories.interfaces import (
@@ -259,7 +260,7 @@ class RecipeService:
     ) -> list[SearchQueryRead]:
         if not (user_id or anonymous_user_id):
             msg = "Either user_id or anonymous_user_id must be provided"
-            raise ValueError(msg)
+            raise UserIdentityNotProvidedError(msg)
 
         if user_id:
             search_queries = await self.recipe_search_repository.get_user_search_history(user_id, limit)
