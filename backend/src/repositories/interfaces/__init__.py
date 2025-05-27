@@ -1,5 +1,6 @@
 from src.repositories.interfaces.anonymous_user import AnonymousUserRepositoryProtocol
 from src.repositories.interfaces.banned_email import BannedEmailRepositoryProtocol
+from src.repositories.interfaces.consent import ConsentRepositoryProtocol
 from src.repositories.interfaces.disliked_recipe import DislikedRecipeRepositoryProtocol
 from src.repositories.interfaces.favorite_recipe import FavoriteRecipeRepositoryProtocol
 from src.repositories.interfaces.recipe import RecipeRepositoryProtocol
@@ -17,6 +18,7 @@ from src.repositories.interfaces.user_profile import UserProfileRepositoryProtoc
 __all__ = [
     "AnonymousUserRepositoryProtocol",
     "BannedEmailRepositoryProtocol",
+    "ConsentRepositoryProtocol",
     "DislikedRecipeRepositoryProtocol",
     "FavoriteRecipeRepositoryProtocol",
     "RecipeImageRepositoryProtocol",
