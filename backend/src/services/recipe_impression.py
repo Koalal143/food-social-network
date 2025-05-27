@@ -12,7 +12,6 @@ from src.schemas.recipe_impression import RecipeImpressionRead
 
 if TYPE_CHECKING:
     from src.models.recipe_impression import RecipeImpression
-    from src.models.user import User
 
 
 class RecipeImpressionService:
@@ -45,16 +44,16 @@ class RecipeImpressionService:
 
         return count, impression_schemas
 
-    async def record_impression(self, user: "User", recipe_id: int) -> RecipeImpressionRead:
+    async def record_impression(self, user_id: int, recipe_id: int) -> RecipeImpressionRead:
         recipe = await self.recipe_repository.get_by_id(recipe_id)
         if not recipe:
             msg = f"Recipe with id {recipe_id} not found"
             raise RecipeNotFoundError(msg)
-        if await self.recipe_impression_repository.exists_recent(user_id=user.id, recipe_id=recipe_id, hours=24):
+        if await self.recipe_impression_repository.exists_recent(user_id=user_id, recipe_id=recipe_id, hours=24):
             msg = f"Recipe with id {recipe_id} was already shown to user within last 24 hours"
             raise RecipeImpressionAlreadyExistsError(msg)
 
-        impression = await self.recipe_impression_repository.create(user_id=user.id, recipe_id=recipe_id)
+        impression = await self.recipe_impression_repository.create(user_id=user_id, recipe_id=recipe_id)
 
         return await self._to_recipe_impression_schema(impression)
 
