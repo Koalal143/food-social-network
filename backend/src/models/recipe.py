@@ -9,6 +9,7 @@ from src.models.base import Base
 if TYPE_CHECKING:
     from src.models.disliked_recipes import DislikedRecipe
     from src.models.favorite_recipes import FavoriteRecipe
+    from src.models.recipe_impression import RecipeImpression
     from src.models.recipe_ingredient import RecipeIngredient
     from src.models.recipe_instructions import RecipeInstruction
     from src.models.recipe_tag import RecipeTag
@@ -17,9 +18,7 @@ if TYPE_CHECKING:
 
 class Recipe(Base):
     __tablename__ = "recipes"
-    __table_args__ = (
-        Index("ix_recipes_slug", "slug"),
-    )
+    __table_args__ = (Index("ix_recipes_slug", "slug"),)
 
     title: Mapped[str] = mapped_column(String(135), nullable=False)
     slug: Mapped[str] = mapped_column(String(110), nullable=False, unique=True)
@@ -33,6 +32,7 @@ class Recipe(Base):
     author: Mapped["User"] = relationship(back_populates="recipes")
     ingredients: Mapped[list["RecipeIngredient"]] = relationship(back_populates="recipe")
     instructions: Mapped[list["RecipeInstruction"]] = relationship(back_populates="recipe")
+    recipe_impressions: Mapped[list["RecipeImpression"]] = relationship(back_populates="recipe")
     tags: Mapped[list["RecipeTag"]] = relationship(back_populates="recipe")
     favorite_recipes: Mapped[list["FavoriteRecipe"]] = relationship(back_populates="recipe")
     disliked_recipes: Mapped[list["DislikedRecipe"]] = relationship(back_populates="recipe")
