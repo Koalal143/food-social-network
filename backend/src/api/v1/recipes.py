@@ -20,6 +20,7 @@ from src.exceptions import (
     RecipeOwnershipError,
 )
 from src.exceptions.recipe_impression import RecipeImpressionAlreadyExistsError
+from src.exceptions.recipe_search import UserIdentityNotProvidedError
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.recipe import (
     MAX_RECIPE_INSTRUCTIONS_COUNT,
@@ -30,6 +31,7 @@ from src.schemas.recipe import (
     RecipeReadShort,
     RecipeUpdate,
 )
+from src.schemas.search_query import SearchQueryRead
 from src.services.recipe import RecipeService
 from src.services.recipe_impression import RecipeImpressionService
 from src.services.recipe_instructions import RecipeInstructionsService
@@ -208,7 +210,7 @@ async def get_recipe_by_slug(
             try:
                 if current_user:
                     await recipe_impression.record_impression(recipe_id=recipe.id, source=source)
-                elif anonymous_user and is_allowed_analytics:
+                elif anonymous_user:
                     await recipe_impression.record_impression_for_anonymous(
                         recipe_id=recipe.id,
                         anonymous_user_id=anonymous_user.id,
