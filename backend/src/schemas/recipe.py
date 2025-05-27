@@ -104,8 +104,8 @@ class RecipeUpdate(_IsPublishedMixin, BaseRecipeSchema):
 
 
 class RecipeSearchQuery(BaseModel):
-    limit: int | None = Field(default=0, gte=0, lte=50)
-    offset: int | None = Field(default=0, gte=0)
+    limit: int = Field(default=10, ge=0, le=50)
+    offset: int | None = Field(default=0, ge=0)
     query: str | None = Field(default=None, description="Query for searching by title and short_description fields")
     tags: list[str] | None = Field(default=None)
     include_ingredients: list[str] | None = Field(default=None)
