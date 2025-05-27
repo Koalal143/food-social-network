@@ -18,3 +18,4 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
     await redis_manager.close()
     await database_manager.dispose()
+    await app.state.dishka_container.close()
