@@ -70,12 +70,13 @@ async def get_search_history(
     current_user: CurrentUserOrNoneDependency,
     anonymous_user: AnonymousUserOrNoneDependency,
     limit: Annotated[int, Query(ge=1, le=50, description="Maximum number of search queries to return")] = 10,
+    offset: Annotated[int, Query(ge=0, description="Number of search queries to skip for pagination")] = 0,
 ) -> list[SearchQueryRead]:
     user_id = current_user.id if current_user else None
     anonymous_user_id = anonymous_user.id if anonymous_user else None
     try:
         return await search_service.get_search_history(
-            user_id=user_id, anonymous_user_id=anonymous_user_id, limit=limit
+            user_id=user_id, anonymous_user_id=anonymous_user_id, limit=limit, offset=offset
         )
     except UserIdentityNotProvidedError as e:
         raise AppHTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e), error_key=e.error_key) from None
@@ -118,6 +119,4 @@ async def save_search_query(
             await uow.commit()
             return search_query
     except UserIdentityNotProvidedError as e:
-        raise AppHTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e), error_key=e.error_key
-        ) from None
+        raise AppHTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e), error_key=e.error_key) from None
