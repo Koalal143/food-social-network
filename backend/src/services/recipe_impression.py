@@ -8,7 +8,7 @@ from src.repositories.interfaces import (
     RecipeRepositoryProtocol,
 )
 from src.schemas.recipe import RecipeReadShort
-from src.schemas.recipe_impression import RecipeImpressionCreate, RecipeImpressionCreateAnonymous, RecipeImpressionRead
+from src.schemas.recipe_impression import RecipeImpressionRead
 
 if TYPE_CHECKING:
     from src.models.recipe_impression import RecipeImpression
@@ -30,16 +30,9 @@ class RecipeImpressionService:
         recipe = RecipeReadShort.model_validate(impression.recipe)
         if recipe.image_url:
             recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_url)
-
-        return RecipeImpressionRead(
-            id=impression.id,
-            user_id=impression.user_id,
-            anonymous_user_id=impression.anonymous_user_id,
-            recipe_id=impression.recipe_id,
-            recipe=recipe,
-            created_at=impression.created_at,
-            updated_at=impression.updated_at,
-        )
+        schema = RecipeImpressionRead.model_validate(impression)
+        schema.recipe = recipe
+        return schema
 
     async def get_user_impressions(
         self, user_id: int, skip: int = 0, limit: int = 10
@@ -52,9 +45,7 @@ class RecipeImpressionService:
 
         return count, impression_schemas
 
-    async def record_impression(self, user: "User", impression_data: RecipeImpressionCreate) -> RecipeImpressionRead:
-        recipe_id = impression_data.recipe_id
-
+    async def record_impression(self, user: "User", recipe_id: int) -> RecipeImpressionRead:
         recipe = await self.recipe_repository.get_by_id(recipe_id)
         if not recipe:
             msg = f"Recipe with id {recipe_id} not found"
@@ -67,12 +58,7 @@ class RecipeImpressionService:
 
         return await self._to_recipe_impression_schema(impression)
 
-    async def record_impression_for_anonymous(
-        self, impression_data: RecipeImpressionCreateAnonymous
-    ) -> RecipeImpressionRead:
-        recipe_id = impression_data.recipe_id
-        anonymous_user_id = impression_data.anonymous_user_id
-
+    async def record_impression_for_anonymous(self, recipe_id: int, anonymous_user_id: int) -> RecipeImpressionRead:
         recipe = await self.recipe_repository.get_by_id(recipe_id)
         if not recipe:
             msg = f"Recipe with id {recipe_id} not found"
