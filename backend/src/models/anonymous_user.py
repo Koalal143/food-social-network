@@ -8,6 +8,7 @@ from sqlalchemy.types import UUID
 from src.models.base import Base
 
 if TYPE_CHECKING:
+    from src.models.consent import Consent
     from src.models.recipe_impression import RecipeImpression
 
 
@@ -21,5 +22,6 @@ class AnonymousUser(Base):
     recipe_impressions: Mapped[list["RecipeImpression"]] = relationship(
         back_populates="anonymous_user", cascade="all, delete-orphan"
     )
+    consent: Mapped["Consent"] = relationship(back_populates="anonymous_user", uselist=False)
 
     __table_args__ = (Index("ix_anonymous_users_created_at", "created_at"),)
