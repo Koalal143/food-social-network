@@ -8,6 +8,7 @@ dependencies = [
     "aiobotocore==2.21.1",
     "alembic>=1.13.1",
     "asyncpg>=0.29.0",
+    "dishka[fastapi]>=1.6.0",
     "elasticsearch>=9.0.1",
     "fastapi>=0.109.0",
     "passlib[argon2]>=1.7.4",
