@@ -18,7 +18,7 @@ from src.services import SecurityService, TokenService, UserService
 from src.services.token import RefreshTokenService
 from src.utils.examples_factory import json_example_factory, json_examples_factory
 
-router = APIRouter(route_class=DishkaRoute, prefix="/auth", tags=["auth"])
+router = APIRouter(route_class=DishkaRoute, prefix="/auth", tags=["Auth"])
 
 
 @router.post(
