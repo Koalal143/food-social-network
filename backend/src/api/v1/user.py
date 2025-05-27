@@ -1,9 +1,9 @@
 from typing import Annotated
 
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, File, Path, Query, Response, UploadFile, status
 
 from src.core.security import CurrentUserDependency, CurrentUserOrNoneDependency
-from src.dependencies import S3StorageDependency, UnitOfWorkDependency
 from src.exceptions import (
     AppHTTPException,
     UserEmailAlreadyExistsError,
@@ -17,6 +17,7 @@ from src.services import RecipeService, UserAvatarService, UserService
 from src.utils.examples_factory import json_example_factory, json_examples_factory
 
 router = APIRouter(
+    route_class=DishkaRoute,
     prefix="/users",
     tags=["Users"],
 )
@@ -38,17 +39,14 @@ router = APIRouter(
     },
 )
 async def get_current_user(
-    uow: UnitOfWorkDependency, s3_client: S3StorageDependency, current_user: CurrentUserDependency
+    current_user: CurrentUserDependency,
+    user_service: FromDishka[UserService],
 ) -> UserRead:
-    async with uow:
-        service = UserService(uow=uow, s3_client=s3_client)
-        try:
-            user = await service.get(current_user.id)
-        except UserNotFoundError as e:
-            raise AppHTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
-            ) from None
-        return user
+    try:
+        user = await user_service.get(current_user.id)
+    except UserNotFoundError as e:
+        raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
+    return user
 
 
 @router.get(
@@ -66,16 +64,15 @@ async def get_current_user(
         },
     },
 )
-async def get_user(username: str, uow: UnitOfWorkDependency, s3_client: S3StorageDependency) -> UserRead:
-    async with uow:
-        service = UserService(uow=uow, s3_client=s3_client)
-        try:
-            user = await service.get_by_username(username)
-        except UserNotFoundError as e:
-            raise AppHTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
-            ) from None
-        return user
+async def get_user(
+    username: str,
+    user_service: FromDishka[UserService],
+) -> UserRead:
+    try:
+        user = await user_service.get_by_username(username)
+    except UserNotFoundError as e:
+        raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
+    return user
 
 
 @router.patch(
@@ -115,23 +112,18 @@ async def get_user(username: str, uow: UnitOfWorkDependency, s3_client: S3Storag
 async def update_current_user(
     update: UserUpdate,
     current_user: CurrentUserDependency,
-    uow: UnitOfWorkDependency,
-    s3_client: S3StorageDependency,
+    user_service: FromDishka[UserService],
 ) -> User:
-    async with uow:
-        service = UserService(uow=uow, s3_client=s3_client)
-        try:
-            return await service.update(
-                current_user.id,
-                username=update.username,
-                profile=update.profile,
-            )
-        except UserNotFoundError as e:
-            raise AppHTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
-            ) from None
-        except (UserNicknameAlreadyExistsError, UserEmailAlreadyExistsError) as e:
-            raise AppHTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e), error_key=e.error_key) from None
+    try:
+        return await user_service.update(
+            current_user.id,
+            username=update.username,
+            profile=update.profile,
+        )
+    except UserNotFoundError as e:
+        raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
+    except (UserNicknameAlreadyExistsError, UserEmailAlreadyExistsError) as e:
+        raise AppHTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e), error_key=e.error_key) from None
 
 
 @router.patch(
@@ -167,23 +159,20 @@ async def update_current_user(
 async def update_user_avatar(
     image: Annotated[UploadFile, File()],
     current_user: CurrentUserDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    user_avatar_service: FromDishka[UserAvatarService],
 ) -> dict[str, str]:
-    async with uow:
-        try:
-            service = UserAvatarService(uow=uow, s3_client=s3_storage)
-            avatar_url = await service.update_avatar(current_user.id, image)
-        except WrongImageFormatError as e:
-            raise AppHTTPException(
-                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=str(e), error_key=e.error_key
-            ) from None
-        except ImageTooLargeError as e:
-            raise AppHTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=str(e), error_key=e.error_key
-            ) from None
-        else:
-            return {"avatar_url": avatar_url}
+    try:
+        avatar_url = await user_avatar_service.update_avatar(current_user.id, image)
+    except WrongImageFormatError as e:
+        raise AppHTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=str(e), error_key=e.error_key
+        ) from None
+    except ImageTooLargeError as e:
+        raise AppHTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=str(e), error_key=e.error_key
+        ) from None
+    else:
+        return {"avatar_url": avatar_url}
 
 
 @router.delete(
@@ -194,12 +183,9 @@ async def update_user_avatar(
 )
 async def delete_user_avatar(
     current_user: CurrentUserDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    user_avatar_service: FromDishka[UserAvatarService],
 ) -> None:
-    async with uow:
-        service = UserAvatarService(uow=uow, s3_client=s3_storage)
-        await service.delete_avatar(current_user.id)
+    await user_avatar_service.delete_avatar(current_user.id)
 
 
 @router.get(
@@ -208,17 +194,15 @@ async def delete_user_avatar(
     description=(
         "Returns a list of current user's recipes with pagination. The total count of recipes is returned in the "
         "X-Total-Count header."
-    )
+    ),
 )
-async def get_current_user_recipes(  # noqa: PLR0913
+async def get_current_user_recipes(
     current_user: CurrentUserDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    recipe_service: FromDishka[RecipeService],
     response: Response,
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
 ) -> list[RecipeReadShort]:
-    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
     total, recipes = await recipe_service.get_all_by_author_id(
         author_id=current_user.id,
         skip=offset,
@@ -235,16 +219,14 @@ async def get_current_user_recipes(  # noqa: PLR0913
     description="Returns a list of user's recipes with pagination. The total count of recipes is returned in the "
     "X-Total-Count header.",
 )
-async def get_user_recipes(  # noqa: PLR0913
+async def get_user_recipes(
     author_nickname: Annotated[str, Path(alias="username")],
     current_user: CurrentUserOrNoneDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    recipe_service: FromDishka[RecipeService],
     response: Response,
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
 ) -> list[RecipeReadShort]:
-    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
     total, recipes = await recipe_service.get_all_by_author_username(
         author_nickname=author_nickname,
         skip=offset,
