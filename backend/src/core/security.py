@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from dishka.integrations.fastapi import FromDishka, inject
@@ -72,7 +73,7 @@ async def get_anonymous_user_or_none(
     if not anonymous_id:
         return None
     try:
-        return await anonymous_user_service.get_by_cookie_id(anonymous_id)
+        return await anonymous_user_service.get_by_cookie_id(uuid.UUID(anonymous_id))
     except AnonymousUserDoesNotExistError:
         return None
 
