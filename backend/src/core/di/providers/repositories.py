@@ -5,11 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.storage import S3Storage
 from src.repositories.anonymous_user import AnonymousUserRepository
 from src.repositories.banned_email import BannedEmailRepository
+from src.repositories.consent import ConsentRepository
 from src.repositories.disliked_recipe import DislikedRecipeRepository
 from src.repositories.favorite_recipe import FavoriteRecipeRepository
 from src.repositories.interfaces import (
     AnonymousUserRepositoryProtocol,
     BannedEmailRepositoryProtocol,
+    ConsentRepositoryProtocol,
     DislikedRecipeRepositoryProtocol,
     FavoriteRecipeRepositoryProtocol,
     RecipeImageRepositoryProtocol,
@@ -65,6 +67,10 @@ class RepositoryProvider(Provider):
     @provide
     def get_banned_email_repository(self, session: AsyncSession) -> BannedEmailRepositoryProtocol:
         return BannedEmailRepository(session)
+
+    @provide
+    def get_consent_repository(self, session: AsyncSession) -> ConsentRepositoryProtocol:
+        return ConsentRepository(session)
 
     # Recipe-related repositories
     @provide
