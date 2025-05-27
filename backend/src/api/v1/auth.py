@@ -1,7 +1,7 @@
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, status
 
-from src.core.security import AnonymousUserOrNoneDependency, ConsentDependency
+from src.core.security import AnonymousUserOrNoneDependency
 from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions import (
     AppHTTPException,
@@ -116,7 +116,6 @@ async def login(
     token_service: FromDishka[TokenService],
     recipe_impression_service: FromDishka[RecipeImpressionService],
     anonymous_user: AnonymousUserOrNoneDependency,
-    is_analytics_allowed: ConsentDependency,
     uow: FromDishka[SQLAlchemyUnitOfWork],
 ) -> Token:
     async with uow:
@@ -146,7 +145,7 @@ async def login(
 
         tokens = await token_service.create_tokens(user.id)
         await user_service.update_last_login(user)
-        if anonymous_user and is_analytics_allowed:
+        if anonymous_user:
             await recipe_impression_service.merge_impressions(anonymous_user.id, user.id)
         await uow.commit()
         return tokens
