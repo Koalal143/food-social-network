@@ -5,6 +5,7 @@ from fastapi import Depends, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from src.exceptions import (
+    AnonymousUserDoesNotExistError,
     AppHTTPException,
     InactiveOrNotExistingUserError,
     InvalidJWTError,
@@ -70,7 +71,10 @@ async def get_anonymous_user_or_none(
     anonymous_id = request.cookies.get("anonymous_id")
     if not anonymous_id:
         return None
-    return await anonymous_user_service.get_by_cookie_id(anonymous_id)
+    try:
+        return await anonymous_user_service.get_by_cookie_id(anonymous_id)
+    except AnonymousUserDoesNotExistError:
+        return None
 
 
 CurrentUserDependency = Annotated[User, Depends(get_current_user)]
