@@ -6,6 +6,7 @@ Create Date: 2025-05-24 13:15:53.899072
 
 """
 
+import uuid
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -21,10 +22,9 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
-def create_slug_for_migration(title: str, recipe_id: int) -> str:
-    max_length = 60
-    title_slug = slugify(title, max_length=(max_length - len(str(recipe_id)) - 1))
-    return f"{title_slug}-{recipe_id}"
+def create_slug_for_migration(title: str) -> str:
+    title_slug = slugify(title, max_length=60)
+    return f"{title_slug}-{uuid.uuid4().hex[:8]}"
 
 
 def upgrade() -> None:
@@ -37,7 +37,7 @@ def upgrade() -> None:
 
     update_data = []
     for recipe in recipes:
-        slug = create_slug_for_migration(recipe.title, recipe.id)
+        slug = create_slug_for_migration(recipe.title)
         update_data.append({"recipe_id": recipe.id, "slug": slug})
 
     if update_data:
@@ -45,7 +45,7 @@ def upgrade() -> None:
             update(recipes_table)
             .where(recipes_table.c.id == sa.bindparam("recipe_id"))
             .values(slug=sa.bindparam("slug")),
-            update_data
+            update_data,
         )
 
     op.alter_column("recipes", "slug", nullable=False)

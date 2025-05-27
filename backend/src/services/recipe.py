@@ -199,10 +199,9 @@ class RecipeService:
 
     async def create(self, user: User, recipe_create: RecipeCreate) -> RecipeRead:
         recipe_data = recipe_create.model_dump(exclude={"ingredients", "instructions", "tags"})
-        recipe = await self.uow.recipes.create(is_published=False, author_id=user.id, **recipe_data)
-
-        slug = create_recipe_slug(recipe_create.title, recipe.id)
-        await self.uow.recipes.update(recipe.id, slug=slug)
+        recipe = await self.recipe_repository.create(
+            slug=create_recipe_slug(recipe_create.title), is_published=False, author_id=user.id, **recipe_data
+        )
 
         await self._create_ingredients(recipe.id, recipe_create.ingredients)
 
