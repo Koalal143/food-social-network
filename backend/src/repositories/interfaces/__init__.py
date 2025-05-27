@@ -29,6 +29,7 @@ __all__ = [
     "RecipeSearchRepositoryProtocol",
     "RecipeTagRepositoryProtocol",
     "RefreshTokenRepositoryProtocol",
+    "SearchQueryRepositoryProtocol",
     "UserAvatarRepositoryProtocol",
     "UserProfileRepositoryProtocol",
     "UserRepositoryProtocol",
