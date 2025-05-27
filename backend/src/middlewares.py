@@ -1,3 +1,4 @@
+import logging
 import uuid
 from collections.abc import Callable
 
@@ -5,6 +6,13 @@ from fastapi import Request, Response
 from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
+
+from src.core.di import container
+from src.db.uow import SQLAlchemyUnitOfWork
+from src.schemas.anonymous_user import AnonymousUserCreate
+from src.services.anonymous_user import AnonymousUserService
+
+logger = logging.getLogger(__name__)
 
 
 class AnonymousUserMiddlewareConfig(BaseModel):
@@ -34,26 +42,37 @@ class AnonymousUserMiddleware(BaseHTTPMiddleware):
         self.config = config
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        is_authenticated = "Authorization" in request.headers
-
+        is_authenticated = "authorization" in request.headers
+        set_anonymous_cookie = False
         if not is_authenticated:
             anonymous_id = request.cookies.get(self.config.cookie_name)
 
             if not anonymous_id:
                 anonymous_id = str(uuid.uuid4())
-                request.state.set_anonymous_cookie = True
 
-            request.state.anonymous_id = anonymous_id
-        else:
-            request.state.anonymous_id = None
-            request.state.set_anonymous_cookie = False
+                async with container() as request_container:
+                    uow = await request_container.get(SQLAlchemyUnitOfWork)
+                    anonymous_user_service = await request_container.get(AnonymousUserService)
+                    try:
+                        async with uow:
+                            await anonymous_user_service.create(
+                                AnonymousUserCreate(
+                                    cookie_id=anonymous_id, user_agent=request.headers.get("user-agent")
+                                )
+                            )
+                            await uow.commit()
+                    except Exception:
+                        logger.exception("Error when creating anonymous user in middleware")
+                    else:
+                        set_anonymous_cookie = True
+                        request.state.anonymous_cookie_id = anonymous_id
 
         response = await call_next(request)
 
-        if not is_authenticated and getattr(request.state, "set_anonymous_cookie", False):
+        if not is_authenticated and set_anonymous_cookie:
             response.set_cookie(
                 key=self.config.cookie_name,
-                value=request.state.anonymous_id,
+                value=request.state.anonymous_cookie_id,
                 max_age=self.config.cookie_max_age,
                 httponly=self.config.cookie_httponly,
                 samesite=self.config.cookie_samesite,
