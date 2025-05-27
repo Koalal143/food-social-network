@@ -84,12 +84,7 @@ async def get_anonymous_user_or_none(
         return None
 
 
-def is_analytics_accepted(request: Request) -> bool:
-    return request.cookies.get("analytics_allowed") == "true"
-
-
 CurrentUserDependency = Annotated[User, Depends(get_current_user)]
 CurrentUserOrNoneDependency = Annotated[User | None, Depends(get_current_user_or_none)]
 SuperUserDependency = Annotated[User, Depends(get_superuser)]
 AnonymousUserOrNoneDependency = Annotated[AnonymousUser | None, Depends(get_anonymous_user_or_none)]
-ConsentDependency = Annotated[bool, Depends(is_analytics_accepted)]
