@@ -3,6 +3,7 @@ from dishka import Provider, Scope, provide
 from src.repositories.interfaces import (
     AnonymousUserRepositoryProtocol,
     BannedEmailRepositoryProtocol,
+    ConsentRepositoryProtocol,
     DislikedRecipeRepositoryProtocol,
     FavoriteRecipeRepositoryProtocol,
     RecipeImageRepositoryProtocol,
@@ -20,6 +21,7 @@ from src.repositories.interfaces import (
 from src.services.anonymous_user import AnonymousUserService
 from src.services.avatar import UserAvatarService
 from src.services.banned_email import BannedEmailService
+from src.services.consent import ConsentService
 from src.services.disliked_recipe import DislikedRecipeService
 from src.services.favorite_recipe import FavoriteRecipeService
 from src.services.recipe import RecipeService
@@ -58,6 +60,10 @@ class ServiceProvider(Provider):
         self, anonymous_user_repository: AnonymousUserRepositoryProtocol
     ) -> AnonymousUserService:
         return AnonymousUserService(anonymous_user_repository=anonymous_user_repository)
+
+    @provide
+    def get_consent_service(self, consent_repository: ConsentRepositoryProtocol) -> ConsentService:
+        return ConsentService(consent_repository=consent_repository)
 
     # Auth-related services
     @provide
