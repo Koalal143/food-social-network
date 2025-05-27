@@ -5,6 +5,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from src.enums.recipe_get_source import RecipeGetSourceEnum
 from src.models.recipe import Recipe
 from src.models.recipe_impression import RecipeImpression
 from src.models.user import User
@@ -76,7 +77,7 @@ class RecipeImpressionRepository:
         )
         return await self.session.scalar(stmt) or 0
 
-    async def create(self, user_id: int, recipe_id: int, source: str | None = None) -> RecipeImpression:
+    async def create(self, user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None) -> RecipeImpression:
         impression = RecipeImpression(user_id=user_id, recipe_id=recipe_id, source=source)
         self.session.add(impression)
         await self.session.flush()
@@ -84,7 +85,7 @@ class RecipeImpressionRepository:
         return impression
 
     async def create_for_anonymous(
-        self, anonymous_user_id: int, recipe_id: int, source: str | None = None
+        self, anonymous_user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None
     ) -> RecipeImpression:
         impression = RecipeImpression(anonymous_user_id=anonymous_user_id, recipe_id=recipe_id, source=source)
         self.session.add(impression)
@@ -109,7 +110,9 @@ class RecipeImpressionRepository:
         result = await self.session.scalar(final_stmt)
         return bool(result)
 
-    async def exists_recent(self, user_id: int, recipe_id: int, source: str | None, hours: int = 24) -> bool:
+    async def exists_recent(
+        self, user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None, hours: int = 24
+    ) -> bool:
         """Check if the recipe was shown to the user in the last given hours."""
         time_threshold = datetime.now(UTC) - timedelta(hours=hours)
         stmt = (
@@ -127,7 +130,7 @@ class RecipeImpressionRepository:
         return bool(result)
 
     async def exists_recent_for_anonymous(
-        self, anonymous_user_id: int, recipe_id: int, source: str | None, hours: int = 24
+        self, anonymous_user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None, hours: int = 24
     ) -> bool:
         """Check if the recipe was shown to the anonymous user in the last given hours."""
         time_threshold = datetime.now(UTC) - timedelta(hours=hours)
