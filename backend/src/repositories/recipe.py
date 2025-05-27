@@ -73,7 +73,8 @@ class RecipeRepository:
 
         result = await self.session.scalars(stmt)
         recipe = result.first()
-        recipe.is_on_favorites = False
+        if recipe:
+            recipe.is_on_favorites = False
         return recipe
 
     async def get_by_ids(self, recipe_ids: Sequence[int]) -> Sequence[Recipe] | None:

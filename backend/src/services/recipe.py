@@ -273,8 +273,8 @@ class RecipeService:
 
         await self.uow.commit()
 
-        await RecipeIndex.delete(id=recipe_id)
-        await RecipeIndex.save()
+        search = RecipeIndex.search()
+        query = await search.query(Q("term", id=recipe_id)).delete()
 
     async def get_image_upload_url(self, user: User, recipe_id: int) -> DirectUpload:
         existing_recipe = await self.uow.recipes.get_by_id(recipe_id)
