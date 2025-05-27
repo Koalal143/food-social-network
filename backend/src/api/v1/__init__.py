@@ -12,6 +12,7 @@ router.include_router(recipe_search.router)
 router.include_router(recipes.router)
 router.include_router(recipe_search.router)
 router.include_router(recipes.router)
+router.include_router(recipe_search.router)
 router.include_router(favorite_recipe.router)
 router.include_router(disliked_recipe.router)
 

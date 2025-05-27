@@ -20,7 +20,6 @@ from src.exceptions import (
     RecipeOwnershipError,
 )
 from src.exceptions.recipe_impression import RecipeImpressionAlreadyExistsError
-from src.exceptions.recipe_search import UserIdentityNotProvidedError
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.recipe import (
     MAX_RECIPE_INSTRUCTIONS_COUNT,
@@ -31,7 +30,6 @@ from src.schemas.recipe import (
     RecipeReadShort,
     RecipeUpdate,
 )
-from src.schemas.search_query import SearchQueryRead
 from src.services.recipe import RecipeService
 from src.services.recipe_impression import RecipeImpressionService
 from src.services.recipe_instructions import RecipeInstructionsService
