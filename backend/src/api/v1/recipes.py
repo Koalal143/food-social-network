@@ -4,8 +4,14 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Path, Query, Response, status
 from pydantic import PositiveInt
 
-from src.core.security import CurrentUserDependency, CurrentUserOrNoneDependency
+from src.core.security import (
+    AnonymousUserOrNoneDependency,
+    ConsentDependency,
+    CurrentUserDependency,
+    CurrentUserOrNoneDependency,
+)
 from src.db.uow import SQLAlchemyUnitOfWork
+from src.enums.recipe_get_source import RecipeGetSourceEnum
 from src.exceptions import (
     AppHTTPException,
     AttachInstructionStepError,
@@ -14,6 +20,7 @@ from src.exceptions import (
     RecipeNotFoundError,
     RecipeOwnershipError,
 )
+from src.exceptions.recipe_impression import RecipeImpressionAlreadyExistsError
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.recipe import (
     MAX_RECIPE_INSTRUCTIONS_COUNT,
@@ -26,6 +33,7 @@ from src.schemas.recipe import (
     RecipeUpdate,
 )
 from src.services.recipe import RecipeService
+from src.services.recipe_impression import RecipeImpressionService
 from src.services.recipe_instructions import RecipeInstructionsService
 from src.utils.examples_factory import json_example_factory, json_examples_factory
 
@@ -107,13 +115,33 @@ async def search_recipes(
 async def get_recipe(
     recipe_id: Annotated[int, Path(title="Recipe ID", ge=1)],
     recipe_service: FromDishka[RecipeService],
+    recipe_impression: FromDishka[RecipeImpressionService],
+    anonymous_user: AnonymousUserOrNoneDependency,
+    is_allowed_analytics: ConsentDependency,
     current_user: CurrentUserOrNoneDependency,
+    uow: FromDishka[SQLAlchemyUnitOfWork],
+    source: Annotated[RecipeGetSourceEnum | None, Query(description="Source of the request")] = None,
 ) -> RecipeReadFull:
     try:
         user_id = current_user.id if current_user else None
-        return await recipe_service.get_by_id(recipe_id=recipe_id, user_id=user_id)
+        recipe = await recipe_service.get_by_id(recipe_id=recipe_id, user_id=user_id)
     except RecipeNotFoundError as e:
         raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
+    else:
+        async with uow:
+            try:
+                if current_user:
+                    await recipe_impression.record_impression(recipe_id=recipe_id, source=source)
+                elif anonymous_user and is_allowed_analytics:
+                    await recipe_impression.record_impression_for_anonymous(
+                        recipe_id=recipe_id,
+                        anonymous_user_id=anonymous_user.id,
+                        source=source,
+                    )
+                await uow.commit()
+            except RecipeImpressionAlreadyExistsError:
+                pass
+        return recipe
 
 
 @router.get(
@@ -137,12 +165,32 @@ async def get_recipe_by_slug(
     slug: Annotated[str, Path(title="Recipe slug", description="URL-friendly recipe identifier")],
     recipe_service: FromDishka[RecipeService],
     current_user: CurrentUserOrNoneDependency,
+    uow: FromDishka[SQLAlchemyUnitOfWork],
+    recipe_impression: FromDishka[RecipeImpressionService],
+    anonymous_user: AnonymousUserOrNoneDependency,
+    is_allowed_analytics: ConsentDependency,
+    source: Annotated[RecipeGetSourceEnum | None, Query(description="Source of the request")] = None,
 ) -> RecipeReadFull:
     try:
         user_id = current_user.id if current_user else None
-        return await recipe_service.get_by_slug(slug=slug, user_id=user_id)
+        recipe = await recipe_service.get_by_slug(slug=slug, user_id=user_id)
     except RecipeNotFoundError as e:
         raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
+    else:
+        async with uow:
+            try:
+                if current_user:
+                    await recipe_impression.record_impression(recipe_id=recipe.id, source=source)
+                elif anonymous_user and is_allowed_analytics:
+                    await recipe_impression.record_impression_for_anonymous(
+                        recipe_id=recipe.id,
+                        anonymous_user_id=anonymous_user.id,
+                        source=source,
+                    )
+                await uow.commit()
+            except RecipeImpressionAlreadyExistsError:
+                pass
+        return recipe
 
 
 @router.get(
