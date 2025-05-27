@@ -1,10 +1,18 @@
+from collections.abc import Sequence
+
 from elasticsearch.dsl import Q
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.search.indexes import RecipeIndex
+from src.models.search_query import SearchQuery
 from src.schemas.recipe import RecipeSearchQuery
 
 
 class RecipeSearchRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
     async def search_recipes(self, params: RecipeSearchQuery) -> tuple[int, list[int]]:
         search = RecipeIndex.search()
 
@@ -55,5 +63,42 @@ class RecipeSearchRepository:
         await recipe_index.save()
 
     async def delete_recipe(self, recipe_id: int) -> None:
-        await RecipeIndex.delete(id=recipe_id)
-        await RecipeIndex.save()
+        search = RecipeIndex.search()
+        await search.query(Q("term", id=recipe_id)).delete()
+
+    async def save_search_query(
+        self, query_text: str, user_id: int | None, anonymous_user_id: int | None
+    ) -> SearchQuery:
+        if not (user_id or anonymous_user_id):
+            msg = "One of user_id or anonymous_user_id must be provided"
+            raise ValueError(msg)
+
+        search_query = SearchQuery(
+            query=query_text,
+            user_id=user_id,
+            anonymous_user_id=anonymous_user_id,
+        )
+        self.session.add(search_query)
+        await self.session.flush()
+        await self.session.refresh(search_query)
+        return search_query
+
+    async def get_user_search_history(self, user_id: int, limit: int = 10) -> Sequence[SearchQuery]:
+        stmt = (
+            select(SearchQuery)
+            .where(SearchQuery.user_id == user_id)
+            .order_by(desc(SearchQuery.created_at))
+            .limit(limit)
+        )
+        result = await self.session.scalars(stmt)
+        return result.all()
+
+    async def get_anonymous_search_history(self, anonymous_user_id: int, limit: int = 10) -> Sequence[SearchQuery]:
+        stmt = (
+            select(SearchQuery)
+            .where(SearchQuery.anonymous_user_id == anonymous_user_id)
+            .order_by(desc(SearchQuery.created_at))
+            .limit(limit)
+        )
+        result = await self.session.scalars(stmt)
+        return result.all()
