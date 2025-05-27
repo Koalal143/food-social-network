@@ -1,6 +1,7 @@
 from src.models.anonymous_user import AnonymousUser
 from src.models.banned_email import BannedEmail
 from src.models.base import Base
+from src.models.consent import Consent
 from src.models.disliked_recipes import DislikedRecipe
 from src.models.favorite_recipes import FavoriteRecipe
 from src.models.recipe import Recipe
@@ -16,6 +17,7 @@ __all__ = [
     "AnonymousUser",
     "BannedEmail",
     "Base",
+    "Consent",
     "DislikedRecipe",
     "FavoriteRecipe",
     "Recipe",
