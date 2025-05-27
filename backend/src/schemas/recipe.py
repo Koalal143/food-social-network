@@ -1,13 +1,12 @@
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, PositiveInt, computed_field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, PositiveInt
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
 from src.schemas.base import BaseReadSchema, BaseSchema
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.user import UserReadShort
 from src.utils.partial_model import partial_model
-from src.utils.slug import create_recipe_slug
 from src.utils.validators import validate_recipe_title
 
 MAX_RECIPE_INSTRUCTIONS_COUNT = 25
@@ -82,10 +81,7 @@ class _IsPublishedMixin(BaseSchema):
 class RecipeReadShort(BaseRecipeSchema):
     id: PositiveInt
     is_on_favorites: bool = Field(default=False, description="Is the recipe in user's favorites")
-
-    @computed_field
-    def slug(self) -> str:
-        return create_recipe_slug(self.title, self.id)
+    slug: str = Field(description="Recipe slug for URL")
 
 
 class RecipeRead(_InstructionsMixin, _IngredientsMixin, _TagsMixin, _IsPublishedMixin, RecipeReadShort, BaseReadSchema):
