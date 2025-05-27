@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from src.enums.recipe_get_source import RecipeGetSourceEnum
 from src.exceptions.recipe import RecipeNotFoundError
 from src.exceptions.recipe_impression import RecipeImpressionAlreadyExistsError
 from src.repositories.interfaces import (
@@ -44,7 +45,9 @@ class RecipeImpressionService:
 
         return count, impression_schemas
 
-    async def record_impression(self, user_id: int, recipe_id: int) -> RecipeImpressionRead:
+    async def record_impression(
+        self, user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None
+    ) -> RecipeImpressionRead:
         recipe = await self.recipe_repository.get_by_id(recipe_id)
         if not recipe:
             msg = f"Recipe with id {recipe_id} not found"
@@ -53,14 +56,16 @@ class RecipeImpressionService:
             msg = f"Recipe with id {recipe_id} was already shown to user within last 24 hours"
             raise RecipeImpressionAlreadyExistsError(msg)
 
-        impression = await self.recipe_impression_repository.create(user_id=user_id, recipe_id=recipe_id)
+        impression = await self.recipe_impression_repository.create(user_id=user_id, recipe_id=recipe_id, source=source)
 
         return await self._to_recipe_impression_schema(impression)
 
     async def merge_impressions(self, anonymous_user_id: int, user_id: int) -> None:
         await self.recipe_impression_repository.merge_impressions(anonymous_user_id=anonymous_user_id, user_id=user_id)
 
-    async def record_impression_for_anonymous(self, recipe_id: int, anonymous_user_id: int) -> RecipeImpressionRead:
+    async def record_impression_for_anonymous(
+        self, recipe_id: int, anonymous_user_id: int, source: RecipeGetSourceEnum | None = None
+    ) -> RecipeImpressionRead:
         recipe = await self.recipe_repository.get_by_id(recipe_id)
         if not recipe:
             msg = f"Recipe with id {recipe_id} not found"
@@ -73,7 +78,7 @@ class RecipeImpressionService:
             raise RecipeImpressionAlreadyExistsError(msg)
 
         impression = await self.recipe_impression_repository.create_for_anonymous(
-            anonymous_user_id=anonymous_user_id, recipe_id=recipe_id
+            anonymous_user_id=anonymous_user_id, recipe_id=recipe_id, source=source
         )
 
         return await self._to_recipe_impression_schema(impression)
