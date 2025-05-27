@@ -241,12 +241,32 @@ async def get_recipe_by_slug(
     slug: Annotated[str, Path(title="Recipe slug", description="URL-friendly recipe identifier")],
     recipe_service: FromDishka[RecipeService],
     current_user: CurrentUserOrNoneDependency,
+    uow: FromDishka[SQLAlchemyUnitOfWork],
+    recipe_impression: FromDishka[RecipeImpressionService],
+    anonymous_user: AnonymousUserOrNoneDependency,
+    is_allowed_analytics: ConsentDependency,
+    source: Annotated[RecipeGetSourceEnum | None, Query(description="Source of the request")] = None,
 ) -> RecipeReadFull:
     try:
         user_id = current_user.id if current_user else None
-        return await recipe_service.get_by_slug(slug=slug, user_id=user_id)
+        recipe = await recipe_service.get_by_slug(slug=slug, user_id=user_id)
     except RecipeNotFoundError as e:
         raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
+    else:
+        async with uow:
+            try:
+                if current_user:
+                    await recipe_impression.record_impression(recipe_id=recipe.id, source=source)
+                elif anonymous_user and is_allowed_analytics:
+                    await recipe_impression.record_impression_for_anonymous(
+                        recipe_id=recipe.id,
+                        anonymous_user_id=anonymous_user.id,
+                        source=source,
+                    )
+                await uow.commit()
+            except RecipeImpressionAlreadyExistsError:
+                pass
+        return recipe
 
 
 @router.get(
