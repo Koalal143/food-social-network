@@ -1,5 +1,4 @@
 import logging
-import uuid
 from collections.abc import Callable
 
 from fastapi import Request, Response
@@ -48,18 +47,17 @@ class AnonymousUserMiddleware(BaseHTTPMiddleware):
             anonymous_id = request.cookies.get(self.config.cookie_name)
 
             if not anonymous_id:
-                anonymous_id = str(uuid.uuid4())
-
                 async with container() as request_container:
                     uow = await request_container.get(SQLAlchemyUnitOfWork)
                     anonymous_user_service = await request_container.get(AnonymousUserService)
                     try:
                         async with uow:
-                            await anonymous_user_service.create(
+                            anonymous_user = await anonymous_user_service.create(
                                 AnonymousUserCreate(
                                     cookie_id=anonymous_id, user_agent=request.headers.get("user-agent")
                                 )
                             )
+                            anonymous_id = anonymous_user.cookie_id
                             await uow.commit()
                     except Exception:
                         logger.exception("Error when creating anonymous user in middleware")
