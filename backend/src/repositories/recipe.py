@@ -28,17 +28,14 @@ class RecipeRepository:
         )
 
     def _get_with_author_short(self) -> Select[tuple[Recipe]]:
-        return (
-            select(Recipe)
-            .options(
-                selectinload(Recipe.ingredients),
-                selectinload(Recipe.instructions),
-                selectinload(Recipe.tags),
-                joinedload(Recipe.author)
-                .load_only(User.id, User.username)
-                .joinedload(User.profile)
-                .load_only(UserProfile.avatar_url),
-            )
+        return select(Recipe).options(
+            selectinload(Recipe.ingredients),
+            selectinload(Recipe.instructions),
+            selectinload(Recipe.tags),
+            joinedload(Recipe.author)
+            .load_only(User.id, User.username)
+            .joinedload(User.profile)
+            .load_only(UserProfile.avatar_url),
         )
 
     def _add_is_favorite_subquery(self, query: Select, user_id: int | None) -> Select:
@@ -113,11 +110,7 @@ class RecipeRepository:
 
         return stmt, recipes
 
-    async def _get_count_with_filters(
-        self,
-        additional_filters: list[Any] | None = None,
-        **filters: Any
-    ) -> int:
+    async def _get_count_with_filters(self, additional_filters: list[Any] | None = None, **filters: Any) -> int:
         count_stmt = select(func.count(Recipe.id)).filter_by(**filters)
 
         if additional_filters:
@@ -134,12 +127,7 @@ class RecipeRepository:
         limit: int = 100,
         **filters: Any,
     ) -> tuple[int, Sequence[RecipeWithFavorite]]:
-        _, recipes = await self._get_recipes_with_filters(
-            user_id=user_id,
-            skip=skip,
-            limit=limit,
-            **filters
-        )
+        _, recipes = await self._get_recipes_with_filters(user_id=user_id, skip=skip, limit=limit, **filters)
 
         count = await self._get_count_with_filters(**filters)
         return count, recipes
@@ -155,17 +143,10 @@ class RecipeRepository:
         author_filter = Recipe.author.has(User.username == author_username)
 
         _, recipes = await self._get_recipes_with_filters(
-            user_id=user_id,
-            skip=skip,
-            limit=limit,
-            additional_filters=[author_filter],
-            **filters
+            user_id=user_id, skip=skip, limit=limit, additional_filters=[author_filter], **filters
         )
 
-        count = await self._get_count_with_filters(
-            additional_filters=[author_filter],
-            **filters
-        )
+        count = await self._get_count_with_filters(additional_filters=[author_filter], **filters)
 
         return count, recipes
 
@@ -201,6 +182,7 @@ class RecipeRepository:
     async def update(self, recipe_id: int, **fields: Any) -> Recipe | None:
         stmt = update(Recipe).where(Recipe.id == recipe_id).values(**fields)
         await self.session.execute(stmt)
+        await self.session.flush()
         return await self.get_by_id(recipe_id=recipe_id)
 
     async def delete_by_id(self, recipe_id: int) -> None:
