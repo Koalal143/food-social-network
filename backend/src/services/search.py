@@ -109,3 +109,14 @@ class SearchService:
             )
 
         return [SearchQueryRead.model_validate(query, from_attributes=True) for query in search_queries]
+
+    async def merge_search_queries(self, anonymous_user_id: int, user_id: int) -> None:
+        """
+        Merge search queries from anonymous user to authenticated user.
+
+        Args:
+            anonymous_user_id: ID of anonymous user
+            user_id: ID of authenticated user
+
+        """
+        await self.recipe_search_repository.merge_search_queries(anonymous_user_id=anonymous_user_id, user_id=user_id)
