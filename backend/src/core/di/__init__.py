@@ -1,3 +1,3 @@
-from src.core.di.container import create_container
+from src.core.di.container import container
 
-__all__ = ["create_container"]
+__all__ = ["container"]
