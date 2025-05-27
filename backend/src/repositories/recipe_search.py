@@ -83,22 +83,26 @@ class RecipeSearchRepository:
         await self.session.refresh(search_query)
         return search_query
 
-    async def get_user_search_history(self, user_id: int, limit: int = 10) -> Sequence[SearchQuery]:
+    async def get_user_search_history(self, user_id: int, limit: int = 10, offset: int = 0) -> Sequence[SearchQuery]:
         stmt = (
             select(SearchQuery)
             .where(SearchQuery.user_id == user_id)
             .order_by(desc(SearchQuery.created_at))
             .limit(limit)
+            .offset(offset)
         )
         result = await self.session.scalars(stmt)
         return result.all()
 
-    async def get_anonymous_search_history(self, anonymous_user_id: int, limit: int = 10) -> Sequence[SearchQuery]:
+    async def get_anonymous_search_history(
+        self, anonymous_user_id: int, limit: int = 10, offset: int = 0
+    ) -> Sequence[SearchQuery]:
         stmt = (
             select(SearchQuery)
             .where(SearchQuery.anonymous_user_id == anonymous_user_id)
             .order_by(desc(SearchQuery.created_at))
             .limit(limit)
+            .offset(offset)
         )
         result = await self.session.scalars(stmt)
         return result.all()
