@@ -92,16 +92,18 @@ async def search_recipes(
     response: Response,
     current_user: CurrentUserOrNoneDependency,
     anonymous_user: AnonymousUserOrNoneDependency,
+    uow: FromDishka[SQLAlchemyUnitOfWork],
 ) -> list[RecipeReadShort]:
     user_id = current_user.id if current_user else None
     anonymous_user_id = anonymous_user.id if anonymous_user else None
-
-    total, recipes = await recipe_service.search(
-        params=query,
-        user_id=user_id,
-        anonymous_user_id=anonymous_user_id,
-    )
-    response.headers["X-Total-Count"] = str(total)
+    async with uow:
+        total, recipes = await recipe_service.search(
+            params=query,
+            user_id=user_id,
+            anonymous_user_id=anonymous_user_id,
+        )
+        response.headers["X-Total-Count"] = str(total)
+        await uow.commit()
     return recipes
 
 
