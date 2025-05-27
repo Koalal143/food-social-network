@@ -37,12 +37,15 @@ class UserRepository:
             hashed_password=hashed_password,
         )
         self.session.add(user)
+        await self.session.flush()
         return user
 
     async def update_last_login(self, user_id: int, last_login: datetime | None) -> None:
         await self.session.execute(
             update(User).where(User.id == user_id).values(last_login=last_login or datetime.now(UTC))
         )
+        await self.session.flush()
 
     async def update_username(self, user_id: int, username: str) -> None:
         await self.session.execute(update(User).where(User.id == user_id).values(username=username))
+        await self.session.flush()
