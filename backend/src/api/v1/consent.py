@@ -1,8 +1,7 @@
-
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Response, status
 
-from src.core.config import CookiePolicyConfig
+from src.core.config import Settings
 from src.core.security import AnonymousUserOrNoneDependency
 from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions import AppHTTPException
@@ -61,6 +60,8 @@ async def create_consent(
     anonymous_user: AnonymousUserOrNoneDependency,
     consent_service: FromDishka[ConsentService],
     uow: FromDishka[SQLAlchemyUnitOfWork],
+    response: Response,
+    settings: FromDishka[Settings],
 ) -> ConsentRead:
     async with uow:
         consent = await consent_service.create(
@@ -68,6 +69,14 @@ async def create_consent(
             is_analytics_allowed=consent_data.is_analytics_allowed,
         )
         await uow.commit()
+        if consent_data.is_analytics_allowed:
+            response.set_cookie(
+                key="analytics_allowed",
+                value="true",
+                httponly=settings.cookie_policy.httponly,
+                secure=settings.cookie_policy.secure,
+                samesite=settings.cookie_policy.samesite,
+            )
         return ConsentRead.model_validate(consent, from_attributes=True)
 
 
@@ -90,7 +99,7 @@ async def update_consent(
     anonymous_user: AnonymousUserOrNoneDependency,
     consent_data: ConsentUpdate,
     response: Response,
-    cookie_policy: FromDishka[CookiePolicyConfig],
+    settings: FromDishka[Settings],
     consent_service: FromDishka[ConsentService],
     uow: FromDishka[SQLAlchemyUnitOfWork],
 ) -> ConsentRead:
@@ -119,9 +128,9 @@ async def update_consent(
             response.set_cookie(
                 key="analytics_allowed",
                 value="true",
-                httponly=cookie_policy.httponly,
-                secure=cookie_policy.secure,
-                samesite=cookie_policy.samesite,
+                httponly=settings.cookie_policy.httponly,
+                secure=settings.cookie_policy.secure,
+                samesite=settings.cookie_policy.samesite,
             )
         else:
             response.delete_cookie(key="analytics_allowed")
