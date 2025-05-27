@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
 from elasticsearch.dsl import Q
-from sqlalchemy import desc, select
+from sqlalchemy import delete, desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.search.indexes import RecipeIndex
@@ -106,3 +106,25 @@ class RecipeSearchRepository:
         )
         result = await self.session.scalars(stmt)
         return result.all()
+
+    async def merge_search_queries(self, anonymous_user_id: int, user_id: int) -> None:
+        user_searched_queries_subq = select(SearchQuery.query).where(SearchQuery.user_id == user_id).scalar_subquery()
+        unique_update_stmt = (
+            update(SearchQuery)
+            .where(
+                SearchQuery.anonymous_user_id == anonymous_user_id, SearchQuery.query.not_in(user_searched_queries_subq)
+            )
+            .values(user_id=user_id, anonymous_user_id=None)
+        )
+        update_duplicate_stmt = (
+            update(SearchQuery)
+            .where(SearchQuery.user_id == user_id, SearchQuery.query.in_(user_searched_queries_subq))
+            .values(updated_at=SearchQuery.created_at)
+        )
+        delete_duplicate_stmt = delete(SearchQuery).where(
+            SearchQuery.anonymous_user_id == anonymous_user_id, SearchQuery.query.in_(user_searched_queries_subq)
+        )
+        await self.session.execute(unique_update_stmt)
+        await self.session.execute(update_duplicate_stmt)
+        await self.session.execute(delete_duplicate_stmt)
+        await self.session.flush()
