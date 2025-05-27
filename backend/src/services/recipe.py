@@ -152,8 +152,6 @@ class RecipeService:
         schema = unprepared_schema.model_dump(exclude={"updated_at", "instructions", "image_url"})
         await self.recipe_search_repository.index_recipe(schema)
 
-
-
     async def create(self, user: User, recipe_create: RecipeCreate) -> RecipeRead:
         recipe_data = recipe_create.model_dump(exclude={"ingredients", "instructions", "tags"})
         recipe = await self.recipe_repository.create(
