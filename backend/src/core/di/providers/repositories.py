@@ -94,8 +94,8 @@ class RepositoryProvider(Provider):
         return RecipeImageRepository(s3_storage)
 
     @provide
-    def get_recipe_search_repository(self) -> RecipeSearchRepositoryProtocol:
-        return RecipeSearchRepository()
+    def get_recipe_search_repository(self, session: AsyncSession) -> RecipeSearchRepositoryProtocol:
+        return RecipeSearchRepository(session)
 
     @provide
     def get_recipe_impression_repository(self, session: AsyncSession) -> RecipeImpressionRepositoryProtocol:
