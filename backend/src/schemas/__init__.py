@@ -12,6 +12,7 @@ from src.schemas.recipe import (
     RecipeReadShort,
     RecipeUpdate,
 )
+from src.schemas.search_query import SearchQueryRead
 from src.schemas.token import Token, TokenPayload
 from src.schemas.user import (
     UserCreate,
@@ -43,6 +44,7 @@ __all__ = [
     "RecipeReadFull",
     "RecipeReadShort",
     "RecipeUpdate",
+    "SearchQueryRead",
     "Token",
     "TokenPayload",
     "UserCreate",
