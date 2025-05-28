@@ -28,8 +28,8 @@ class RecipeImpressionService:
 
     async def _to_recipe_impression_schema(self, impression: "RecipeImpression") -> RecipeImpressionRead:
         recipe = RecipeReadShort.model_validate(impression.recipe)
-        if recipe.image_url:
-            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_url)
+        if recipe.image_path:
+            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
         schema = RecipeImpressionRead.model_validate(impression)
         schema.recipe = recipe
         return schema
@@ -52,7 +52,9 @@ class RecipeImpressionService:
         if not recipe:
             msg = f"Recipe with id {recipe_id} not found"
             raise RecipeNotFoundError(msg)
-        if await self.recipe_impression_repository.exists_recent(user_id=user_id, recipe_id=recipe_id, hours=24):
+        if await self.recipe_impression_repository.exists_recent(
+            user_id=user_id, source=source, recipe_id=recipe_id, hours=24
+        ):
             msg = f"Recipe with id {recipe_id} was already shown to user within last 24 hours"
             raise RecipeImpressionAlreadyExistsError(msg)
 
@@ -72,7 +74,7 @@ class RecipeImpressionService:
             raise RecipeNotFoundError(msg)
 
         if await self.recipe_impression_repository.exists_recent_for_anonymous(
-            anonymous_user_id=anonymous_user_id, recipe_id=recipe_id, source=None, hours=24
+            anonymous_user_id=anonymous_user_id, recipe_id=recipe_id, source=source, hours=24
         ):
             msg = f"Recipe with id {recipe_id} was already shown to anonymous user within last 24 hours"
             raise RecipeImpressionAlreadyExistsError(msg)

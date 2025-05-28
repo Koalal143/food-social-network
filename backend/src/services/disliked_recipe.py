@@ -27,8 +27,8 @@ class DislikedRecipeService:
 
     async def _to_recipe_with_dislike_schema(self, disliked_recipe: Recipe) -> DislikedRecipeRead:
         recipe = RecipeReadShort.model_validate(disliked_recipe)
-        if recipe.image_url:
-            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_url)
+        if recipe.image_path:
+            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
 
         recipe.is_disliked = True
         return recipe
