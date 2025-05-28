@@ -19,7 +19,3 @@ class NoRecipeInstructionsError(BaseAppError):
 
 class AttachInstructionStepError(BaseAppError):
     error_key = "attach_instruction_step"
-
-
-class InstructionNotBelongsToRecipeError(BaseAppError):
-    error_key = "instruction_not_belongs_to_recipe"

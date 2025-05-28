@@ -15,7 +15,6 @@ from src.exceptions.http import AppHTTPException
 from src.exceptions.image import ImageTooLargeError, WrongImageFormatError
 from src.exceptions.recipe import (
     AttachInstructionStepError,
-    InstructionNotBelongsToRecipeError,
     NoRecipeImageError,
     NoRecipeInstructionsError,
     RecipeNotFoundError,
@@ -35,7 +34,6 @@ __all__ = [
     "ImageTooLargeError",
     "InactiveOrNotExistingUserError",
     "IncorrectCredentialsError",
-    "InstructionNotBelongsToRecipeError",
     "InvalidJWTError",
     "InvalidTokenError",
     "JWTSignatureExpired",
