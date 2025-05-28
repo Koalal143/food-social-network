@@ -72,9 +72,7 @@ class RecipeInstructionRepository:
         await self.session.execute(stmt)
         await self.session.flush()
 
-    async def get_by_ids_and_recipe_id(
-        self, instruction_ids: list[int], recipe_id: int
-    ) -> Sequence[RecipeInstruction]:
+    async def get_by_ids_and_recipe_id(self, instruction_ids: list[int], recipe_id: int) -> Sequence[RecipeInstruction]:
         stmt = select(RecipeInstruction).where(
             RecipeInstruction.id.in_(instruction_ids), RecipeInstruction.recipe_id == recipe_id
         )
