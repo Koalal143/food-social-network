@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useRouter } from 'next/navigation'
-import { LogOut, User, PlusCircle, Search, Menu, X } from 'lucide-react'
+import { LogOut, User, PlusCircle, Search, Menu, X, Shield } from 'lucide-react'
 import Container from './Container'
 import SearchInput from '../ui/SearchInput'
 import { useState } from 'react'
@@ -48,7 +48,7 @@ export default function Header() {
                         {/* Кнопки авторизации и профиля */}
                         <div className={`flex items-center gap-1 md:gap-2 ${showMobileSearch ? 'hidden md:flex' : 'flex'}`}>
                             {/* Кнопка поиска на мобильных устройствах */}
-                            <Button 
+                            <Button
                                 variant="ghost"
                                 size="sm"
                                 className="md:hidden p-1 ml-1"
@@ -63,8 +63,8 @@ export default function Header() {
                             </Button>
                             {user ? (
                                 <>
-                                    <Button 
-                                        variant="default" 
+                                    <Button
+                                        variant="default"
                                         size="sm"
                                         asChild
                                         className="hidden md:flex bg-primary/90 hover:bg-primary/80"
@@ -74,7 +74,7 @@ export default function Header() {
                                             Добавить рецепт
                                         </Link>
                                     </Button>
-                                    
+
                                     {/* Кнопка добавления для мобильных устройств */}
                                     <Button
                                         variant="ghost"
@@ -86,11 +86,11 @@ export default function Header() {
                                             <PlusCircle className="h-5 w-5 text-gray-700" />
                                         </Link>
                                     </Button>
-                                    
+
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button 
-                                                variant="ghost" 
+                                            <Button
+                                                variant="ghost"
                                                 className="relative h-8 w-8 rounded-full hover:bg-gray-100/50"
                                             >
                                                 <Image
@@ -110,8 +110,16 @@ export default function Header() {
                                                     Профиль
                                                 </Link>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem 
-                                                className="text-red-600 focus:text-red-600" 
+                                            {user?.is_superuser && (
+                                                <DropdownMenuItem asChild>
+                                                    <Link href="/admin" className="flex items-center">
+                                                        <Shield className="mr-2 h-4 w-4" />
+                                                        Админ-панель
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            )}
+                                            <DropdownMenuItem
+                                                className="text-red-600 focus:text-red-600"
                                                 onClick={handleLogout}
                                             >
                                                 <LogOut className="mr-2 h-4 w-4" />
