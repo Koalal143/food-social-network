@@ -28,8 +28,8 @@ class RecipeImpressionService:
 
     async def _to_recipe_impression_schema(self, impression: "RecipeImpression") -> RecipeImpressionRead:
         recipe = RecipeReadShort.model_validate(impression.recipe)
-        if recipe.image_path:
-            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
+        if impression.recipe.image_path:
+            recipe.image_url = await self.recipe_image_repository.get_image_url(impression.recipe.image_path)
         schema = RecipeImpressionRead.model_validate(impression)
         schema.recipe = recipe
         return schema
