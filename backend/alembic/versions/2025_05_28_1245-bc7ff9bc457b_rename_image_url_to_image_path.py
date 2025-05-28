@@ -23,5 +23,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.alter_Wcolumn("recipe_instructions", "image_path", new_column_name="image_url")
+    op.alter_column("recipe_instructions", "image_path", new_column_name="image_url")
     op.alter_column("recipes", "image_path", new_column_name="image_url")
