@@ -21,10 +21,9 @@ from src.services.token import TokenService
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-@inject
-async def get_current_user(
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-    token_service: FromDishka[TokenService],
+async def _get_current_user(
+    token_service: TokenService,
+    credentials: HTTPAuthorizationCredentials | None,
 ) -> User:
     try:
         return await token_service.get_current_user(
@@ -38,6 +37,13 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
 
+@inject
+async def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+    token_service: FromDishka[TokenService],
+) -> User:
+    return await _get_current_user(token_service, credentials)
+
 
 @inject
 async def get_current_user_or_none(
@@ -46,10 +52,8 @@ async def get_current_user_or_none(
 ) -> User | None:
     if not credentials:
         return None
-    return await get_current_user(
-        credentials=credentials,
-        token_service=token_service,
-    )
+    # Can't use get_current_user because dishka doesn't support nested dependencies with FromDishka and Depends
+    return await _get_current_user(token_service, credentials)
 
 
 async def get_superuser(
