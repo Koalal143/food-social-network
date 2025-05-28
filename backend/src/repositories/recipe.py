@@ -128,6 +128,7 @@ class RecipeRepository:
         stmt = self._add_impressions_subquery(stmt)
         recipes: list[RecipeWithExtra] = []
         if user_id is not None:
+            stmt = self._add_impressions_subquery(stmt)
             stmt = self._add_is_favorite_subquery(stmt, user_id)
             result = await self.session.execute(stmt)
             for element in result.all():
