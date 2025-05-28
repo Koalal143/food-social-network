@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { handleApiError } from '@/utils/errorHandler'
 import AdminService from '@/services/admin.service'
+import BannedEmailService from '@/services/banned-email.service'
 import { ArrowLeft, TestTube } from 'lucide-react'
 import Link from 'next/link'
 
@@ -32,6 +33,10 @@ export default function AdminTestPage() {
             {
                 name: 'Список рецептов',
                 test: () => AdminService.getAllRecipes(0, 5)
+            },
+            {
+                name: 'Заблокированные домены',
+                test: () => BannedEmailService.getAllBannedDomains(0, 5)
             }
         ]
 

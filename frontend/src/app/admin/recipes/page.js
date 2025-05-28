@@ -9,14 +9,13 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { handleApiError } from '@/utils/errorHandler'
-import RecipesService from '@/services/recipes.service'
+import AdminService from '@/services/admin.service'
 import {
     Search,
     ChefHat,
     Eye,
     Trash2,
     ArrowLeft,
-    Filter,
     MoreHorizontal,
     User
 } from 'lucide-react'
@@ -204,10 +203,16 @@ export default function AdminRecipesPage() {
                                                             src={recipe.image_url}
                                                             alt={recipe.title}
                                                             className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                e.target.nextSibling.style.display = 'flex';
+                                                            }}
                                                         />
-                                                    ) : (
-                                                        <ChefHat className="w-6 h-6 text-muted-foreground" />
-                                                    )}
+                                                    ) : null}
+                                                    <ChefHat
+                                                        className="w-6 h-6 text-muted-foreground"
+                                                        style={{ display: recipe.image_url ? 'none' : 'block' }}
+                                                    />
                                                 </div>
                                                 <div className="flex-1">
                                                     <h3 className="font-semibold">{recipe.title}</h3>

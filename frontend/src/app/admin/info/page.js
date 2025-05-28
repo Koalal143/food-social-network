@@ -5,11 +5,10 @@ import Container from '@/components/layout/Container'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-    ArrowLeft, 
-    Info, 
-    CheckCircle, 
-    XCircle, 
+import {
+    ArrowLeft,
+    Info,
+    CheckCircle,
     AlertTriangle,
     ChefHat,
     Users,
@@ -63,7 +62,7 @@ export default function AdminInfoPage() {
                                         Отображение общего количества рецептов в системе
                                     </p>
                                 </div>
-                                
+
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
                                         <ChefHat className="w-4 h-4 text-green-600" />
@@ -73,7 +72,7 @@ export default function AdminInfoPage() {
                                         Просмотр, поиск и удаление любых рецептов
                                     </p>
                                 </div>
-                                
+
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
                                         <Shield className="w-4 h-4 text-green-600" />
@@ -83,7 +82,17 @@ export default function AdminInfoPage() {
                                         Доступ только для пользователей с is_superuser = true
                                     </p>
                                 </div>
-                                
+
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <Shield className="w-4 h-4 text-red-600" />
+                                        <span className="font-medium">Заблокированные домены</span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground ml-6">
+                                        Управление списком заблокированных email доменов
+                                    </p>
+                                </div>
+
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2">
                                         <Info className="w-4 h-4 text-green-600" />
@@ -120,13 +129,13 @@ export default function AdminInfoPage() {
                                         </p>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
                                     <BarChart3 className="w-5 h-5 text-amber-600 mt-0.5" />
                                     <div>
                                         <h4 className="font-medium text-amber-800">Расширенная статистика</h4>
                                         <p className="text-sm text-amber-700 mt-1">
-                                            Статистика по пользователям, активности и детальная аналитика 
+                                            Статистика по пользователям, активности и детальная аналитика
                                             требует специальных endpoints для агрегации данных.
                                         </p>
                                     </div>
@@ -155,7 +164,7 @@ export default function AdminInfoPage() {
                                     </div>
                                     <Badge variant="default">Работает</Badge>
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between p-3 border rounded-lg">
                                     <div>
                                         <code className="text-sm bg-gray-100 px-2 py-1 rounded">DELETE /v1/recipes/{'{id}'}</code>
@@ -163,7 +172,7 @@ export default function AdminInfoPage() {
                                     </div>
                                     <Badge variant="default">Работает</Badge>
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between p-3 border rounded-lg">
                                     <div>
                                         <code className="text-sm bg-gray-100 px-2 py-1 rounded">GET /v1/recipes/search</code>
@@ -171,11 +180,35 @@ export default function AdminInfoPage() {
                                     </div>
                                     <Badge variant="default">Работает</Badge>
                                 </div>
-                                
+
                                 <div className="flex items-center justify-between p-3 border rounded-lg">
                                     <div>
                                         <code className="text-sm bg-gray-100 px-2 py-1 rounded">GET /v1/users/me</code>
                                         <p className="text-sm text-muted-foreground mt-1">Получение информации о текущем пользователе</p>
+                                    </div>
+                                    <Badge variant="default">Работает</Badge>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 border rounded-lg">
+                                    <div>
+                                        <code className="text-sm bg-gray-100 px-2 py-1 rounded">GET /v1/banned-emails</code>
+                                        <p className="text-sm text-muted-foreground mt-1">Получение списка заблокированных доменов</p>
+                                    </div>
+                                    <Badge variant="default">Работает</Badge>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 border rounded-lg">
+                                    <div>
+                                        <code className="text-sm bg-gray-100 px-2 py-1 rounded">POST /v1/banned-emails</code>
+                                        <p className="text-sm text-muted-foreground mt-1">Добавление домена в список заблокированных</p>
+                                    </div>
+                                    <Badge variant="default">Работает</Badge>
+                                </div>
+
+                                <div className="flex items-center justify-between p-3 border rounded-lg">
+                                    <div>
+                                        <code className="text-sm bg-gray-100 px-2 py-1 rounded">DELETE /v1/banned-emails/{'{domain}'}</code>
+                                        <p className="text-sm text-muted-foreground mt-1">Удаление домена из списка заблокированных</p>
                                     </div>
                                     <Badge variant="default">Работает</Badge>
                                 </div>
@@ -200,7 +233,7 @@ export default function AdminInfoPage() {
                                         В выпадающем меню профиля появится пункт "Админ-панель".
                                     </p>
                                 </div>
-                                
+
                                 <div>
                                     <h4 className="font-medium mb-2">2. Просмотр статистики</h4>
                                     <p className="text-sm text-muted-foreground">
@@ -208,7 +241,7 @@ export default function AdminInfoPage() {
                                         Статистика обновляется автоматически при загрузке страницы.
                                     </p>
                                 </div>
-                                
+
                                 <div>
                                     <h4 className="font-medium mb-2">3. Управление рецептами</h4>
                                     <p className="text-sm text-muted-foreground">
@@ -216,9 +249,17 @@ export default function AdminInfoPage() {
                                         Доступны поиск по названию и удаление рецептов.
                                     </p>
                                 </div>
-                                
+
                                 <div>
-                                    <h4 className="font-medium mb-2">4. Тестирование</h4>
+                                    <h4 className="font-medium mb-2">4. Управление заблокированными доменами</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                        Перейдите в раздел "Заблокированные домены" для управления списком запрещенных email доменов.
+                                        Можно добавлять новые домены и удалять существующие.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <h4 className="font-medium mb-2">5. Тестирование</h4>
                                     <p className="text-sm text-muted-foreground">
                                         Используйте страницу /admin/test для проверки работоспособности API endpoints.
                                     </p>

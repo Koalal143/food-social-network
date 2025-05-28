@@ -10,13 +10,11 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { handleApiError } from '@/utils/errorHandler'
 import AdminService from '@/services/admin.service'
-import RecipesService from '@/services/recipes.service'
 import {
     Users,
     ChefHat,
     TrendingUp,
     Calendar,
-    Settings,
     BarChart3,
     Shield
 } from 'lucide-react'
@@ -186,6 +184,25 @@ export default function AdminDashboard() {
                                 <Link href="/admin/users">
                                     <Button className="w-full">
                                         Перейти к пользователям
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Shield className="w-5 h-5" />
+                                    Заблокированные домены
+                                </CardTitle>
+                                <CardDescription>
+                                    Управление списком заблокированных email доменов
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href="/admin/banned-domains">
+                                    <Button className="w-full">
+                                        Управлять доменами
                                     </Button>
                                 </Link>
                             </CardContent>
