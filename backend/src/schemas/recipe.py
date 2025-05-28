@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, HttpUrl, PositiveInt
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, HttpUrl, PositiveInt, field_validator
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
 from src.schemas.base import BaseReadSchema, BaseSchema
@@ -35,7 +35,9 @@ class BaseRecipeInstruction(BaseSchema):
 
 
 class RecipeInstruction(BaseRecipeInstruction):
-    image_url: HttpUrl | None = Field(default=None, examples=["https://example.com/static/images/recipes/1/instructions/1/step.png"])
+    image_url: HttpUrl | None = Field(
+        default=None, examples=["https://example.com/static/images/recipes/1/instructions/1/step.png"]
+    )
 
 
 @partial_model
@@ -83,7 +85,9 @@ class _IsPublishedMixin(BaseSchema):
 
 class RecipeReadShort(BaseRecipeSchema):
     id: PositiveInt
-    image_url: str | None = Field(None, max_length=255, examples=["https://example.com/static/images/recipes/1/main.png"])
+    image_url: str | None = Field(
+        None, max_length=255, examples=["https://example.com/static/images/recipes/1/main.png"]
+    )
     is_on_favorites: bool = Field(default=False, description="Is the recipe in user's favorites")
     slug: str = Field(description="Recipe slug for URL")
 
@@ -105,9 +109,23 @@ class RecipeUpdate(_IsPublishedMixin, BaseRecipeSchema):
     """Schema for updating all recipe fields, except instruction."""
 
     image_path: str | None = Field(default=None, max_length=255, examples=["images/recipes/1/main.png"])
-    instructions: list[RecipeInstructionUpdate] | None = Field(default=None)
+    instructions: list[RecipeInstructionUpdate] | None = Field(default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT)
     ingredients: list[IngredientUpdate] | None = Field(default=None)
     tags: list[RecipeTagUpdate] | None = Field(default=None)
+
+    @field_validator("instructions", mode="after")
+    @classmethod
+    def validate_instructions_steps(
+        cls,
+        instructions: list[RecipeInstructionUpdate] | None,
+    ) -> list[RecipeInstructionUpdate] | None:
+        if instructions and [instruction.step_number for instruction in instructions] != list(
+            range(1, len(instructions) + 1)
+        ):
+            msg = "Step numbers must be sequential starting from 1 with step equal to index + 1"
+            raise ValueError(msg)
+
+        return instructions
 
 
 class RecipeSearchQuery(BaseModel):
