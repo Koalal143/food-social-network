@@ -37,6 +37,13 @@ async def _get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
 
+@inject
+async def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+    token_service: FromDishka[TokenService],
+) -> User:
+    return await _get_current_user(token_service, credentials)
+
 
 @inject
 async def get_current_user(
