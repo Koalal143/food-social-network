@@ -29,7 +29,7 @@ class RecipeImpressionRepository:
                     Recipe.id,
                     Recipe.title,
                     Recipe.short_description,
-                    Recipe.image_url,
+                    Recipe.image_path,
                     Recipe.difficulty,
                     Recipe.cook_time_minutes,
                 )

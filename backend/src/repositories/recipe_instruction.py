@@ -28,13 +28,13 @@ class RecipeInstructionRepository:
         return result or 0
 
     async def create(
-        self, recipe_id: int, step_number: int, description: str, image_url: str | None = None
+        self, recipe_id: int, step_number: int, description: str, image_path: str | None = None
     ) -> RecipeInstruction:
         db_instruction = RecipeInstruction(
             recipe_id=recipe_id,
             step_number=step_number,
             description=description,
-            image_url=image_url,
+            image_path=image_path,
         )
         self.session.add(db_instruction)
         await self.session.flush()
