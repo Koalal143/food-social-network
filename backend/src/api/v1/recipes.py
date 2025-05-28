@@ -158,7 +158,7 @@ async def get_recipe_by_slug(
         async with uow:
             try:
                 if current_user:
-                    await recipe_impression.record_impression(recipe_id=recipe.id, source=source)
+                    await recipe_impression.record_impression(user_id=user_id, recipe_id=recipe.id, source=source)
                 elif anonymous_user:
                     await recipe_impression.record_impression_for_anonymous(
                         recipe_id=recipe.id,
