@@ -1,7 +1,8 @@
 from collections.abc import Sequence
 
 from elasticsearch.dsl import Q
-from sqlalchemy import delete, desc, select, update
+from sqlalchemy import delete, desc, func, select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.search.indexes import RecipeIndex
@@ -72,16 +73,23 @@ class RecipeSearchRepository:
         if not (user_id or anonymous_user_id):
             msg = "One of user_id or anonymous_user_id must be provided"
             raise ValueError(msg)
-
-        search_query = SearchQuery(
+        stmt = insert(SearchQuery).values(
             query=query_text,
             user_id=user_id,
             anonymous_user_id=anonymous_user_id,
         )
-        self.session.add(search_query)
-        await self.session.flush()
-        await self.session.refresh(search_query)
-        return search_query
+        if user_id:
+            stmt = stmt.on_conflict_do_update(
+                index_elements=[SearchQuery.user_id, SearchQuery.query],
+                set_={SearchQuery.updated_at: func.now()},
+            )
+        else:
+            stmt = stmt.on_conflict_do_update(
+                index_elements=[SearchQuery.anonymous_user_id, SearchQuery.query],
+                set_={SearchQuery.updated_at: func.now()},
+            )
+        result = await self.session.scalars(stmt.returning(SearchQuery))
+        return result.first()
 
     async def get_user_search_history(self, user_id: int, limit: int = 10, offset: int = 0) -> Sequence[SearchQuery]:
         stmt = (
