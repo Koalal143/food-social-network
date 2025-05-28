@@ -89,6 +89,7 @@ class RecipeSearchRepository:
                 set_={SearchQuery.updated_at: func.now()},
             )
         result = await self.session.scalars(stmt.returning(SearchQuery))
+        await self.session.flush()
         return result.first()
 
     async def get_user_search_history(self, user_id: int, limit: int = 10, offset: int = 0) -> Sequence[SearchQuery]:
