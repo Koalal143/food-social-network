@@ -1,12 +1,22 @@
 from collections.abc import Sequence
 
-from src.exceptions.recipe import AttachInstructionStepError
-from src.repositories.interfaces import RecipeImageRepositoryProtocol
-from src.schemas.recipe import MAX_RECIPE_INSTRUCTIONS_COUNT, RecipeInstructionsUploadUrls
+from src.exceptions.recipe import (
+    AttachInstructionStepError,
+)
+from src.repositories.interfaces import (
+    RecipeImageRepositoryProtocol,
+)
+from src.schemas.recipe import (
+    MAX_RECIPE_INSTRUCTIONS_COUNT,
+    RecipeInstructionsUploadUrls,
+)
 
 
 class RecipeInstructionsService:
-    def __init__(self, recipe_image_repository: RecipeImageRepositoryProtocol) -> None:
+    def __init__(
+        self,
+        recipe_image_repository: RecipeImageRepositoryProtocol,
+    ) -> None:
         self.recipe_image_repository = recipe_image_repository
 
     async def generate_instructions_post_urls(

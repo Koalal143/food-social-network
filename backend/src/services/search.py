@@ -21,8 +21,8 @@ class SearchService:
         self.recipe_image_repository = recipe_image_repository
 
     async def _to_recipe_short_schema(self, recipe: Recipe) -> RecipeReadShort:
-        if recipe.image_url:
-            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_url)
+        if recipe.image_path:
+            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
         return RecipeReadShort.model_validate(recipe, from_attributes=True)
 
     async def search(

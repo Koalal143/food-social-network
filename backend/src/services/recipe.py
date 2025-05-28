@@ -52,20 +52,20 @@ class RecipeService:
     async def _to_recipe_schema(self, recipe: Recipe) -> RecipeReadFull:
         recipe_schema = RecipeReadFull.model_validate(recipe)
 
-        if recipe.image_url:
-            recipe_schema.image_url = await self.recipe_image_repository.get_image_url(recipe.image_url)
+        if recipe.image_path:
+            recipe_schema.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
 
         for i, instruction in enumerate(recipe_schema.instructions):
-            if instruction.image_url:
+            if instruction.image_path:
                 recipe_schema.instructions[i].image_url = await self.recipe_image_repository.get_image_url(
-                    instruction.image_url
+                    instruction.image_path
                 )
 
         return recipe_schema
 
     async def _to_recipe_short_schema(self, recipe: Recipe) -> RecipeReadShort:
-        if recipe.image_url:
-            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_url)
+        if recipe.image_path:
+            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
         return RecipeReadShort.model_validate(recipe, from_attributes=True)
 
     async def _to_recipe_full_schema(self, recipe: RecipeWithFavorite) -> RecipeReadFull:
@@ -182,7 +182,7 @@ class RecipeService:
             msg = f"Recipe with id {recipe_id} belongs to other user"
             raise RecipeOwnershipError(msg)
 
-        if not existing_recipe.image_url and recipe_update.is_published:
+        if not existing_recipe.image_path and recipe_update.is_published:
             msg = "Recipe can not be published without image"
             raise NoRecipeImageError(msg)
 
