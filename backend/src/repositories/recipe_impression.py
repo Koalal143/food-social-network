@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete, func, select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -78,20 +79,32 @@ class RecipeImpressionRepository:
         return await self.session.scalar(stmt) or 0
 
     async def create(self, user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None) -> RecipeImpression:
-        impression = RecipeImpression(user_id=user_id, recipe_id=recipe_id, source=source)
-        self.session.add(impression)
+        stmt = insert(RecipeImpression).values(
+            user_id=user_id,
+            recipe_id=recipe_id,
+            source=source
+        ).on_conflict_do_update(
+            index_elements=[RecipeImpression.user_id, RecipeImpression.recipe_id],
+            set_={RecipeImpression.updated_at: func.now()},
+        )
+        result = await self.session.scalars(stmt.returning(RecipeImpression))
         await self.session.flush()
-        await self.session.refresh(impression)
-        return impression
+        return result
 
     async def create_for_anonymous(
         self, anonymous_user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None
     ) -> RecipeImpression:
-        impression = RecipeImpression(anonymous_user_id=anonymous_user_id, recipe_id=recipe_id, source=source)
-        self.session.add(impression)
+        stmt = insert(RecipeImpression).values(
+            anonymous_user_id=anonymous_user_id,
+            recipe_id=recipe_id,
+            source=source
+        ).on_conflict_do_update(
+            index_elements=[RecipeImpression.anonymous_user_id, RecipeImpression.recipe_id],
+            set_={RecipeImpression.updated_at: func.now()},
+        )
+        result = await self.session.scalars(stmt.returning(RecipeImpression))
         await self.session.flush()
-        await self.session.refresh(impression)
-        return impression
+        return result
 
     async def delete(self, user_id: int, recipe_id: int) -> None:
         stmt = delete(RecipeImpression).where(
