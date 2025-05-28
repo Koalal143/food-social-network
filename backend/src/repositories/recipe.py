@@ -124,6 +124,7 @@ class RecipeRepository:
             for filter_condition in additional_filters:
                 stmt = stmt.where(filter_condition)
 
+        stmt = self._add_impressions_subquery(stmt)
         recipes: list[RecipeWithExtra] = []
         if user_id is not None:
             stmt = self._add_impressions_subquery(stmt)
@@ -136,7 +137,9 @@ class RecipeRepository:
                 recipes.append(recipe)
         else:
             result = await self.session.execute(stmt)
-            for recipe in result.scalars().all():
+            for element in result.all():
+                recipe, impressions_count = element
+                recipe.impressions_count = impressions_count
                 recipe.is_on_favorites = False
                 recipes.append(recipe)
 
