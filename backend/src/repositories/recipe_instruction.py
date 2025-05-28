@@ -71,3 +71,36 @@ class RecipeInstructionRepository:
         stmt = delete(RecipeInstruction).where(RecipeInstruction.id == instruction_id)
         await self.session.execute(stmt)
         await self.session.flush()
+
+    async def get_by_ids_and_recipe_id(
+        self, instruction_ids: list[int], recipe_id: int
+    ) -> Sequence[RecipeInstruction]:
+        stmt = select(RecipeInstruction).where(
+            RecipeInstruction.id.in_(instruction_ids), RecipeInstruction.recipe_id == recipe_id
+        )
+        result = await self.session.scalars(stmt)
+        return result.all()
+
+    async def bulk_update(self, instructions: list[dict[str, Any]]) -> Sequence[RecipeInstruction]:
+        updated_instructions = []
+        for instruction_data in instructions:
+            instruction_id = instruction_data.pop("id")
+            stmt = (
+                update(RecipeInstruction)
+                .where(RecipeInstruction.id == instruction_id)
+                .values(**instruction_data)
+                .returning(RecipeInstruction)
+            )
+            result = await self.session.scalars(stmt)
+            updated_instruction = result.first()
+            if updated_instruction:
+                updated_instructions.append(updated_instruction)
+
+        await self.session.flush()
+        return updated_instructions
+
+    async def bulk_delete(self, instruction_ids: list[int]) -> None:
+        if instruction_ids:
+            stmt = delete(RecipeInstruction).where(RecipeInstruction.id.in_(instruction_ids))
+            await self.session.execute(stmt)
+            await self.session.flush()
