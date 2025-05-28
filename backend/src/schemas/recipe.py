@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, PositiveInt
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, HttpUrl, PositiveInt
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
 from src.schemas.base import BaseReadSchema, BaseSchema
@@ -28,14 +28,18 @@ class IngredientUpdate(Ingredient):
     pass
 
 
-class RecipeInstruction(BaseSchema):
+class BaseRecipeInstruction(BaseSchema):
     step_number: PositiveInt = Field(le=MAX_RECIPE_INSTRUCTIONS_COUNT)
     description: str = Field(max_length=1000, examples=["Boil water", "Добавьте соль"])
-    image_url: str | None = Field(default=None)
+    image_path: str | None = Field(default=None, max_length=255, examples=["images/recipes/1/instructions/1/step.png"])
+
+
+class RecipeInstruction(BaseRecipeInstruction):
+    image_url: HttpUrl | None = Field(default=None, examples=["https://example.com/static/images/recipes/1/instructions/1/step.png"])
 
 
 @partial_model
-class RecipeInstructionUpdate(RecipeInstruction):
+class RecipeInstructionUpdate(BaseRecipeInstruction):
     pass
 
 
@@ -57,7 +61,6 @@ class BaseRecipeSchema(BaseModel):
 
     title: RecipeTitle
     short_description: str = Field(max_length=255, examples=["Рецепт салата Цезарь"])
-    image_url: str | None = Field(None, max_length=255, examples=["https://example.com/image.jpg"])
     difficulty: RecipeDifficultyEnum = Field(examples=["EASY"])
     cook_time_minutes: int = Field(gt=0)
 
@@ -80,6 +83,7 @@ class _IsPublishedMixin(BaseSchema):
 
 class RecipeReadShort(BaseRecipeSchema):
     id: PositiveInt
+    image_url: str | None = Field(None, max_length=255, examples=["https://example.com/static/images/recipes/1/main.png"])
     is_on_favorites: bool = Field(default=False, description="Is the recipe in user's favorites")
     slug: str = Field(description="Recipe slug for URL")
 
@@ -93,14 +97,17 @@ class RecipeReadFull(RecipeRead):
 
 
 class RecipeCreate(_InstructionsMixin, _IngredientsMixin, _TagsMixin, BaseRecipeSchema):
-    pass
+    image_path: str | None = Field(default=None, max_length=255, examples=["images/recipes/1/main.png"])
 
 
 @partial_model
 class RecipeUpdate(_IsPublishedMixin, BaseRecipeSchema):
-    instructions: list[RecipeInstructionUpdate]
-    ingredients: list[IngredientUpdate]
-    tags: list[RecipeTagUpdate]
+    """Schema for updating all recipe fields, except instruction."""
+
+    image_path: str | None = Field(default=None, max_length=255, examples=["images/recipes/1/main.png"])
+    instructions: list[RecipeInstructionUpdate] | None = Field(default=None)
+    ingredients: list[IngredientUpdate] | None = Field(default=None)
+    tags: list[RecipeTagUpdate] | None = Field(default=None)
 
 
 class RecipeSearchQuery(BaseModel):
