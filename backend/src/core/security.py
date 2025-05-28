@@ -37,6 +37,7 @@ async def _get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
 
+
 @inject
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
