@@ -28,7 +28,7 @@ from src.schemas.recipe import (
     RecipeUpdate,
 )
 from src.schemas.user import UserReadShort
-from src.typings.recipe_with_favorite import RecipeWithFavorite
+from src.typings.recipe_with_favorite import RecipeWithExtra
 from src.utils.slug import create_recipe_slug
 
 
@@ -68,7 +68,7 @@ class RecipeService:
             recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
         return RecipeReadShort.model_validate(recipe, from_attributes=True)
 
-    async def _to_recipe_full_schema(self, recipe: RecipeWithFavorite) -> RecipeReadFull:
+    async def _to_recipe_full_schema(self, recipe: RecipeWithExtra) -> RecipeReadFull:
         recipe_schema = await self._to_recipe_schema(recipe)
         author = UserReadShort.model_validate(recipe.author, from_attributes=True)
         if author.profile.avatar_url:
