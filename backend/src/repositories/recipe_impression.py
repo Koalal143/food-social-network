@@ -79,32 +79,32 @@ class RecipeImpressionRepository:
         return await self.session.scalar(stmt) or 0
 
     async def create(self, user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None) -> RecipeImpression:
-        stmt = insert(RecipeImpression).values(
-            user_id=user_id,
-            recipe_id=recipe_id,
-            source=source
-        ).on_conflict_do_update(
-            index_elements=[RecipeImpression.user_id, RecipeImpression.recipe_id],
-            set_={RecipeImpression.updated_at: func.now()},
+        stmt = (
+            insert(RecipeImpression)
+            .values(user_id=user_id, recipe_id=recipe_id, source=source)
+            .on_conflict_do_update(
+                index_elements=[RecipeImpression.user_id, RecipeImpression.recipe_id],
+                set_={RecipeImpression.updated_at: func.now()},
+            )
         )
         result = await self.session.scalars(stmt.returning(RecipeImpression))
         await self.session.flush()
-        return result
+        return result.first()
 
     async def create_for_anonymous(
         self, anonymous_user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None
     ) -> RecipeImpression:
-        stmt = insert(RecipeImpression).values(
-            anonymous_user_id=anonymous_user_id,
-            recipe_id=recipe_id,
-            source=source
-        ).on_conflict_do_update(
-            index_elements=[RecipeImpression.anonymous_user_id, RecipeImpression.recipe_id],
-            set_={RecipeImpression.updated_at: func.now()},
+        stmt = (
+            insert(RecipeImpression)
+            .values(anonymous_user_id=anonymous_user_id, recipe_id=recipe_id, source=source)
+            .on_conflict_do_update(
+                index_elements=[RecipeImpression.anonymous_user_id, RecipeImpression.recipe_id],
+                set_={RecipeImpression.updated_at: func.now()},
+            )
         )
         result = await self.session.scalars(stmt.returning(RecipeImpression))
         await self.session.flush()
-        return result
+        return result.first()
 
     async def delete(self, user_id: int, recipe_id: int) -> None:
         stmt = delete(RecipeImpression).where(
@@ -114,7 +114,9 @@ class RecipeImpressionRepository:
         await self.session.flush()
 
     async def merge_impressions(self, anonymous_user_id: int, user_id: int) -> None:
-        user_seen_recipe_ids_subq = select(Recipe.id).where(RecipeImpression.user_id == user_id).scalar_subquery()
+        user_seen_recipe_ids_subq = (
+            select(RecipeImpression.recipe_id).where(RecipeImpression.user_id == user_id).scalar_subquery()
+        )
         stmt = (
             update(RecipeImpression)
             .where(

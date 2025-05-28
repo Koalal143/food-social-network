@@ -1,15 +1,16 @@
 from collections.abc import Sequence
 from typing import Any
 
-from sqlalchemy import Select, delete, exists, func, select, update
+from sqlalchemy import Select, delete, exists, func, select, text, union_all, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from src.models.favorite_recipes import FavoriteRecipe
 from src.models.recipe import Recipe
+from src.models.recipe_impression import RecipeImpression
 from src.models.user import User
 from src.models.user_profile import UserProfile
-from src.typings.recipe_with_favorite import RecipeWithFavorite
+from src.typings.recipe_with_favorite import RecipeWithExtra
 
 
 class RecipeRepository:
@@ -53,9 +54,35 @@ class RecipeRepository:
 
         return query.add_columns(favorite_subquery)
 
-    async def get_by_id(self, recipe_id: int, user_id: int | None = None) -> RecipeWithFavorite | None:
-        stmt = self._get_with_author_short().where(Recipe.id == recipe_id)
+    def _add_impressions_subquery(self, query: Select) -> Select:
+        auth_impressions = (
+            select(
+                func.concat(text("'anonymous'"), RecipeImpression.anonymous_user_id).label("viewer_id"),
+            )
+            .where(RecipeImpression.anonymous_user_id.is_not(None), RecipeImpression.recipe_id == Recipe.id)
+            .correlate(Recipe)
+            .distinct()
+        )
+        anonymous_impressions = (
+            select(
+                func.concat(text("'user'"), RecipeImpression.user_id).label("viewer_id"),
+            )
+            .where(RecipeImpression.user_id.is_not(None), RecipeImpression.recipe_id == Recipe.id)
+            .correlate(Recipe)
+            .distinct()
+        )
+        impressions_union = union_all(auth_impressions, anonymous_impressions).subquery()
+        impressions_subquery = (
+            select(func.count(func.distinct(impressions_union.c.viewer_id)))
+            .scalar_subquery()
+            .label("impressions_count")
+        )
 
+        return query.add_columns(impressions_subquery)
+
+    async def get_by_id(self, recipe_id: int, user_id: int | None = None) -> RecipeWithExtra | None:
+        stmt = self._get_with_author_short().where(Recipe.id == recipe_id)
+        stmt = self._add_impressions_subquery(stmt)
         if user_id is not None:
             stmt = self._add_is_favorite_subquery(stmt, user_id)
             result = await self.session.execute(stmt)
@@ -63,14 +90,17 @@ class RecipeRepository:
             if row is None:
                 return None
 
-            recipe, is_on_favorites = row
+            recipe, impressions_count, is_on_favorites = row
             recipe.is_on_favorites = bool(is_on_favorites)
+            recipe.impressions_count = impressions_count
             return recipe
 
-        result = await self.session.scalars(stmt)
-        recipe = result.first()
+        result = await self.session.execute(stmt)
+        row = result.first()
+        recipe, impressions_count = row
         if recipe:
             recipe.is_on_favorites = False
+            recipe.impressions_count = impressions_count
         return recipe
 
     async def get_by_ids(self, recipe_ids: Sequence[int]) -> Sequence[Recipe] | None:
@@ -85,7 +115,7 @@ class RecipeRepository:
         limit: int = 100,
         additional_filters: list[Any] | None = None,
         **filters: Any,
-    ) -> tuple[Select, list[RecipeWithFavorite]]:
+    ) -> tuple[Select, list[RecipeWithExtra]]:
         stmt = select(Recipe).offset(skip).limit(limit)
         if filters:
             stmt = stmt.filter_by(**filters)
@@ -94,13 +124,15 @@ class RecipeRepository:
             for filter_condition in additional_filters:
                 stmt = stmt.where(filter_condition)
 
-        recipes: list[RecipeWithFavorite] = []
+        recipes: list[RecipeWithExtra] = []
         if user_id is not None:
+            stmt = self._add_impressions_subquery(stmt)
             stmt = self._add_is_favorite_subquery(stmt, user_id)
             result = await self.session.execute(stmt)
             for element in result.all():
-                recipe, is_on_favorites = element
+                recipe, impressions_count, is_on_favorites = element
                 recipe.is_on_favorites = bool(is_on_favorites)
+                recipe.impressions_count = impressions_count
                 recipes.append(recipe)
         else:
             result = await self.session.execute(stmt)
@@ -126,7 +158,7 @@ class RecipeRepository:
         skip: int = 0,
         limit: int = 100,
         **filters: Any,
-    ) -> tuple[int, Sequence[RecipeWithFavorite]]:
+    ) -> tuple[int, Sequence[RecipeWithExtra]]:
         _, recipes = await self._get_recipes_with_filters(user_id=user_id, skip=skip, limit=limit, **filters)
 
         count = await self._get_count_with_filters(**filters)
@@ -139,7 +171,7 @@ class RecipeRepository:
         skip: int = 0,
         limit: int = 100,
         **filters: Any,
-    ) -> tuple[int, Sequence[RecipeWithFavorite]]:
+    ) -> tuple[int, Sequence[RecipeWithExtra]]:
         author_filter = Recipe.author.has(User.username == author_username)
 
         _, recipes = await self._get_recipes_with_filters(
@@ -156,7 +188,7 @@ class RecipeRepository:
         user_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
-    ) -> tuple[int, Sequence[RecipeWithFavorite]]:
+    ) -> tuple[int, Sequence[RecipeWithExtra]]:
         author_filter = Recipe.author.has(User.id == author_id)
 
         _, recipes = await self._get_recipes_with_filters(
@@ -201,9 +233,9 @@ class RecipeRepository:
         result = await self.session.scalars(stmt)
         return result.first()
 
-    async def get_by_slug(self, slug: str, user_id: int | None = None) -> RecipeWithFavorite | None:
+    async def get_by_slug(self, slug: str, user_id: int | None = None) -> RecipeWithExtra | None:
         stmt = self._get_with_author_short().where(Recipe.slug == slug)
-
+        stmt = self._add_impressions_subquery(stmt)
         if user_id is not None:
             stmt = self._add_is_favorite_subquery(stmt, user_id)
             result = await self.session.execute(stmt)
@@ -211,12 +243,15 @@ class RecipeRepository:
             if row is None:
                 return None
 
-            recipe, is_on_favorites = row
+            recipe, impressions_count, is_on_favorites = row
             recipe.is_on_favorites = bool(is_on_favorites)
+            recipe.impressions_count = impressions_count
             return recipe
 
-        result = await self.session.scalars(stmt)
-        recipe = result.first()
+        result = await self.session.execute(stmt)
+        row = result.first()
+        recipe, impressions_count = row
         if recipe:
             recipe.is_on_favorites = False
+            recipe.impressions_count = impressions_count
         return recipe
