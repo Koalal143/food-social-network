@@ -16,13 +16,13 @@ export default function FavoritesProvider({ children }) {
         try {
             // Устанавливаем статус загрузки для этой порции данных
             setFavoritesLoading(prev => ({ ...prev, [offset]: true }))
-            
+
             // Выполняем запрос на сервер
             const result = await FavoritesService.getPaginatedFavorites(offset, limit)
 
             // Если это первая страница — полностью заменяем список
             // Иначе — добавляем новые рецепты к уже загруженным
-            setFavorites(prev => 
+            setFavorites(prev =>
                 offset === 0 ? result.data : [...prev, ...result.data]
             )
 
@@ -56,6 +56,12 @@ export default function FavoritesProvider({ children }) {
         setFavorites(updatedFavorites)
     }
 
+    // Удаление рецепта из избранного при удалении самого рецепта (без API запроса)
+    const removeFromFavoritesOnDelete = (recipeId) => {
+        setFavorites(prev => prev.filter(recipe => recipe.id !== recipeId))
+        setFavoritesTotalCount(prev => Math.max(0, prev - 1))
+    }
+
     // Для примера: при монтировании компонента можно загрузить первые избранные рецепты
     useEffect(() => {
         const loadInitialData = async () => {
@@ -72,8 +78,8 @@ export default function FavoritesProvider({ children }) {
     }, [])
 
     return (
-        <FavoritesContext.Provider 
-            value={{ 
+        <FavoritesContext.Provider
+            value={{
                 favorites,
                 loading,
                 favoritesLoading,
@@ -81,7 +87,8 @@ export default function FavoritesProvider({ children }) {
                 favoritesTotalCount,
                 getFavorites,
                 addFavorite,
-                removeFavorite
+                removeFavorite,
+                removeFromFavoritesOnDelete
             }}
         >
             {children}
@@ -124,8 +131,8 @@ export default function FavoritesProvider({ children }) {
 //     }
 
 //     return (
-//         <FavoritesContext.Provider 
-//             value={{ 
+//         <FavoritesContext.Provider
+//             value={{
 //                 favorites,
 //                 loading,
 //                 addFavorite,

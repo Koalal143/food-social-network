@@ -17,26 +17,26 @@ export default function RecipeProvider({ children }) {
     const fetchRecipes = async (resetExisting = false) => {
         try {
             setLoading(true)
-            
+
             const currentOffset = resetExisting ? 0 : offset
-            
+
             const { data, totalCount } = await RecipesService.getPaginatedRecipes(currentOffset, LIMIT)
-            
+
             setTotalCount(totalCount)
-            
+
             const newOffset = resetExisting ? LIMIT : currentOffset + LIMIT;
             const moreAvailable = newOffset < totalCount;
             setHasMore(moreAvailable);
-            
+
             setRecipes(prev => {
                 if (resetExisting) return data;
 
                 const existingIds = prev.map(recipe => recipe.id);
                 const uniqueNewRecipes = data.filter(recipe => !existingIds.includes(recipe.id));
-                
+
                 return [...prev, ...uniqueNewRecipes];
             });
-            
+
             setOffset(newOffset);
         } catch (error) {
             setError(error)
@@ -73,30 +73,30 @@ export default function RecipeProvider({ children }) {
                 tags: [{ name: "Dinner" }],
                 ingredients: formData.ingredients
             };
-    
+
             const recipe = await RecipesService.addRecipe(newRecipe);
-    
+
             const mainPhotoPresigned = await RecipesService.getUploadImageUrl(recipe.id);
             await S3Service.uploadImage(mainPhotoPresigned, formData.main_photo[0]);
-    
+
             let presignedPostDatas = [];
             const stepsWithPhotos = formData.instructions
                 .filter(instruction => instruction.photo !== null && instruction.photo !== undefined)
                 .map(instruction => instruction.step_number);
-    
+
             if (stepsWithPhotos.length > 0) {
                 try {
                     presignedPostDatas = await RecipesService.getUploadInstructionsUrls(
-                        recipe.id, 
+                        recipe.id,
                         stepsWithPhotos
                     );
-    
+
                     await Promise.all(
                         presignedPostDatas.map(async (presignedData) => {
                             const instruction = formData.instructions.find(
                                 inst => inst.step_number === presignedData.step_number
                             );
-                            
+
                             if (instruction?.photo) {
                                 await S3Service.uploadImage(presignedData, instruction.photo);
                             }
@@ -107,29 +107,29 @@ export default function RecipeProvider({ children }) {
                     throw error;
                 }
             }
-    
+
             const instructions = formData.instructions.map(instruction => {
                 const presignedData = presignedPostDatas.find(
                     item => item.step_number === instruction.step_number
                 );
-    
+
                 return {
                     step_number: instruction.step_number,
                     description: instruction.description,
                     image_url: presignedData?.fields?.key || null
                 };
             });
-    
+
             const recipeWithPhotos = {
                 id: recipe.id,
                 image_url: mainPhotoPresigned.fields.key,
                 instructions: instructions
             };
-    
+
             await RecipesService.updateRecipe(recipeWithPhotos);
-    
+
             return recipeWithPhotos;
-    
+
         } catch (error) {
             console.error("Ошибка при добавлении рецепта:", error);
             throw error;
@@ -146,6 +146,23 @@ export default function RecipeProvider({ children }) {
         }
     };
 
+    const deleteRecipe = async (recipeId) => {
+        try {
+            await RecipesService.deleteRecipe(recipeId);
+
+            // Удаляем рецепт из локального состояния
+            setRecipes(prev => prev.filter(recipe => recipe.id !== recipeId));
+
+            // Обновляем общее количество
+            setTotalCount(prev => Math.max(0, prev - 1));
+
+            return true;
+        } catch (error) {
+            console.error("Ошибка при удалении рецепта:", error);
+            throw error;
+        }
+    };
+
     return (
         <RecipeContext.Provider
             value={{
@@ -157,7 +174,8 @@ export default function RecipeProvider({ children }) {
                 fetchRecipes,
                 getRecipeById,
                 addRecipe,
-                getRecipesByAuthorId
+                getRecipesByAuthorId,
+                deleteRecipe
             }}
         >
             {children}
