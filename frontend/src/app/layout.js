@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header";
 import DesktopSidebar from "@/components/layout/DesktopSidebar";
 import MobileMenu from "@/components/layout/MobileMenu";
 import { Toaster } from "@/components/ui/toaster";
+import CookieConsent from "@/components/ui/CookieConsent";
 
 const montserrat = Montserrat({
     variable: "--font-main",
@@ -31,6 +32,7 @@ export default function RootLayout({ children }) {
                         </main>
                     </div>
                     <MobileMenu />
+                    <CookieConsent />
                     <Toaster />
                 </MainProvider>
             </body>
