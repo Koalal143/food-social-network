@@ -10,7 +10,7 @@ import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import RecipesList from '@/components/shared/RecipesList';
-import { useSearch } from '@/context/SearchContext';
+import { useSearch } from '@/providers/SearchProvider';
 
 export default function SearchPage() {
   const router = useRouter();
@@ -36,8 +36,8 @@ export default function SearchPage() {
   return (
     <Container className="py-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={handleBack}
           className="flex items-center gap-2"
         >
@@ -89,4 +89,4 @@ export default function SearchPage() {
       </div>
     </Container>
   );
-} 
+}
