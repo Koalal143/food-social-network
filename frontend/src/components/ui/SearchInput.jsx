@@ -23,9 +23,9 @@ export default function SearchInput({ setShowMobileSearch }) {
           setShowMobileSearch(false)
         }
       }
-      
+
       window.addEventListener('popstate', handlePopState)
-      
+
       return () => {
         window.removeEventListener('popstate', handlePopState)
       }
