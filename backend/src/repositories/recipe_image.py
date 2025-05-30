@@ -31,14 +31,14 @@ class RecipeImageRepository(RecipeImageRepositoryProtocol):
     async def generate_instruction_image_upload_urls(self, recipe_id: int, steps: list[int]) -> list[dict[str, Any]]:
         urls = [f"recipes/{recipe_id}/instructions/{step}/step.png" for step in steps]
         presigned_urls = []
-        conditions = [
-            {"acl": "private"},
-            ["starts-with", "$Content-Type", "image/"],
-            ["starts-with", "$key", f"recipes/{recipe_id}/instructions/"],
-            ["content-length-range", 1, 5 * 1024 * 1024],
-        ]
 
         for index, url in enumerate(urls):
+            conditions = [
+                {"acl": "private"},
+                ["starts-with", "$Content-Type", "image/"],
+                ["starts-with", "$key", f"recipes/{recipe_id}/instructions"],
+                ["content-length-range", 1, 5 * 1024 * 1024],
+            ]
             presigned_url = await self.s3_storage.generate_presigned_post(
                 bucket_name=self._bucket_name,
                 key=url,
