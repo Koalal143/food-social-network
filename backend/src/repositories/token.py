@@ -56,7 +56,7 @@ class RefreshTokenRepository(RefreshTokenRepositoryProtocol):
 
     async def get_cached_refresh_token(self, token: str) -> str | None:
         result = await self.redis.get(f"refresh_token:{token}")
-        return result.decode() if result else None
+        return result if result else None
 
     async def delete_cached_refresh_token(self, token: str) -> None:
         await self.redis.delete(f"refresh_token:{token}")
