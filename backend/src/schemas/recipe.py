@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, HttpUrl, PositiveInt, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, HttpUrl, PositiveInt
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
 from src.schemas.base import BaseReadSchema, BaseSchema
@@ -40,9 +40,21 @@ class RecipeInstruction(BaseRecipeInstruction):
     )
 
 
-@partial_model
-class RecipeInstructionUpdate(BaseRecipeInstruction):
+class RecipeInstructionCreate(BaseRecipeInstruction):
     pass
+
+
+
+def validate_instructions_steps(
+    instructions: list[BaseRecipeInstruction] | None,
+) -> list[BaseRecipeInstruction] | None:
+    if instructions and [instruction.step_number for instruction in instructions] != list(
+        range(1, len(instructions) + 1)
+    ):
+        msg = "Step numbers must be sequential starting from 1 with step equal to index + 1"
+        raise ValueError(msg)
+
+    return instructions
 
 
 class RecipeInstructionsUploadUrls(DirectUpload):
@@ -67,10 +79,6 @@ class BaseRecipeSchema(BaseModel):
     cook_time_minutes: int = Field(gt=0)
 
 
-class _InstructionsMixin(BaseSchema):
-    instructions: list[RecipeInstruction] | None = Field(default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT)
-
-
 class _IngredientsMixin(BaseSchema):
     ingredients: list[Ingredient] = Field(max_length=50)
 
@@ -91,40 +99,35 @@ class RecipeReadShort(BaseRecipeSchema):
     slug: str = Field(description="Recipe slug for URL")
 
 
-class RecipeRead(_InstructionsMixin, _IngredientsMixin, _TagsMixin, _IsPublishedMixin, RecipeReadShort, BaseReadSchema):
+class RecipeRead(_IngredientsMixin, _TagsMixin, _IsPublishedMixin, RecipeReadShort, BaseReadSchema):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True, extra="ignore")
+
+    instructions: Annotated[list[RecipeInstruction] | None, AfterValidator(validate_instructions_steps)] = Field(
+        default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT
+    )
 
 
 class RecipeReadFull(RecipeRead):
     author: UserReadShort
 
 
-class RecipeCreate(_InstructionsMixin, _IngredientsMixin, _TagsMixin, BaseRecipeSchema):
+class RecipeCreate(_IngredientsMixin, _TagsMixin, BaseRecipeSchema):
     image_path: str | None = Field(default=None, max_length=255, examples=["images/recipes/1/main.png"])
 
+    instructions: Annotated[list[RecipeInstructionCreate] | None, AfterValidator(validate_instructions_steps)] = Field(
+        default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT
+    )
 
 @partial_model
 class RecipeUpdate(_IsPublishedMixin, BaseRecipeSchema):
     """Schema for updating all recipe fields, except instruction."""
 
     image_path: str | None = Field(default=None, max_length=255, examples=["images/recipes/1/main.png"])
-    instructions: list[RecipeInstructionUpdate] | None = Field(default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT)
+    instructions: Annotated[list[RecipeInstructionCreate] | None, AfterValidator(validate_instructions_steps)] = Field(
+        default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT
+    )
     ingredients: list[IngredientUpdate] | None = Field(default=None)
     tags: list[RecipeTagUpdate] | None = Field(default=None)
-
-    @field_validator("instructions", mode="after")
-    @classmethod
-    def validate_instructions_steps(
-        cls,
-        instructions: list[RecipeInstructionUpdate] | None,
-    ) -> list[RecipeInstructionUpdate] | None:
-        if instructions and [instruction.step_number for instruction in instructions] != list(
-            range(1, len(instructions) + 1)
-        ):
-            msg = "Step numbers must be sequential starting from 1 with step equal to index + 1"
-            raise ValueError(msg)
-
-        return instructions
 
 
 class RecipeSearchQuery(BaseModel):
