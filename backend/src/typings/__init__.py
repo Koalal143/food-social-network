@@ -1,5 +1,5 @@
-from src.typings.recipe_with_favorite import RecipeWithFavorite
+from src.typings.recipe_with_favorite import RecipeWithExtra
 
 __all__ = [
-    "RecipeWithFavorite",
+    "RecipeWithExtra",
 ]
