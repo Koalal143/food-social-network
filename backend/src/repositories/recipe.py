@@ -97,14 +97,15 @@ class RecipeRepository:
 
         result = await self.session.execute(stmt)
         row = result.first()
-        recipe, impressions_count = row
-        if recipe:
+        if row:
+            recipe, impressions_count = row
             recipe.is_on_favorites = False
             recipe.impressions_count = impressions_count
-        return recipe
+            return recipe
+        return None
 
     async def get_by_ids(self, recipe_ids: Sequence[int]) -> Sequence[Recipe] | None:
-        stmt = self._get_with_author_short().where(Recipe.id.in_(recipe_ids))
+        stmt = self._get_with_author_short().where(Recipe.id.in_(recipe_ids))  # TODO: add impressions and favorites
         result = await self.session.scalars(stmt)
         return result.all()
 
@@ -131,6 +132,8 @@ class RecipeRepository:
             stmt = self._add_is_favorite_subquery(stmt, user_id)
             result = await self.session.execute(stmt)
             for element in result.all():
+                if not element:
+                    continue
                 recipe, impressions_count, is_on_favorites = element
                 recipe.is_on_favorites = bool(is_on_favorites)
                 recipe.impressions_count = impressions_count
@@ -138,6 +141,8 @@ class RecipeRepository:
         else:
             result = await self.session.execute(stmt)
             for element in result.all():
+                if not element:
+                    continue
                 recipe, impressions_count = element
                 recipe.impressions_count = impressions_count
                 recipe.is_on_favorites = False
