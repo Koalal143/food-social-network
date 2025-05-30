@@ -27,8 +27,8 @@ class FavoriteRecipeService:
 
     async def _to_recipe_with_like_schema(self, favorite_recipe: Recipe) -> FavoriteRecipeRead:
         recipe = RecipeReadShort.model_validate(favorite_recipe)
-        if recipe.image_path:
-            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
+        if favorite_recipe.image_path:
+            recipe.image_url = await self.recipe_image_repository.get_image_url(favorite_recipe.image_path)
 
         recipe.is_on_favorites = True
         return recipe
