@@ -6,11 +6,11 @@ import FavoritesProvider from "./FavoritesProvider"
 import SearchHistoryProvider from "./SearchHistoryProvider"
 import AuthProvider from "./AuthProvider"
 import { SearchProvider } from "./SearchProvider"
-import CookieConsentProvider from "./CookieConsentProvider"
+// import CookieConsentProvider from "./CookieConsentProvider"
 
 export default function MainProvider({ children }) {
     return (
-        <CookieConsentProvider>
+        // <CookieConsentProvider>
             <AuthProvider>
                 <RecipeProvider>
                     <UserProvider>
@@ -24,6 +24,6 @@ export default function MainProvider({ children }) {
                     </UserProvider>
                 </RecipeProvider>
             </AuthProvider>
-        </CookieConsentProvider>
+        // </CookieConsentProvider>
     )
 }
