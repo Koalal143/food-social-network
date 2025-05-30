@@ -29,6 +29,7 @@ class FavoriteRecipeRepository:
                     Recipe.image_path,
                     Recipe.difficulty,
                     Recipe.cook_time_minutes,
+                    Recipe.slug,
                 )
             )
             .order_by(FavoriteRecipe.created_at.desc())
