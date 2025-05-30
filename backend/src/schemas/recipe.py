@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, HttpUrl, PositiveInt, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, HttpUrl, PositiveInt
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
 from src.schemas.base import BaseReadSchema, BaseSchema
@@ -131,20 +131,6 @@ class RecipeUpdate(_IsPublishedMixin, BaseRecipeSchema):
     )
     ingredients: list[IngredientUpdate] | None = Field(default=None)
     tags: list[RecipeTagUpdate] | None = Field(default=None)
-
-    @field_validator("instructions", mode="after")
-    @classmethod
-    def validate_instructions_steps(
-        cls,
-        instructions: list[RecipeInstructionUpdate] | None,
-    ) -> list[RecipeInstructionUpdate] | None:
-        if instructions and [instruction.step_number for instruction in instructions] != list(
-            range(1, len(instructions) + 1)
-        ):
-            msg = "Step numbers must be sequential starting from 1 with step equal to index + 1"
-            raise ValueError(msg)
-
-        return instructions
 
 
 class RecipeSearchQuery(BaseModel):
