@@ -1,0 +1,86 @@
+[project]
+name = "food-recsys-prototype"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.13.1",
+    "asyncpg>=0.29.0",
+    "dishka>=1.6.0",
+    "fastapi>=0.111.0",
+    "faststream[cli,nats]>=0.5.0",
+    "langchain-gigachat>=0.3.10",
+    "numpy>=2.2.6",
+    "pandas>=2.2.3",
+    "pydantic>=2.11.4",
+    "pydantic-settings>=2.9.1",
+    "qdrant-client>=1.14.2",
+    "sqlalchemy>=2.0.30",
+    "uvicorn>=0.34.2",
+]
+
+
+[tool.ruff]
+target-version = "py311"
+exclude = ["venv", ".venv", ".env", "src/typings/external"]
+
+line-length = 120
+lint.select = ["ALL"]
+lint.ignore = [
+    # modules
+    "C90", # mccabe complexity
+    "DJ",  # django
+    "T10", # debugger
+
+    # specific rules
+    "COM",    # flake8-commas
+    "S104",   # binging to all interfaces
+    "D100",   # ignore missing docs
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "D200",   # ignore one-line docstring
+    "D203",
+    "D212",
+    "D213",
+    "D400",
+    "D415",
+    "TRY003", # external messages in exceptions are too verbose
+    "TD002",
+    "TD003",
+    "FIX002", # too verbose descriptions of todos
+    "S101",   # prohibited assert statement
+    "ARG001", # unused function argument
+    "ANN401", # disallow Any type
+    "RUF001", # string contrains ambigious o
+    "PLR0913", # too many arguments in function signature
+]
+format.skip-magic-trailing-comma = false
+
+[tool.ruff.lint.per-file-ignores]
+"alembic/*" = ["INP001"]
+"tests/*" = ["ANN", "INP001"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+exclude = ["typings/external", "typings/external/aiobotocore_s3/type_defs.pyi"]
+show_error_context = true
+show_absolute_path = true
+pretty = true
+ignore_missing_imports = true
+strict = false
+explicit_package_bases = true
+
+[dependency-groups]
+dev = [
+    "mypy>=1.16.0",
+    "pre-commit>=4.2.0",
+    "ruff>=0.11.12",
+    "uv-sort>=0.6.0",
+]
