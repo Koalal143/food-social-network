@@ -73,7 +73,7 @@ export default function SearchPage() {
           </div>
         ) : contextSearchQuery && searchResults.length > 0 ? (
           <RecipesList recipes={searchResults}/>
-        ) : contextSearchQuery ? (
+        ) : contextSearchQuery && !searchResults ? (
           <div className="text-center py-12">
             <p className="text-xl text-muted-foreground">
               По запросу "{contextSearchQuery}" ничего не найдено

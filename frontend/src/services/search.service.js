@@ -7,8 +7,8 @@ import { ERROR_MESSAGES } from "@/constants/errors";
 export default class SearchService {
     static async searchRecipes(query, offset = 0, limit = 10) {
         try {
-            const url = new URL(`${BASE_API}/v1/search/recipes`); // Предполагаемый эндпоинт поиска
-            url.searchParams.append('q', query);
+            const url = new URL(`${BASE_API}/v1/recipes/search`);
+            url.searchParams.append('query', query);
             url.searchParams.append('offset', offset.toString());
             url.searchParams.append('limit', limit.toString());
 
