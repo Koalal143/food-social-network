@@ -116,13 +116,14 @@ export default function RecipeProvider({ children }) {
                 return {
                     step_number: instruction.step_number,
                     description: instruction.description,
-                    image_url: presignedData?.fields?.key || null
+                    image_path: presignedData?.fields?.key || null
                 };
             });
     
             const recipeWithPhotos = {
                 id: recipe.id,
-                image_url: mainPhotoPresigned.fields.key,
+                image_path: mainPhotoPresigned.fields.key,
+                is_published: true,
                 instructions: instructions
             };
     
