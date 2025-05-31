@@ -160,8 +160,6 @@ services:
       - "6334:6334"
     volumes:
       - qdrant_data:/qdrant/storage
-    environment:
-      - QDRANT__SERVICE__API_KEY=$RECSYS__QDRANT__API_KEY
     networks:
       - recsys-network
 
