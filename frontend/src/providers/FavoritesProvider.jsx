@@ -11,22 +11,16 @@ export default function FavoritesProvider({ children }) {
     const [favoritesError, setFavoritesError] = useState({}) // Ошибки
     const [favoritesTotalCount, setFavoritesTotalCount] = useState(0) // Общее количество избранных
 
-    // Получение избранных рецептов с пагинацией
     const getFavorites = useCallback(async (offset = 0, limit = 10) => {
         try {
-            // Устанавливаем статус загрузки для этой порции данных
             setFavoritesLoading(prev => ({ ...prev, [offset]: true }))
             
-            // Выполняем запрос на сервер
             const result = await FavoritesService.getPaginatedFavorites(offset, limit)
 
-            // Если это первая страница — полностью заменяем список
-            // Иначе — добавляем новые рецепты к уже загруженным
             setFavorites(prev => 
                 offset === 0 ? result.data : [...prev, ...result.data]
             )
 
-            // Сохраняем общее количество избранных рецептов
             setFavoritesTotalCount(result.totalCount)
 
             return {
@@ -35,18 +29,15 @@ export default function FavoritesProvider({ children }) {
                 hasMore: (offset + limit) < result.totalCount
             }
         } catch (error) {
-            // Устанавливаем ошибку для соответствующего offset
             setFavoritesError(prev => ({ ...prev, [offset]: error.message }))
             throw error
         } finally {
-            // Сбрасываем статус загрузки для этого offset
             setFavoritesLoading(prev => ({ ...prev, [offset]: false }))
         }
-    }, []) // Пустой массив зависимостей
+    }, [])
 
-    // Добавление рецепта в избранное
-    const addFavorite = (recipe, source='feed') => {
-        const updatedFavorites = FavoritesService.addToFavorites(recipe, source)
+    const addFavorite = (recipe) => {
+        const updatedFavorites = FavoritesService.addToFavorites(recipe)
         setFavorites(updatedFavorites)
     }
 
@@ -54,6 +45,11 @@ export default function FavoritesProvider({ children }) {
     const removeFavorite = (recipeId) => {
         const updatedFavorites = FavoritesService.removeFromFavorites(recipeId)
         setFavorites(updatedFavorites)
+    }
+
+    const removeFromFavoritesOnDelete = (recipeId) => {
+        setFavorites(prev => prev.filter(recipe => recipe.id !== recipeId))
+        setFavoritesTotalCount(prev => Math.max(0, prev - 1))
     }
 
     // Для примера: при монтировании компонента можно загрузить первые избранные рецепты
@@ -81,7 +77,8 @@ export default function FavoritesProvider({ children }) {
                 favoritesTotalCount,
                 getFavorites,
                 addFavorite,
-                removeFavorite
+                removeFavorite,
+                removeFromFavoritesOnDelete
             }}
         >
             {children}
