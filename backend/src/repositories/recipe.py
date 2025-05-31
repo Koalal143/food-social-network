@@ -187,6 +187,7 @@ class RecipeRepository:
         user_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
+        **filters: Any,
     ) -> tuple[int, Sequence[RecipeWithExtra]]:
         author_filter = Recipe.author.has(User.id == author_id)
 
@@ -195,10 +196,12 @@ class RecipeRepository:
             skip=skip,
             limit=limit,
             additional_filters=[author_filter],
+            **filters,
         )
 
         count = await self._get_count_with_filters(
             additional_filters=[author_filter],
+            **filters,
         )
 
         return count, recipes

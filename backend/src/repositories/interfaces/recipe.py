@@ -32,6 +32,7 @@ class RecipeRepositoryProtocol(Protocol):
         user_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
+        **filters: Any,
     ) -> tuple[int, Sequence[Recipe]]: ...
 
     async def create(self, **fields: Any) -> Recipe: ...
