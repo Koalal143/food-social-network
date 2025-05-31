@@ -13,4 +13,4 @@ broker = NatsBroker(
 broker.include_router(router)
 setup_dishka(container, broker=broker)
 
-app = AsgiFastStream(broker, asyncapi_path="/docs/asyncapi")
+app = AsgiFastStream(broker, asyncapi_path="/docs/asyncapi" if settings.mode == "dev" else None)
