@@ -1,4 +1,5 @@
 from dishka import Provider, Scope, provide
+from faststream.nats import NatsBroker
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +22,7 @@ from src.repositories.interfaces import (
     RecipeRepositoryProtocol,
     RecipeSearchRepositoryProtocol,
     RecipeTagRepositoryProtocol,
+    RecsysRepositoryProtocol,
     RefreshTokenRepositoryProtocol,
     UserAvatarRepositoryProtocol,
     UserProfileRepositoryProtocol,
@@ -33,6 +35,7 @@ from src.repositories.recipe_ingredient import RecipeIngredientRepository
 from src.repositories.recipe_instruction import RecipeInstructionRepository
 from src.repositories.recipe_search import RecipeSearchRepository
 from src.repositories.recipe_tag import RecipeTagRepository
+from src.repositories.recsys_client import RecsysRepository
 from src.repositories.token import RefreshTokenRepository
 from src.repositories.user import UserRepository
 from src.repositories.user_avatar import UserAvatarRepository
@@ -108,3 +111,7 @@ class RepositoryProvider(Provider):
     @provide
     def get_disliked_recipe_repository(self, session: AsyncSession) -> DislikedRecipeRepositoryProtocol:
         return DislikedRecipeRepository(session)
+
+    @provide
+    def get_recsys_repository(self, broker: NatsBroker) -> RecsysRepositoryProtocol:
+        return RecsysRepository(broker)
