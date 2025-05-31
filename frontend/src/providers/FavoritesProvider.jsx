@@ -45,8 +45,8 @@ export default function FavoritesProvider({ children }) {
     }, []) // Пустой массив зависимостей
 
     // Добавление рецепта в избранное
-    const addFavorite = (recipe) => {
-        const updatedFavorites = FavoritesService.addToFavorites(recipe)
+    const addFavorite = (recipe, source='feed') => {
+        const updatedFavorites = FavoritesService.addToFavorites(recipe, source)
         setFavorites(updatedFavorites)
     }
 

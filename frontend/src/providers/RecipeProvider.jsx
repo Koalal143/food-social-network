@@ -123,11 +123,15 @@ export default function RecipeProvider({ children }) {
             const recipeWithPhotos = {
                 id: recipe.id,
                 image_path: mainPhotoPresigned.fields.key,
-                is_published: true,
                 instructions: instructions
             };
     
             await RecipesService.updateRecipe(recipeWithPhotos);
+
+            await RecipesService.updateRecipe({
+                id: recipe.id,
+                is_published: true
+            });
     
             return recipeWithPhotos;
     

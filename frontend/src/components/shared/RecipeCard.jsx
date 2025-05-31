@@ -1,23 +1,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Clock } from "lucide-react";
+import { Clock, Eye } from "lucide-react";
 import minutesToHuman from "@/utils/minutesToHuman";
 import { useState } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
 import { DIFFICULTY } from "@/constants/difficulty";
-import { Button } from "../ui/button";
+import { useAuth } from "@/context/AuthContext";
 
-export default function RecipeCard({ recipe }) {
+export default function RecipeCard({ recipe, source='feed' }) {
     const { addFavorite, removeFavorite } = useFavorites();
     const [isSaved, setIsSaved] = useState(recipe.is_on_favorites);
+    const { isAuth } = useAuth();
 
     const handleSave = (e) => {
         e.preventDefault()
         if (isSaved) {
             removeFavorite(recipe.id);
         } else {
-            addFavorite(recipe.id);
+            addFavorite(recipe.id, source);
         }
         setIsSaved(!isSaved);
     };
@@ -43,9 +44,6 @@ export default function RecipeCard({ recipe }) {
                             <div className="flex items-center gap-2 text-white">
                                 <Clock className="w-4 h-4" />
                                 <span className="text-sm">{minutesToHuman(recipe.cook_time_minutes)}</span>
-                                {/* <span className="mx-1">|</span>
-                                <User className="w-4 h-4" />
-                                <span className="text-sm">{recipe.servings} порций</span> */}
                             </div>
                         </div>
                     </div>
@@ -59,18 +57,17 @@ export default function RecipeCard({ recipe }) {
                                 <div className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
                                     {DIFFICULTY[recipe.difficulty]}
                                 </div>
-                                {/* <div className="flex items-center gap-1 text-yellow-500">
-                                    <Star className="w-4 h-4 fill-yellow-500" />
-                                    <span className="text-sm">4.8</span>
-                                </div> */}
                             </div>
                             <button 
                                 className={`px-3 py-1 ${
                                     isSaved 
                                         ? 'bg-green-500 hover:bg-green-600' 
                                         : 'bg-primary hover:bg-primary/90'
-                                } text-white rounded-full text-sm transition-colors`}
+                                } text-white rounded-full text-sm transition-colors ${
+                                    !isAuth && 'bg-gray-500 hover:bg-gray-600 pointer-events-none opacity-50 cursor-not-allowed'
+                                }`}
                                 onClick={handleSave}
+                                disabled={!isAuth}
                             >
                                 {isSaved ? 'Сохранено' : 'Сохранить'}
                             </button>

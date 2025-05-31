@@ -16,6 +16,7 @@ import RecipeInstruction from "@/components/ui/recipe-page/RecipeInstruction";
 import { useToast } from "@/hooks/use-toast";
 import { handleApiError } from "@/utils/errorHandler";
 import NotFound from "@/app/not-found";
+import { useAuth } from "@/context/AuthContext";
 
 export default function RecipePage({ params }) {
   const { getRecipeById, error, loading } = useRecipes();
@@ -23,6 +24,7 @@ export default function RecipePage({ params }) {
   const [ recipe, setRecipe ] = useState(null);
   const { toast } = useToast()
   const [ isSaved, setIsSaved ] = useState(false);
+  const { isAuth } = useAuth();
   
   const { id } = React.use(params);
 
@@ -51,7 +53,7 @@ export default function RecipePage({ params }) {
     if (isSaved) {
       removeFavorite(recipe.id);
     } else {
-      addFavorite(recipe.id);
+      addFavorite(recipe.id, 'feed'); // TODO: change to 'feed-detail'
     }
     setIsSaved(!isSaved);
   };
@@ -89,8 +91,9 @@ export default function RecipePage({ params }) {
                 size="icon"
                 className="bg-background/80 backdrop-blur rounded-full"
                 onClick={handleSave}
+                disabled={!isAuth}
               >
-                <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-primary' : ''}`} />
+                <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-primary' : ''} ${!isAuth && 'text-gray-500'}`} />
               </Button>
               <CopyLinkButton
                 link={`${window.location.origin}/recipe/${id}`}

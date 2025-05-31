@@ -54,7 +54,7 @@ export default class FavoritesService {
       }
     }
 
-    static async addToFavorites(recipeId, options={}) {
+    static async addToFavorites(recipeId, source='feed', options={}) {
         try {
             await tokenManager.ensureValidToken();
 
@@ -69,7 +69,7 @@ export default class FavoritesService {
                 'Content-Type': 'application/json'
             };
 
-            const response = await fetch(`${BASE_API}/v1/favorite-recipes`, {
+            const response = await fetch(`${BASE_API}/v1/favorite-recipes?source=${source}`, {
                 method: 'POST',
                 body: JSON.stringify({'recipe_id': recipeId}),
                 headers: headers
