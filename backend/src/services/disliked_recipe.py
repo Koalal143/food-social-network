@@ -1,3 +1,4 @@
+from src.enums.feedback_type import FeedbackTypeEnum
 from src.exceptions.disliked_recipe import RecipeAlreadyDislikedError, RecipeNotDislikedError
 from src.exceptions.recipe import RecipeNotFoundError
 from src.models.recipe import Recipe
@@ -7,6 +8,7 @@ from src.repositories.interfaces import (
     FavoriteRecipeRepositoryProtocol,
     RecipeImageRepositoryProtocol,
     RecipeRepositoryProtocol,
+    RecsysRepositoryProtocol,
 )
 from src.schemas.disliked_recipe import DislikedRecipeCreate, DislikedRecipeRead
 from src.schemas.recipe import RecipeReadShort
@@ -19,11 +21,13 @@ class DislikedRecipeService:
         recipe_repository: RecipeRepositoryProtocol,
         favorite_recipe_repository: FavoriteRecipeRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
+        recsys_repository: RecsysRepositoryProtocol,
     ) -> None:
         self.disliked_recipe_repository = disliked_recipe_repository
         self.recipe_repository = recipe_repository
         self.favorite_recipe_repository = favorite_recipe_repository
         self.recipe_image_repository = recipe_image_repository
+        self.recsys_repository = recsys_repository
 
     async def _to_recipe_with_dislike_schema(self, disliked_recipe: Recipe) -> DislikedRecipeRead:
         recipe = RecipeReadShort.model_validate(disliked_recipe)
@@ -58,6 +62,7 @@ class DislikedRecipeService:
             await self.favorite_recipe_repository.delete(user_id=user.id, recipe_id=recipe_id)
 
         disliked = await self.disliked_recipe_repository.create(user_id=user.id, recipe_id=recipe_id)
+        await self.recsys_repository.add_feedback(user.id, recipe_id, FeedbackTypeEnum.dislike)
 
         return await self._to_recipe_with_dislike_schema(disliked)
 
@@ -72,6 +77,7 @@ class DislikedRecipeService:
             raise RecipeNotDislikedError(msg)
 
         await self.disliked_recipe_repository.delete(user_id=user.id, recipe_id=recipe_id)
+        await self.recsys_repository.delete_feedback(user.id, recipe_id, FeedbackTypeEnum.dislike)
 
     async def is_disliked(self, user_id: int, recipe_id: int) -> bool:
         return await self.disliked_recipe_repository.exists(user_id=user_id, recipe_id=recipe_id)
