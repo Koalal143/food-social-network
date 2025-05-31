@@ -38,43 +38,6 @@ from src.utils.examples_factory import json_example_factory, json_examples_facto
 router = APIRouter(route_class=DishkaRoute, prefix="/recipes", tags=["Recipes"])
 
 
-_recipe_example = {  # TODO: remove hard-coded example
-    "id": 1,
-    "title": "Паста Карбонара",
-    "slug": "pasta-karbonara-1",
-    "short_description": "Классическая итальянская паста с беконом и сыром",
-    "image_url": "https://example.com/images/recipes/1/main.png",
-    "difficulty": "MEDIUM",
-    "cook_time_minutes": 30,
-    "is_published": True,
-    "created_at": "2025-05-10T12:00:00Z",
-    "updated_at": "2025-05-10T14:30:00Z",
-    "ingredients": [
-        {"name": "Спагетти", "quantity": "200 г"},
-        {"name": "Бекон", "quantity": "150 г"},
-        {"name": "Яйца", "quantity": "2 шт"},
-    ],
-    "instructions": [
-        {"step_number": 1, "description": "Отварите спагетти", "image_url": None},
-        {
-            "step_number": 2,
-            "description": "Обжарьте бекон",
-            "image_url": "https://example.com/images/recipes/1/instructions/2/step.png",
-        },
-    ],
-    "tags": [{"name": "Итальянская кухня"}, {"name": "Ужин"}],
-}
-
-_recipe_full_example = {
-    **_recipe_example,
-    "author": {
-        "id": 1,
-        "username": "john_doe",
-        "profile": {"avatar_url": "https://example.com/images/avatars/1.jpg"},
-    },
-}
-
-
 @router.get(
     "/{recipe_id}",
     summary="Get recipe by ID",
@@ -82,7 +45,6 @@ _recipe_full_example = {
     responses={
         status.HTTP_200_OK: {
             "description": "Successful response with recipe details",
-            "content": json_example_factory(_recipe_full_example),
         },
         status.HTTP_404_NOT_FOUND: {
             "description": "Recipe not found",
@@ -128,10 +90,6 @@ async def get_recipe(
     summary="Get recipe by slug",
     description="Returns detailed information about a recipe using its URL-friendly slug identifier.",
     responses={
-        status.HTTP_200_OK: {
-            "description": "Successful response with recipe details",
-            "content": json_example_factory({**_recipe_full_example, "slug": "pasta-karbonara-1"}),
-        },
         status.HTTP_404_NOT_FOUND: {
             "description": "Recipe not found",
             "content": json_example_factory(
@@ -284,7 +242,7 @@ async def get_recipes(
     limit: Annotated[int, Query(ge=1, le=50, description="Количество рецептов на странице")] = 10,
 ) -> list[RecipeReadShort]:
     total, recipes = await recipe_service.get_all(
-        user_id=current_user.id if current_user else None, skip=offset, limit=limit
+        user_id=current_user.id if current_user else None, skip=offset, limit=limit, is_published=True,
     )
     response.headers["X-Total-Count"] = str(total)
     return list(recipes)
@@ -296,10 +254,6 @@ async def get_recipes(
     summary="Create new recipe",
     description="Creates a new recipe with ingredients, instructions, and tags. Authentication required.",
     responses={
-        status.HTTP_201_CREATED: {
-            "description": "Recipe created successfully",
-            "content": json_example_factory(_recipe_example),
-        },
         status.HTTP_401_UNAUTHORIZED: {
             "description": "Unauthorized",
             "content": json_example_factory({"detail": "Not authenticated", "error_key": "not_authenticated"}),
@@ -324,10 +278,6 @@ async def create_recipe(
     description="Updates an existing recipe. Can update main data and related entities. Authentication required. "
     "Only the owner of the recipe or a superuser can update it.",
     responses={
-        status.HTTP_200_OK: {
-            "description": "Recipe updated successfully",
-            "content": json_example_factory(_recipe_full_example),
-        },
         status.HTTP_400_BAD_REQUEST: {
             "description": "Can't publish recipe without instructions or image",
             "content": json_examples_factory(
