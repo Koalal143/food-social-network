@@ -180,7 +180,7 @@ class RecipeService:
     ) -> None:
         title_changed = recipe_update.title is not None and recipe_update.title != existing_recipe.title
         tags_changed = recipe_update.tags is not None
-        if not existing_recipe.is_published and recipe_update.is_published is True:
+        if recipe_update.is_published is True:
             if title_changed or tags_changed:
                 new_title = recipe_update.title if recipe_update.title is not None else existing_recipe.title
                 if recipe_update.tags is not None:
@@ -188,9 +188,14 @@ class RecipeService:
                 else:
                     existing_tags = [tag.name for tag in existing_recipe.tags] if existing_recipe.tags else []
                     new_tags_str = ", ".join(existing_tags)
-                await self.recsys_repository.update_recipe(existing_recipe.id, new_title, new_tags_str)
+                await self.recsys_repository.update_recipe(
+                    existing_recipe.author_id, existing_recipe.id, new_title, new_tags_str
+                )
             else:
-                await self.recsys_repository.add_recipe(existing_recipe.id, existing_recipe.title, existing_recipe.tags)
+                tags = ", ".join([tag.name for tag in existing_recipe.tags]) if existing_recipe.tags else ""
+                await self.recsys_repository.add_recipe(
+                    existing_recipe.author_id, existing_recipe.id, existing_recipe.title, tags
+                )
 
         if existing_recipe.is_published and recipe_update.is_published is False:
             await self.recsys_repository.delete_recipe(existing_recipe.id)
@@ -200,9 +205,6 @@ class RecipeService:
         recipe = await self.recipe_repository.create(
             slug=create_recipe_slug(recipe_create.title), is_published=False, author_id=user.id, **recipe_data
         )
-
-        slug = create_recipe_slug(recipe_create.title, recipe.id)
-        await self.uow.recipes.update(recipe.id, slug=slug)
 
         await self._create_ingredients(recipe.id, recipe_create.ingredients)
 

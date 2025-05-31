@@ -234,4 +234,4 @@ async def get_user_recipes(
         user_id=current_user.id if current_user else None,
     )
     response.headers["X-Total-Count"] = str(total)
-    return recipes
+    return list(recipes)

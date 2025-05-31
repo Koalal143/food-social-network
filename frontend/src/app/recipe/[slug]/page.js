@@ -50,7 +50,7 @@ export default function RecipePage({ params }) {
       }
     };
     fetchData();
-  }, [id]);
+  }, [slug]);
 
   const handleSave = () => {
     if (isSaved) {

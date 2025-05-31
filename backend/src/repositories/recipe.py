@@ -205,50 +205,6 @@ class RecipeRepository:
 
         return count, recipes
 
-    async def get_by_author_id(
-        self,
-        author_id: int,
-        user_id: int | None = None,
-        skip: int = 0,
-        limit: int = 100,
-    ) -> tuple[int, Sequence[RecipeWithFavorite]]:
-        author_filter = Recipe.author.has(User.id == author_id)
-
-        _, recipes = await self._get_recipes_with_filters(
-            user_id=user_id,
-            skip=skip,
-            limit=limit,
-            additional_filters=[author_filter],
-        )
-
-        count = await self._get_count_with_filters(
-            additional_filters=[author_filter],
-        )
-
-        return count, recipes
-
-    async def get_by_author_id(
-        self,
-        author_id: int,
-        user_id: int | None = None,
-        skip: int = 0,
-        limit: int = 100,
-    ) -> tuple[int, Sequence[RecipeWithFavorite]]:
-        author_filter = Recipe.author.has(User.id == author_id)
-
-        _, recipes = await self._get_recipes_with_filters(
-            user_id=user_id,
-            skip=skip,
-            limit=limit,
-            additional_filters=[author_filter],
-        )
-
-        count = await self._get_count_with_filters(
-            additional_filters=[author_filter],
-        )
-
-        return count, recipes
-
     async def create(self, **fields: Any) -> Recipe:
         db_recipe = Recipe(**fields)
         self.session.add(db_recipe)

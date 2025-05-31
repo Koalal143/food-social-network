@@ -316,7 +316,7 @@ const SwipeDemo = () => {
           onLike={handleNext}
           onDislike={handleNext}
           onSkip={handleNext}
-          onViewRecipe={(recipe) => router.push(`/recipe/${recipe.id}`)}
+          onViewRecipe={(recipe) => router.push(`/recipe/${recipe.slug}?source=recs-detail`)}
         />
       </div>
     </div>

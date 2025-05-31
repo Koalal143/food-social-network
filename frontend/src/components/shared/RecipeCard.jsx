@@ -18,7 +18,7 @@ export default function RecipeCard({ recipe, source='feed' }) {
         if (isSaved) {
             removeFavorite(recipe.id);
         } else {
-            addFavorite(recipe.id, source);
+            addFavorite(recipe.id);
         }
         setIsSaved(!isSaved);
     };
@@ -29,7 +29,7 @@ export default function RecipeCard({ recipe, source='feed' }) {
             whileTap={{ scale: 0.99 }}
             className="h-full"
         >
-            <Link href={`/recipe/${recipe.slug}`}>
+            <Link href={`/recipe/${recipe.slug}?source=${source}`}>
                 <div className="bg-secondary/60 rounded-lg overflow-hidden  h-full flex flex-col">
                     <div className="relative aspect-video">
                         <Image 

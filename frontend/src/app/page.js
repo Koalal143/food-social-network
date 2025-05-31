@@ -28,6 +28,7 @@ export default function App() {
         loading={loading}
         hasMore={hasMore}
         onLoadMore={handleLoadMore}
+        source="feed"
       />
       
       {hasMore && !loading && (

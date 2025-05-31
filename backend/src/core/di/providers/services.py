@@ -131,32 +131,6 @@ class ServiceProvider(Provider):
         )
 
     @provide
-    def get_search_service(
-        self,
-        recipe_search_repository: RecipeSearchRepositoryProtocol,
-        recipe_repository: RecipeRepositoryProtocol,
-        recipe_image_repository: RecipeImageRepositoryProtocol,
-    ) -> SearchService:
-        return SearchService(
-            recipe_search_repository=recipe_search_repository,
-            recipe_repository=recipe_repository,
-            recipe_image_repository=recipe_image_repository,
-        )
-
-    @provide
-    def get_search_service(
-        self,
-        recipe_search_repository: RecipeSearchRepositoryProtocol,
-        recipe_repository: RecipeRepositoryProtocol,
-        recipe_image_repository: RecipeImageRepositoryProtocol,
-    ) -> SearchService:
-        return SearchService(
-            recipe_search_repository=recipe_search_repository,
-            recipe_repository=recipe_repository,
-            recipe_image_repository=recipe_image_repository,
-        )
-
-    @provide
     def get_recipe_instructions_service(
         self, recipe_image_repository: RecipeImageRepositoryProtocol
     ) -> RecipeInstructionsService:
