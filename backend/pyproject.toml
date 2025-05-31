@@ -11,6 +11,7 @@ dependencies = [
     "dishka[fastapi]>=1.6.0",
     "elasticsearch>=9.0.1",
     "fastapi>=0.109.0",
+    "faststream[nats]>=0.5.42",
     "passlib[argon2]>=1.7.4",
     "pydantic[email]>=2.5.3",
     "pydantic-settings>=2.1.0",
