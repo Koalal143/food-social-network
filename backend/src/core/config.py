@@ -67,6 +67,10 @@ class CookiePolicyConfig(BaseModel):
     secure: bool = False
 
 
+class NatsConfig(BaseModel):
+    url: str = "nats://nats:4222"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -84,6 +88,7 @@ class Settings(BaseSettings):
     cookie_policy: CookiePolicyConfig
     redis: RedisConfig
     elasticsearch: ElasticSearchConfig
+    nats: NatsConfig = NatsConfig()
     mode: Literal["dev", "test", "prod"] = Field(default="prod", description="Application mode")
 
 
