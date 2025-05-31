@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_nested_delimiter="__",
-        env_file=PATH / ".env",
+        env_file=PATH.parent / ".env",
         extra="ignore",
     )
 
