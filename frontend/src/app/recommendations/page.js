@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import Container from "@/components/layout/Container";
 import RecipeSwipeCard from "@/components/shared/RecipeSwipeCard";
 import { useRouter } from 'next/navigation';
-import { useRecipes } from "@/context/RecipeContext";
+import { useRecomendations } from '@/context/RecomendationsContext';
+import { useDislikes } from '@/context/DislikesContext';
 import Loader from "@/components/ui/Loader";
 import { useFavorites } from "@/context/FavoritesContext";
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,21 +15,13 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 export default function RecommendationsPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { recipes, loading } = useRecipes();
+  const { recipes, loading, fetchRecipes } = useRecomendations();
   const { addFavorite } = useFavorites();
+  const { addToDisliked } = useDislikes();
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [direction, setDirection] = useState(null);
 
-  // Показываем туториал при первом визите
-  useEffect(() => {
-    if (!loading && recipes.length > 0) {
-      // Можно добавить логику проверки первого визита
-      // setShowTutorial(true);
-    }
-  }, [loading, recipes]);
-
-  // Функция для пошагового продвижения по туториалу
   const nextTutorialStep = () => {
     if (tutorialStep < 3) {
       setTutorialStep(tutorialStep + 1);
@@ -38,13 +31,15 @@ export default function RecommendationsPage() {
     }
   };
 
-  // Закрыть туториал
   const closeTutorial = () => {
     setShowTutorial(false);
     setTutorialStep(0);
   };
 
   const handleDislike = () => {
+    if (recipes[currentIndex]) {
+      addToDisliked(recipes[currentIndex].id)
+    }
     setDirection('left');
     if (currentIndex < recipes.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -60,7 +55,7 @@ export default function RecommendationsPage() {
 
   const handleLike = () => {
     if (recipes[currentIndex]) {
-      addFavorite(recipes[currentIndex], 'recs');
+      addFavorite(recipes[currentIndex].id);
     }
     setDirection('right');
     if (currentIndex < recipes.length - 1) {
@@ -76,6 +71,13 @@ export default function RecommendationsPage() {
     setCurrentIndex(0);
     setDirection(null);
   };
+
+  useEffect(() => {
+    // Если пользователь дошёл до конца массива — подгружаем новые рецепты
+    if (currentIndex >= recipes.length - 1 && recipes.length > 0) {
+      fetchRecipes(true); // append = true
+    }
+  }, [currentIndex]);
 
   if (loading) {
     return (
@@ -184,7 +186,7 @@ export default function RecommendationsPage() {
               </motion.div>
             )}
           </AnimatePresence>
-          {/* Интерактивный туториал для всех устройств */}
+          {/* Интерактивный туториал */}
           <AnimatePresence>
             {showTutorial && (
               <motion.div 
@@ -287,7 +289,7 @@ export default function RecommendationsPage() {
           </AnimatePresence>
         </div>
 
-        {/* Заголовок и кнопки управления */}
+        {/* Кнопка инструкции */}
         <motion.div 
           className="max-w-xs md:max-w-md mx-auto mt-2 md:mt-6"
           initial={{ opacity: 0, y: -20 }}
