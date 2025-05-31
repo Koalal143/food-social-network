@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useFavorites } from '@/context/FavoritesContext'
@@ -15,41 +15,54 @@ import Loader from '@/components/ui/Loader'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
-import FavoritesService from '@/services/favorites.service'
+import AuthService from '@/services/auth.service'
 
 const RECIPES_PER_PAGE = 9;
 
 export default function ProfilePage() {
-    const { user, loading: authLoading, updateProfile } = useAuth()
-    const { getRecipesByAuthorId } = useRecipes()
-    const { favorites, getFavorites, favoritesTotalCount, favoritesLoading } = useFavorites()
+    const { user, authLoading, updateProfile } = useAuth()
+    const { favorites, getFavorites, favoritesLoading } = useFavorites()
 
     const { toast } = useToast()
     const [userRecipes, setUserRecipes] = useState([])
-    const [isLoading, setIsLoading] = useState(true)
+    const [offset, setOffset] = useState(0)
+    const [recipesHasMore, setRecipesHasMore] = useState(true)
+    const [isInitialLoading, setIsInitialLoading] = useState(false)
+    const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const [totalCount, setTotalCount] = useState(0)
     const [error, setError] = useState(null)
+    const loadingRef = useRef(false)
+    const debounceTimerRef = useRef(null)
+    const favoritesLoadingRef = useRef(false)
+    const favoritesDebounceTimerRef = useRef(null)
+    const [favoritesOffset, setFavoritesOffset] = useState(0)
+    const [favoritesHasMore, setFavoritesHasMore] = useState(true)
 
-    // Загружаем рецепты пользователя
     useEffect(() => {
-        const loadData = async () => {
+        const loadInitialRecipes = async () => {
+            if (loadingRef.current) return
             try {
+                loadingRef.current = true
+                setIsInitialLoading(true)
                 setError(null)
-                const recipes = await getRecipesByAuthorId(user.id)
-                setUserRecipes(recipes)
+                const result = await AuthService.getPaginatedRecipes(0, RECIPES_PER_PAGE)
+                setUserRecipes(result.data)
+                setTotalCount(result.totalCount)
+                setOffset(result.data.length)
+                setRecipesHasMore((result.data.length || 0) < (result.totalCount || 0))
             } catch (error) {
                 const { message } = handleApiError(error)
                 setError(message)
             } finally {
-                setIsLoading(false)
+                setIsInitialLoading(false)
+                loadingRef.current = false
             }
         }
-
         if (user?.id) {
-            loadData()
+            loadInitialRecipes()
         }
-    }, [user, getRecipesByAuthorId])
+    }, [user])
 
-    // Загружаем первые избранные рецепты при монтировании
     useEffect(() => {
         const loadInitialFavorites = async () => {
             try {
@@ -58,7 +71,6 @@ export default function ProfilePage() {
                 console.error("Ошибка при загрузке избранных:", err)
             }
         }
-
         loadInitialFavorites()
     }, [])
 
@@ -70,7 +82,6 @@ export default function ProfilePage() {
                     about: values.about
                 }
             }
-            
             await updateProfile(formattedData)
             toast({
                 title: "Профиль обновлен",
@@ -86,16 +97,59 @@ export default function ProfilePage() {
         }
     }
 
-    const loadMoreFavorites = () => {
-        const offset = favorites.length
-        if (favoritesLoading[offset]) return
+    const loadMoreFavorites = useCallback(() => {
+        if (favoritesLoadingRef.current || !favoritesHasMore) return
 
-        getFavorites(offset, RECIPES_PER_PAGE)
-    }
+        if (favoritesDebounceTimerRef.current) {
+            clearTimeout(favoritesDebounceTimerRef.current)
+        }
 
-    const hasMore = favorites.length < favoritesTotalCount
+        favoritesDebounceTimerRef.current = setTimeout(async () => {
+            try {
+                favoritesLoadingRef.current = true
+                const offset = favorites.length
+                const result = await getFavorites(offset, RECIPES_PER_PAGE)
+                setFavoritesOffset(offset + result.favorites.length)
+                setFavoritesHasMore((offset + result.favorites.length) < result.totalCount)
+            } catch (err) {
+                // обработка ошибки
+            } finally {
+                favoritesLoadingRef.current = false
+            }
+        }, 300)
+    }, [favorites, favoritesHasMore, getFavorites])
 
-    if (authLoading || isLoading) {
+    const loadMoreUserRecipes = useCallback(() => {
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current)
+        }
+        debounceTimerRef.current = setTimeout(async () => {
+            if (loadingRef.current || !recipesHasMore || userRecipes.length >= totalCount) {
+                return
+            }
+            try {
+                loadingRef.current = true
+                setIsLoadingMore(true)
+                const result = await AuthService.getPaginatedRecipes(offset, RECIPES_PER_PAGE)
+                const newRecipes = result.data || []
+                setUserRecipes(prev => {
+                    const existingIds = new Set(prev.map(r => r.id))
+                    const uniqueNewRecipes = newRecipes.filter(r => !existingIds.has(r.id))
+                    return [...prev, ...uniqueNewRecipes]
+                })
+                setOffset(prev => prev + newRecipes.length)
+                setRecipesHasMore(userRecipes.length + newRecipes.length < (result.totalCount || 0))
+            } catch (error) {
+                const { message } = handleApiError(error)
+                setError(message)
+            } finally {
+                setIsLoadingMore(false)
+                loadingRef.current = false
+            }
+        }, 300)
+    }, [offset, recipesHasMore, userRecipes.length, totalCount])
+
+    if (authLoading || isInitialLoading) {
         return <Loader />
     }
 
@@ -126,8 +180,12 @@ export default function ProfilePage() {
                             recipes={userRecipes} 
                             favorites={favorites} 
                             loadMoreFavorites={loadMoreFavorites}
-                            hasMore={hasMore}
+                            hasMoreRecipes={recipesHasMore}
+                            hasMoreFavs={favoritesHasMore}
+                            hasMore={recipesHasMore}
                             isFavoritesLoading={!!favoritesLoading[favorites.length]}
+                            loadMoreRecipes={loadMoreUserRecipes}
+                            isLoading={isLoadingMore}
                         />
                     </div>
                 </div>
@@ -135,109 +193,3 @@ export default function ProfilePage() {
         </ProtectedRoute>
     )
 }
-
-// "use client"
-
-// import { useEffect, useState } from 'react'
-// import { useRouter } from 'next/navigation'
-// import { useAuth } from '@/context/AuthContext'
-// import { useFavorites } from '@/context/FavoritesContext'
-// import { useRecipes } from '@/context/RecipeContext'
-// import Container from '@/components/layout/Container'
-// import { useToast } from '@/hooks/use-toast'
-// import EditableProfileInfo from '@/components/ui/profile/EditableProfileInfo'
-// import EditableProfilePhoto from '@/components/ui/profile/EditableProfilePhoto'
-// import ProfileTabs from '@/components/ui/profile/ProfileTabs'
-// import { handleApiError } from '@/utils/errorHandler'
-// import Loader from '@/components/ui/Loader'
-// import Link from 'next/link'
-// import { Button } from '@/components/ui/button'
-// import ProtectedRoute from '@/components/auth/ProtectedRoute'
-
-// const RECIPES_PER_PAGE = 9;
-
-// export default function ProfilePage() {
-//     const { user, loading, updateProfile } = useAuth()
-//     const { getRecipesByAuthorId } = useRecipes()
-//     const router = useRouter()
-//     const { toast } = useToast()
-//     const [userRecipes, setUserRecipes] = useState([])
-//     const { favorites } = useFavorites()
-//     const [isLoading, setIsLoading] = useState(true)
-//     const [error, setError] = useState(null)
-
-//     useEffect(() => {
-//         const loadData = async () => {
-//             try {
-//                 setError(null)
-//                 const recipes = await getRecipesByAuthorId(user.id)
-//                 setUserRecipes(recipes)
-//             } catch (error) {
-//                 const { message } = handleApiError(error)
-//                 setError(message)
-//             } finally {
-//                 setIsLoading(false)
-//             }
-//         }
-
-//         loadData()
-//     }, [user, loading, router, getRecipesByAuthorId])
-
-//     const handleUpdateProfile = async (values) => {
-//         try {
-//             const formattedData = {
-//                 username: values.username,
-//                 profile: {
-//                     about: values.about
-//                 }
-//             }
-            
-//             await updateProfile(formattedData)
-//             toast({
-//                 title: "Профиль обновлен",
-//                 description: "Ваши данные успешно обновлены"
-//             })
-//         } catch (error) {
-//             const { message, type } = handleApiError(error)
-//             toast({
-//                 variant: type,
-//                 title: "Ошибка",
-//                 description: message
-//             })
-//         }
-//     }
-
-//     if (loading || isLoading) {
-//         return <Loader />
-//     }
-
-//     return (
-//         <ProtectedRoute>
-//             <Container className="py-8">
-//                 <div className="space-y-8">
-//                     <div className="flex items-start justify-between">
-//                         <h1 className="text-3xl font-bold tracking-tight">Ваш профиль</h1>
-//                         <Link className='md:hidden' href='/recipe/add'>
-//                             <Button>
-//                                 Добавить рецепт
-//                             </Button>
-//                         </Link>
-//                     </div>
-
-//                     <div className="flex flex-col md:flex-row gap-8 items-start">
-//                         <EditableProfilePhoto user={user} />
-//                         <EditableProfileInfo
-//                             user={user}
-//                             onSave={handleUpdateProfile}
-//                             className="flex-1 min-w-[300px]"
-//                         />
-//                     </div>
-
-//                     <div className="pt-4 border-t">
-//                         <ProfileTabs recipes={userRecipes} favorites={favorites} />
-//                     </div>
-//                 </div>
-//             </Container>
-//         </ProtectedRoute>
-//     )
-// }

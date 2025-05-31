@@ -7,8 +7,9 @@ import { useState } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
 import { DIFFICULTY } from "@/constants/difficulty";
 import { useAuth } from "@/context/AuthContext";
+import RecipeCardActions from "@/components/shared/recipeActions/RecipeCardActions";
 
-export default function RecipeCard({ recipe, source='feed' }) {
+export default function RecipeCard({ recipe, source='feed', editable }) {
     const { addFavorite, removeFavorite } = useFavorites();
     const [isSaved, setIsSaved] = useState(recipe.is_on_favorites);
     const { isAuth } = useAuth();
@@ -40,6 +41,11 @@ export default function RecipeCard({ recipe, source='feed' }) {
                             priority
                             unoptimized={true}
                         />
+                        {editable && (
+                            <div className="absolute top-2 right-2 z-50 bg-red">
+                                <RecipeCardActions recipe={recipe} />
+                            </div>
+                        )}
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
                             <div className="flex items-center gap-2 text-white">
                                 <Clock className="w-4 h-4" />
