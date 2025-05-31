@@ -7,6 +7,7 @@ from src.repositories.interfaces import (
     FavoriteRecipeRepositoryProtocol,
     RecipeImageRepositoryProtocol,
     RecipeRepositoryProtocol,
+    RecsysRepositoryProtocol,
 )
 from src.schemas.favorite_recipe import FavoriteRecipeCreate, FavoriteRecipeRead
 from src.schemas.recipe import RecipeReadShort
@@ -19,11 +20,13 @@ class FavoriteRecipeService:
         recipe_repository: RecipeRepositoryProtocol,
         disliked_recipe_repository: DislikedRecipeRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
+        recsys_repository: RecsysRepositoryProtocol,
     ) -> None:
         self.favorite_recipe_repository = favorite_recipe_repository
         self.recipe_repository = recipe_repository
         self.disliked_recipe_repository = disliked_recipe_repository
         self.recipe_image_repository = recipe_image_repository
+        self.recsys_repository = recsys_repository
 
     async def _to_recipe_with_like_schema(self, favorite_recipe: Recipe) -> FavoriteRecipeRead:
         recipe = RecipeReadShort.model_validate(favorite_recipe)
@@ -60,6 +63,7 @@ class FavoriteRecipeService:
             await self.disliked_recipe_repository.delete(user_id=user.id, recipe_id=recipe_id)
 
         await self.favorite_recipe_repository.create(user_id=user.id, recipe_id=recipe_id)
+        await self.recsys_repository.add_feedback(user.id, recipe_id, "like")
         recipe = await self.recipe_repository.get_by_id(recipe_id)
         return await self._to_recipe_with_like_schema(recipe)
 
@@ -74,6 +78,7 @@ class FavoriteRecipeService:
             raise RecipeNotInFavoritesError(msg)
 
         await self.favorite_recipe_repository.delete(user_id=user.id, recipe_id=recipe_id)
+        await self.recsys_repository.delete_feedback(user.id, recipe_id, "like")
 
     async def is_favorite(self, user_id: int, recipe_id: int) -> bool:
         return await self.favorite_recipe_repository.exists(user_id=user_id, recipe_id=recipe_id)
