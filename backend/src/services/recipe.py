@@ -84,41 +84,56 @@ class RecipeService:
 
     async def get_by_id(self, recipe_id: int, user_id: int | None = None) -> RecipeReadFull:
         recipe = await self.recipe_repository.get_by_id(recipe_id, user_id=user_id)
-        if not recipe:
+        if not recipe or (not recipe.is_published and recipe.author_id != user_id):
             msg = f"Recipe with id {recipe_id} not found"
             raise RecipeNotFoundError(msg)
 
         return await self._to_recipe_full_schema(recipe)
 
     async def get_all(
-        self, skip: int = 0, limit: int = 10, user_id: int | None = None
+        self,
+        skip: int = 0,
+        limit: int = 10,
+        user_id: int | None = None,
+        *,
+        is_published: bool = True,
     ) -> tuple[int, Sequence[RecipeReadShort]]:
-        count, recipes = await self.recipe_repository.get_all(user_id=user_id, skip=skip, limit=limit)
+        count, recipes = await self.recipe_repository.get_all(
+            user_id=user_id, skip=skip, limit=limit, is_published=is_published
+        )
         recipe_schemas = [await self._to_recipe_short_schema(recipe) for recipe in recipes]
 
         return count, recipe_schemas
 
     async def get_all_by_author_username(
-        self, author_nickname: str, skip: int = 0, limit: int = 10, user_id: int | None = None
+        self,
+        author_nickname: str,
+        skip: int = 0,
+        limit: int = 10,
+        user_id: int | None = None,
+        *,
+        is_published: bool = True,
     ) -> tuple[int, Sequence[RecipeReadShort]]:
         count, recipes = await self.recipe_repository.get_by_author_username(
             author_username=author_nickname,
             user_id=user_id,
             skip=skip,
             limit=limit,
+            is_published=is_published,
         )
         recipe_schemas = [await self._to_recipe_short_schema(recipe) for recipe in recipes]
 
         return count, recipe_schemas
 
     async def get_all_by_author_id(
-        self, author_id: int, skip: int = 0, limit: int = 10, user_id: int | None = None
+        self, author_id: int, skip: int = 0, limit: int = 10, user_id: int | None = None, *, is_published: bool = True
     ) -> tuple[int, Sequence[RecipeReadShort]]:
         count, recipes = await self.recipe_repository.get_by_author_id(
             author_id=author_id,
             user_id=user_id,
             skip=skip,
             limit=limit,
+            is_published=is_published,
         )
         recipe_schemas = [await self._to_recipe_short_schema(recipe) for recipe in recipes]
         return count, recipe_schemas
@@ -198,15 +213,11 @@ class RecipeService:
 
         created_recipe = await self.recipe_repository.get_by_id(recipe.id)
         await self._update_elasticsearch_index(created_recipe)
-
-        tags_str = ", ".join([tag.name for tag in recipe_create.tags]) if recipe_create.tags else ""
-        if recipe_create.is_published is True:
-            await self.recsys_repository.add_recipe(recipe.author_id, recipe.id, recipe.title, tags_str)
-
         return await self._to_recipe_schema(created_recipe)
 
     async def update(self, user: User, recipe_id: int, recipe_update: RecipeUpdate) -> RecipeReadFull:
         existing_recipe = await self.recipe_repository.get_by_id(recipe_id)
+        recipe_data = recipe_update.model_dump(exclude={"ingredients", "instructions", "tags"}, exclude_unset=True)
         if not existing_recipe:
             msg = f"Recipe with id {recipe_id} not found"
             raise RecipeNotFoundError(msg)
@@ -214,8 +225,10 @@ class RecipeService:
         if existing_recipe.author_id != user.id and not user.is_superuser:
             msg = f"Recipe with id {recipe_id} belongs to other user"
             raise RecipeOwnershipError(msg)
-
-        if not existing_recipe.image_path and recipe_update.is_published:
+        is_image_path_reseted = recipe_data.get("image_path", "unset")
+        if recipe_update.is_published and not (
+            is_image_path_reseted is not None or recipe_data.get("image_path") or existing_recipe.image_path
+        ):
             msg = "Recipe can not be published without image"
             raise NoRecipeImageError(msg)
 
@@ -223,7 +236,6 @@ class RecipeService:
             msg = "Recipe can not be published without instructions"
             raise NoRecipeInstructionsError(msg)
 
-        recipe_data = recipe_update.model_dump(exclude={"ingredients", "instructions", "tags"}, exclude_unset=True)
         if recipe_data:
             if "title" in recipe_data:
                 recipe_data["slug"] = create_recipe_slug(recipe_data["title"])
