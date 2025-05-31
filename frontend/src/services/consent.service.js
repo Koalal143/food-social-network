@@ -2,9 +2,6 @@ import { BASE_API } from "@/constants/backend-urls";
 
 export default class ConsentService {
     static async sendConsent(is_analytics_allowed) {
-        console.log('BASE_API:', BASE_API);
-        console.log('fetch url:', `${BASE_API}/v1/consent`);
-        
         try {
             const response = await fetch(`${BASE_API}/v1/consent`, {
                 method: 'POST',

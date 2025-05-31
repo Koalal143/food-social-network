@@ -6,34 +6,37 @@ import { Button } from "@/components/ui/button";
 import ConsentService from "@/services/consent.service";
 import { useToast } from "@/hooks/use-toast";
 import { ERROR_MESSAGES } from "@/constants/errors";
+import { useAuth } from "@/context/AuthContext";
 
 const LOCALSTORAGE_KEY = "cookie_consent_accepted";
 
-export default function CookieConsent({ isAuth = false }) {
+export default function CookieConsent() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { isAuth } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isAuth && typeof window !== "undefined") {
+    if (!isAuth) {
       const consent = localStorage.getItem(LOCALSTORAGE_KEY);
       if (!consent) setOpen(true);
+    } else {
+      setOpen(false);
+      localStorage.setItem(LOCALSTORAGE_KEY, "1");
     }
   }, [isAuth]);
 
   const handleConsent = async (isAllowed) => {
     setLoading(true);
     try {
-        console.log('LALALAL IM HERE');
-        
         await ConsentService.sendConsent(isAllowed);
         localStorage.setItem(LOCALSTORAGE_KEY, isAllowed ? "1" : "0");
         setOpen(false);
         toast({
             title: "Спасибо!",
             description: isAllowed
-            ? "Вы разрешили использование cookies для аналитики."
-            : "Вы отказались от использования cookies для аналитики.",
+            ? "Вы разрешили использование cookies."
+            : "Вы отказались от использования cookies.",
         });
     } catch (e) {
         toast({
@@ -46,7 +49,7 @@ export default function CookieConsent({ isAuth = false }) {
     }
   };
 
-  if (!open) return null;
+  if (!open ) return null;
 
   return (
     <div className="fixed bottom-6 left-6 z-[200] pointer-events-none">
