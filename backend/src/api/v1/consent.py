@@ -93,7 +93,7 @@ async def create_consent(
             )
             await consent_service.create(anonymous_user_id=anonymous_user.id, is_analytics_allowed=is_analytics_allowed)
             _set_cookie(settings, response, "anonymous_id", str(anonymous_user.cookie_id))
-
+            await uow.commit()
         return {"created": True}
 
 
