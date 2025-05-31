@@ -29,7 +29,7 @@ export default function RecipeCard({ recipe, source='feed' }) {
             whileTap={{ scale: 0.99 }}
             className="h-full"
         >
-            <Link href={`/recipe/${recipe.id}`}>
+            <Link href={`/recipe/${recipe.slug}`}>
                 <div className="bg-secondary/60 rounded-lg overflow-hidden  h-full flex flex-col">
                     <div className="relative aspect-video">
                         <Image 

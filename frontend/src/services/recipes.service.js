@@ -54,7 +54,7 @@ export default class RecipesService {
         }
     }
 
-    static async getRecipeById(id, options={}) {
+    static async getRecipeBySlug(slug, source='feed', options={}) {
         try {
             await tokenManager.ensureValidToken();
 
@@ -68,7 +68,7 @@ export default class RecipesService {
                 headers['Authorization'] = `Bearer ${accessToken}`;
             }
 
-            const response = await fetch(`${BASE_API}/v1/recipes/${id}`, {
+            const response = await fetch(`${BASE_API}/v1/recipes/by-slug/slug=${slug}/&source=${source}`, {
                 headers: headers
             });
             

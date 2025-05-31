@@ -49,11 +49,11 @@ export default function RecipeProvider({ children }) {
         fetchRecipes(true)
     }, [])
 
-    const getRecipeById = async (id) => {
+    const getRecipeBySlug = async (slug, source='feed') => {
         try {
             setLoading(true)
 
-            return await RecipesService.getRecipeById(id);
+            return await RecipesService.getRecipeBySlug(slug, source);
         } catch (error) {
             setError(error);
             console.error("Ошибка при загрузке рецепта:", error);
@@ -160,7 +160,7 @@ export default function RecipeProvider({ children }) {
                 hasMore,
                 totalCount,
                 fetchRecipes,
-                getRecipeById,
+                getRecipeBySlug,
                 addRecipe,
                 getRecipesByAuthorId
             }}

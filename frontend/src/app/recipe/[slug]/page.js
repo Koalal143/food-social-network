@@ -17,21 +17,24 @@ import { useToast } from "@/hooks/use-toast";
 import { handleApiError } from "@/utils/errorHandler";
 import NotFound from "@/app/not-found";
 import { useAuth } from "@/context/AuthContext";
+import { useSearchParams } from "next/navigation";
 
 export default function RecipePage({ params }) {
-  const { getRecipeById, error, loading } = useRecipes();
+  const { getRecipeBySlug, error, loading } = useRecipes();
   const { addFavorite, removeFavorite } = useFavorites();
   const [ recipe, setRecipe ] = useState(null);
   const { toast } = useToast()
   const [ isSaved, setIsSaved ] = useState(false);
   const { isAuth } = useAuth();
   
-  const { id } = React.use(params);
+  const { slug } = React.use(params);
+  const searchParams = useSearchParams();
+  const source = searchParams.get('source');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const recipeData = await getRecipeById(Number(id));
+        const recipeData = await getRecipeBySlug(slug, source);
         if (recipeData) {
           setRecipe(recipeData);
           setIsSaved(recipeData.is_on_favorites);
@@ -96,7 +99,7 @@ export default function RecipePage({ params }) {
                 <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-primary' : ''} ${!isAuth && 'text-gray-500'}`} />
               </Button>
               <CopyLinkButton
-                link={`${window.location.origin}/recipe/${id}`}
+                link={`${window.location.origin}/recipe/${recipe.slug}?source=shared`}
                 tooltipText="Скопировать ссылку на рецепт"
               />
             </div>
