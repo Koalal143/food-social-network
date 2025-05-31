@@ -1,4 +1,5 @@
 from dishka import Provider, Scope, provide
+from faststream.nats import NatsBroker
 
 from src.repositories.interfaces import (
     AnonymousUserRepositoryProtocol,
@@ -13,11 +14,13 @@ from src.repositories.interfaces import (
     RecipeRepositoryProtocol,
     RecipeSearchRepositoryProtocol,
     RecipeTagRepositoryProtocol,
+    RecsysRepositoryProtocol,
     RefreshTokenRepositoryProtocol,
     UserAvatarRepositoryProtocol,
     UserProfileRepositoryProtocol,
     UserRepositoryProtocol,
 )
+from src.repositories.recsys_client import RecsysRepository
 from src.services.anonymous_user import AnonymousUserService
 from src.services.avatar import UserAvatarService
 from src.services.banned_email import BannedEmailService
@@ -27,6 +30,7 @@ from src.services.favorite_recipe import FavoriteRecipeService
 from src.services.recipe import RecipeService
 from src.services.recipe_impression import RecipeImpressionService
 from src.services.recipe_instructions import RecipeInstructionsService
+from src.services.recommendation import RecommendationService
 from src.services.search import SearchService
 from src.services.security import SecurityService
 from src.services.token import RefreshTokenService, TokenService
@@ -101,6 +105,7 @@ class ServiceProvider(Provider):
         recipe_tag_repository: RecipeTagRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
         recipe_search_repository: RecipeSearchRepositoryProtocol,
+        recsys_repository: RecsysRepositoryProtocol,
     ) -> RecipeService:
         return RecipeService(
             recipe_repository=recipe_repository,
@@ -109,6 +114,7 @@ class ServiceProvider(Provider):
             recipe_tag_repository=recipe_tag_repository,
             recipe_image_repository=recipe_image_repository,
             recipe_search_repository=recipe_search_repository,
+            recsys_repository=recsys_repository,
         )
 
     @provide
@@ -163,12 +169,14 @@ class ServiceProvider(Provider):
         recipe_repository: RecipeRepositoryProtocol,
         disliked_recipe_repository: DislikedRecipeRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
+        recsys_repository: RecsysRepositoryProtocol,
     ) -> FavoriteRecipeService:
         return FavoriteRecipeService(
             favorite_recipe_repository=favorite_recipe_repository,
             recipe_repository=recipe_repository,
             disliked_recipe_repository=disliked_recipe_repository,
             recipe_image_repository=recipe_image_repository,
+            recsys_repository=recsys_repository,
         )
 
     @provide
@@ -178,12 +186,14 @@ class ServiceProvider(Provider):
         recipe_repository: RecipeRepositoryProtocol,
         favorite_recipe_repository: FavoriteRecipeRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
+        recsys_repository: RecsysRepositoryProtocol,
     ) -> DislikedRecipeService:
         return DislikedRecipeService(
             disliked_recipe_repository=disliked_recipe_repository,
             recipe_repository=recipe_repository,
             favorite_recipe_repository=favorite_recipe_repository,
             recipe_image_repository=recipe_image_repository,
+            recsys_repository=recsys_repository,
         )
 
     @provide
@@ -192,14 +202,34 @@ class ServiceProvider(Provider):
         recipe_impression_repository: RecipeImpressionRepositoryProtocol,
         recipe_repository: RecipeRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
+        recsys_repository: RecsysRepositoryProtocol,
     ) -> RecipeImpressionService:
         return RecipeImpressionService(
             recipe_impression_repository=recipe_impression_repository,
             recipe_repository=recipe_repository,
             recipe_image_repository=recipe_image_repository,
+            recsys_repository=recsys_repository,
         )
 
     # Admin services
     @provide
     def get_banned_email_service(self, banned_email_repository: BannedEmailRepositoryProtocol) -> BannedEmailService:
         return BannedEmailService(banned_email_repository=banned_email_repository)
+
+    # External services
+    @provide
+    def get_recsys_repository(self, broker: NatsBroker) -> RecsysRepository:
+        return RecsysRepository(broker=broker)
+
+    @provide
+    def get_recommendation_service(
+        self,
+        recsys_repository: RecsysRepositoryProtocol,
+        recipe_repository: RecipeRepositoryProtocol,
+        recipe_image_repository: RecipeImageRepositoryProtocol,
+    ) -> RecommendationService:
+        return RecommendationService(
+            recsys_repository=recsys_repository,
+            recipe_repository=recipe_repository,
+            recipe_image_repository=recipe_image_repository,
+        )
