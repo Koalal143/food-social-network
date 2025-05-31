@@ -7,9 +7,11 @@ from src.repositories.interfaces import (
     RecipeImageRepositoryProtocol,
     RecipeImpressionRepositoryProtocol,
     RecipeRepositoryProtocol,
+    RecsysRepositoryProtocol,
 )
 from src.schemas.recipe import RecipeReadShort
 from src.schemas.recipe_impression import RecipeImpressionRead
+from src.schemas.recsys_messages import AddImpressionMessage
 
 if TYPE_CHECKING:
     from src.models.recipe_impression import RecipeImpression
@@ -21,10 +23,12 @@ class RecipeImpressionService:
         recipe_impression_repository: RecipeImpressionRepositoryProtocol,
         recipe_repository: RecipeRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
+        recsys_repository: RecsysRepositoryProtocol,
     ) -> None:
         self.recipe_impression_repository = recipe_impression_repository
         self.recipe_repository = recipe_repository
         self.recipe_image_repository = recipe_image_repository
+        self.recsys_repository = recsys_repository
 
     async def _to_recipe_impression_schema(self, impression: "RecipeImpression") -> RecipeImpressionRead:
         recipe = RecipeReadShort.model_validate(impression.recipe)
@@ -58,8 +62,16 @@ class RecipeImpressionService:
 
         await self.recipe_impression_repository.create(user_id=user_id, recipe_id=recipe_id, source=source)
 
+        recsys_source = source.value if source else "feed"
+        await self.recsys_repository.add_impression(user_id, recipe_id, recsys_source)
+
     async def merge_impressions(self, anonymous_user_id: int, user_id: int) -> None:
-        await self.recipe_impression_repository.merge_impressions(anonymous_user_id=anonymous_user_id, user_id=user_id)
+        impressions = await self.recipe_impression_repository.merge_impressions(
+            anonymous_user_id=anonymous_user_id, user_id=user_id
+        )
+        impressions_list = [AddImpressionMessage.model_validate(impression) for impression in impressions]
+        if impressions_list:
+            await self.recsys_repository.add_impressions_bulk(impressions_list)
 
     async def record_impression_for_anonymous(
         self, recipe_id: int, anonymous_user_id: int, source: RecipeGetSourceEnum | None = None
