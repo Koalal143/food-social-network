@@ -113,7 +113,7 @@ class RecipeImpressionRepository:
         await self.session.execute(stmt)
         await self.session.flush()
 
-    async def merge_impressions(self, anonymous_user_id: int, user_id: int) -> None:
+    async def merge_impressions(self, anonymous_user_id: int, user_id: int) -> Sequence[RecipeImpression]:
         user_seen_recipe_ids_subq = (
             select(RecipeImpression.recipe_id).where(RecipeImpression.user_id == user_id).scalar_subquery()
         )
@@ -124,9 +124,11 @@ class RecipeImpressionRepository:
                 RecipeImpression.recipe_id.not_in(user_seen_recipe_ids_subq),
             )
             .values(user_id=user_id, anonymous_user_id=None)
+            .returning(RecipeImpression)
         )
-        await self.session.execute(stmt)
+        result = await self.session.scalars(stmt)
         await self.session.flush()
+        return result.all()
 
     async def exists(self, user_id: int, recipe_id: int) -> bool:
         stmt = (
