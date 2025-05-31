@@ -15,6 +15,7 @@ from src.repositories.interfaces import (
     RecipeRepositoryProtocol,
     RecipeSearchRepositoryProtocol,
     RecipeTagRepositoryProtocol,
+    RecsysRepositoryProtocol,
 )
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.recipe import (
@@ -41,6 +42,7 @@ class RecipeService:
         recipe_tag_repository: RecipeTagRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
         recipe_search_repository: RecipeSearchRepositoryProtocol,
+        recsys_repository: RecsysRepositoryProtocol,
     ) -> None:
         self.recipe_repository = recipe_repository
         self.recipe_ingredient_repository = recipe_ingredient_repository
@@ -48,6 +50,7 @@ class RecipeService:
         self.recipe_tag_repository = recipe_tag_repository
         self.recipe_image_repository = recipe_image_repository
         self.recipe_search_repository = recipe_search_repository
+        self.recsys_repository = recsys_repository
 
     async def _to_recipe_schema(self, recipe: Recipe) -> RecipeReadFull:
         recipe_schema = RecipeReadFull.model_validate(recipe)
@@ -155,6 +158,28 @@ class RecipeService:
         schema = unprepared_schema.model_dump(exclude={"updated_at", "instructions", "image_url"})
         await self.recipe_search_repository.index_recipe(schema)
 
+    async def _update_recsys_on_update(
+        self,
+        existing_recipe: Recipe,
+        recipe_update: RecipeUpdate,
+    ) -> None:
+        title_changed = recipe_update.title is not None and recipe_update.title != existing_recipe.title
+        tags_changed = recipe_update.tags is not None
+        if not existing_recipe.is_published and recipe_update.is_published is True:
+            if title_changed or tags_changed:
+                new_title = recipe_update.title if recipe_update.title is not None else existing_recipe.title
+                if recipe_update.tags is not None:
+                    new_tags_str = ", ".join([tag.name for tag in recipe_update.tags])
+                else:
+                    existing_tags = [tag.name for tag in existing_recipe.tags] if existing_recipe.tags else []
+                    new_tags_str = ", ".join(existing_tags)
+                await self.recsys_repository.update_recipe(existing_recipe.id, new_title, new_tags_str)
+            else:
+                await self.recsys_repository.add_recipe(existing_recipe.id, existing_recipe.title, existing_recipe.tags)
+
+        if existing_recipe.is_published and recipe_update.is_published is False:
+            await self.recsys_repository.delete_recipe(existing_recipe.id)
+
     async def create(self, user: User, recipe_create: RecipeCreate) -> RecipeRead:
         recipe_data = recipe_create.model_dump(exclude={"ingredients", "instructions", "tags"})
         recipe = await self.recipe_repository.create(
@@ -173,6 +198,11 @@ class RecipeService:
 
         created_recipe = await self.recipe_repository.get_by_id(recipe.id)
         await self._update_elasticsearch_index(created_recipe)
+
+        tags_str = ", ".join([tag.name for tag in recipe_create.tags]) if recipe_create.tags else ""
+        if recipe_create.is_published is True:
+            await self.recsys_repository.add_recipe(recipe.author_id, recipe.id, recipe.title, tags_str)
+
         return await self._to_recipe_schema(created_recipe)
 
     async def update(self, user: User, recipe_id: int, recipe_update: RecipeUpdate) -> RecipeReadFull:
@@ -214,6 +244,8 @@ class RecipeService:
         updated_recipe = await self.recipe_repository.get_by_id(recipe_id, user_id=user.id)
 
         await self._update_elasticsearch_index(updated_recipe)
+
+        await self._update_recsys_on_update(existing_recipe, recipe_update)
 
         return await self._to_recipe_full_schema(updated_recipe)
 
