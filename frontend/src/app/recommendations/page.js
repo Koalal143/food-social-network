@@ -7,8 +7,9 @@ import { useRecipes } from "@/context/RecipeContext";
 import Loader from "@/components/ui/Loader";
 import { useFavorites } from "@/context/FavoritesContext";
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoveLeft, MoveRight, MoveUp, X } from 'lucide-react';
+import { Bookmark, ThumbsDown, Eye, Info, ChevronRight, RefreshCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function RecommendationsPage() {
   const router = useRouter();
@@ -17,19 +18,19 @@ export default function RecommendationsPage() {
   const { addFavorite } = useFavorites();
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
+  const [direction, setDirection] = useState(null);
 
-  // Проверяем, первый ли это визит пользователя
+  // Показываем туториал при первом визите
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem('seenSwipeTutorial');
-    if (!hasSeenTutorial && !loading && recipes.length > 0) {
-      setShowTutorial(true);
-      localStorage.setItem('seenSwipeTutorial', 'true');
+    if (!loading && recipes.length > 0) {
+      // Можно добавить логику проверки первого визита
+      // setShowTutorial(true);
     }
   }, [loading, recipes]);
 
   // Функция для пошагового продвижения по туториалу
   const nextTutorialStep = () => {
-    if (tutorialStep < 2) {
+    if (tutorialStep < 3) {
       setTutorialStep(tutorialStep + 1);
     } else {
       setShowTutorial(false);
@@ -44,18 +45,26 @@ export default function RecommendationsPage() {
   };
 
   const handleDislike = () => {
-    showNextRecipe();
+    setDirection('left');
+    if (currentIndex < recipes.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
   };
 
   const handleSkip = () => {
-    showNextRecipe();
+    setDirection('up');
+    if (currentIndex < recipes.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
   };
 
-  const showNextRecipe = () => {
+  const handleLike = () => {
+    if (recipes[currentIndex]) {
+      addFavorite(recipes[currentIndex], 'recs');
+    }
+    setDirection('right');
     if (currentIndex < recipes.length - 1) {
-      setTimeout(() => {
-        setCurrentIndex(currentIndex + 1);
-      }, 500);
+      setCurrentIndex(currentIndex + 1);
     }
   };
 
@@ -63,114 +72,241 @@ export default function RecommendationsPage() {
     router.push(`/recipe/${recipe.id}`);
   };
 
+  const handleRefresh = () => {
+    setCurrentIndex(0);
+    setDirection(null);
+  };
+
   if (loading) {
-    return <Loader />;
+    return (
+      <div className="flex items-center justify-center">
+        <Loader />
+      </div>
+    );
   }
 
   // Содержимое шагов туториала
   const tutorialContent = [
     {
-      title: "Свайпните влево",
-      description: "Чтобы пропустить рецепт, который вам не нравится. Похожие рецепты мы не будем показывать вам",
-      icon: <MoveLeft className="w-8 h-8 text-white" />,
-      action: "влево",
-      color: "bg-red-500"
+      title: "Свайп влево",
+      subtitle: "Дизлайк",
+      description: "Свайпните влево или нажмите на кнопку, чтобы отклонить рецепт. Мы учтём ваши предпочтения для будущих рекомендаций.",
+      icon: <ThumbsDown className="w-6 h-6" />,
+      action: "left",
+      color: "bg-gradient-to-br from-red-500 to-red-600",
+      gesture: "←"
     },
     {
-      title: "Свайпните вверх",
-      description: "Чтобы открыть и изучить рецепт подробнее",
-      icon: <MoveUp className="w-8 h-8 text-white" />,
-      action: "вверх",
-      color: "bg-green-500"
+      title: "Свайп вверх",
+      subtitle: "Скип",
+      description: "Свайпните вверх или нажмите на кнопку, чтобы просто пропустить рецепт без лайка или дизлайка.",
+      icon: <RefreshCw className="w-6 h-6" />,
+      action: "up",
+      color: "bg-gradient-to-br from-blue-500 to-indigo-500",
+      gesture: "↑"
     },
     {
-      title: "Свайпните вправо",
-      description: "Чтобы пропустить рецепт",
-      icon: <MoveRight className="w-8 h-8 text-white" />,
-      action: "вправо",
-      color: "bg-blue-500"
+      title: "Свайп вправо",
+      subtitle: "Лайк",
+      description: "Свайпните вправо или нажмите на кнопку, чтобы добавить рецепт в избранное. Вы сможете найти его в разделе 'Избранное' в вашем профиле.",
+      icon: <Bookmark className="w-6 h-6" />,
+      action: "right",
+      color: "bg-gradient-to-br from-pink-500 to-rose-500",
+      gesture: "→"
+    },
+    {
+      title: "Кнопка 'Глаз'",
+      subtitle: "Посмотреть рецепт",
+      description: "Нажмите на иконку 👁️ в правом верхнем углу карточки, чтобы открыть подробную страницу рецепта.",
+      icon: <Eye className="w-6 h-6" />,
+      action: "eye",
+      color: "bg-gradient-to-br from-gray-500 to-gray-700",
+      gesture: "👁️"
     }
   ];
 
   return (
-    <Container className="py-8 relative">
-      <div className="max-w-md mx-auto">
-        {recipes.length > 0 && currentIndex < recipes.length ? (
-          <RecipeSwipeCard
-            recipe={recipes[currentIndex]}
-            onSkip={handleSkip}
-            onDislike={handleDislike}
-            onViewRecipe={handleViewRecipe}
-          />
-        ) : (
-          <div className="h-96 flex items-center justify-center rounded-lg bg-gray-100">
-            <p className="text-gray-500">Рецепты закончились</p>
-          </div>
-        )}
-
-        {/* Интерактивный туториал по свайпам для мобильных устройств при первом посещении */}
-        <AnimatePresence>
-          {showTutorial && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 md:hidden"
-            >
+    <ProtectedRoute>
+      <Container className="py-2 h-full md:py-4 relative px-2 md:px-0">
+        <div className="max-w-xs md:max-w-md mx-auto">
+          <AnimatePresence
+            mode="wait"
+            onExitComplete={() => setDirection(null)}
+          >
+            {recipes.length > 0 && currentIndex < recipes.length ? (
+              <RecipeSwipeCard
+                key={currentIndex}
+                recipe={recipes[currentIndex]}
+                direction={direction}
+                onSkip={handleSkip}
+                onDislike={handleDislike}
+                onLike={handleLike}
+                onViewRecipe={handleViewRecipe}
+              />
+            ) : (
               <motion.div 
-                onClick={(e) => e.stopPropagation()}
-                className="bg-white rounded-lg p-6 max-w-xs mx-4 relative"
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.9 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative h-80 md:h-96 flex flex-col items-center justify-center rounded-2xl md:rounded-3xl bg-gradient-to-br from-gray-50 via-white to-blue-50 border border-gray-200 shadow-lg overflow-hidden px-4"
               >
-                <button 
-                  onClick={closeTutorial}
-                  className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-                >
-                  <X size={20} />
-                </button>
+                {/* Декоративные элементы */}
+                <div className="absolute top-4 left-4 w-8 h-8 md:w-12 md:h-12 bg-yellow-200/30 rounded-full blur-xl" />
+                <div className="absolute bottom-6 right-6 w-6 h-6 md:w-8 md:h-8 bg-blue-200/30 rounded-full blur-lg" />
+                <div className="absolute top-1/2 right-4 w-4 h-4 md:w-6 md:h-6 bg-pink-200/30 rounded-full blur-md" />
                 
-                <div className="flex flex-col items-center text-center mb-6">
-                  <motion.div 
-                    className={`p-4 rounded-full ${tutorialContent[tutorialStep].color} mb-4`}
-                    initial={{ scale: 1 }}
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ 
-                      repeat: Infinity, 
-                      repeatType: "loop", 
-                      duration: 1.5 
-                    }}
-                  >
-                    {tutorialContent[tutorialStep].icon}
-                  </motion.div>
-                  <h3 className="text-xl font-bold mb-2">{tutorialContent[tutorialStep].title}</h3>
-                  <p className="text-gray-600">{tutorialContent[tutorialStep].description}</p>
-                </div>
-
-                <div className="flex justify-center mb-4">
-                  <div className="flex gap-2">
-                    {[0, 1, 2].map((step) => (
-                      <div 
-                        key={step} 
-                        className={`w-2 h-2 rounded-full ${tutorialStep === step ? 'bg-primary' : 'bg-gray-300'}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <Button 
-                  variant="default" 
-                  className="w-full" 
-                  onClick={nextTutorialStep}
+                <motion.div 
+                  className="text-5xl md:text-6xl mb-4"
+                  animate={{ 
+                    rotate: [0, 10, -10, 0],
+                    scale: [1, 1.1, 1]
+                  }}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: Infinity, 
+                    repeatType: "reverse" 
+                  }}
                 >
-                  {tutorialStep < 2 ? "Далее" : "Начать"}
+                  🍽️
+                </motion.div>
+                <h3 className="text-gray-700 text-lg md:text-xl font-bold mb-2 text-center">
+                  Рецепты закончились
+                </h3>
+                <p className="text-gray-500 text-sm md:text-base text-center mb-4 px-2 md:px-4">
+                  Попробуйте обновить рекомендации
+                </p>
+                <Button 
+                  onClick={handleRefresh}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium px-6 py-2 rounded-full shadow-lg text-base md:text-sm"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Обновить список
                 </Button>
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </Container>
-  );
+            )}
+          </AnimatePresence>
+          {/* Интерактивный туториал для всех устройств */}
+          <AnimatePresence>
+            {showTutorial && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4"
+                onClick={closeTutorial}
+              >
+                <motion.div 
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 max-w-xs md:max-w-sm w-full mx-2 md:mx-4 relative shadow-2xl"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                >
+                  <button 
+                    onClick={closeTutorial}
+                    className="absolute top-2 right-2 md:top-4 md:right-4 text-gray-400 hover:text-gray-600 transition-colors p-1"
+                  >
+                    <X size={20} />
+                  </button>
+                  
+                  <div className="flex flex-col items-center text-center mb-6">
+                    <motion.div 
+                      className={`p-4 rounded-full ${tutorialContent[tutorialStep].color} mb-4 relative overflow-hidden`}
+                      initial={{ scale: 1 }}
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ 
+                        repeat: Infinity, 
+                        repeatType: "loop", 
+                        duration: 2 
+                      }}
+                    >
+                      <div className="text-white relative z-10">
+                        {tutorialContent[tutorialStep].icon}
+                      </div>
+                      <motion.div
+                        className="absolute inset-0 bg-white/20"
+                        animate={{ 
+                          scale: [1, 1.2, 1],
+                          opacity: [0.5, 0, 0.5] 
+                        }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          duration: 2,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    </motion.div>
+
+                    <div className="text-3xl md:text-4xl mb-2 font-bold text-gray-300">
+                      {tutorialContent[tutorialStep].gesture}
+                    </div>
+                    
+                    <h3 className="text-lg md:text-xl font-bold mb-1 text-gray-900">
+                      {tutorialContent[tutorialStep].title}
+                    </h3>
+                    <p className="text-xs md:text-sm font-medium text-gray-600 mb-3">
+                      {tutorialContent[tutorialStep].subtitle}
+                    </p>
+                    <p className="text-gray-500 text-xs md:text-sm leading-relaxed">
+                      {tutorialContent[tutorialStep].description}
+                    </p>
+                  </div>
+
+                  {/* Индикатор прогресса */}
+                  <div className="flex justify-center mb-6">
+                    <div className="flex gap-2">
+                      {[...Array(tutorialContent.length).keys()].map((step) => (
+                        <motion.div 
+                          key={step} 
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            tutorialStep === step 
+                              ? 'w-8 bg-gray-900' 
+                              : 'w-2 bg-gray-300'
+                          }`}
+                          layoutId={`step-${step}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button 
+                    className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 md:py-3 text-base md:text-sm rounded-full" 
+                    onClick={nextTutorialStep}
+                  >
+                    {tutorialStep < tutorialContent.length - 1 ? (
+                      <span className="flex items-center gap-2">
+                        Далее
+                        <ChevronRight className="w-4 h-4" />
+                      </span>
+                    ) : (
+                      "Начать свайпы"
+                    )}
+                  </Button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Заголовок и кнопки управления */}
+        <motion.div 
+          className="max-w-xs md:max-w-md mx-auto mt-2 md:mt-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTutorial(true)}
+              className="flex items-center bg-white/80 backdrop-blur-sm hover:bg-white/90 border-gray-200 shadow-sm rounded-full px-4 py-2 text-base md:text-sm"
+            >
+              <Info className="w-4 h-4" />
+              Как пользоваться
+            </Button>
+          </div>
+        </motion.div>
+      </Container>
+    </ProtectedRoute>
+  )
 }
