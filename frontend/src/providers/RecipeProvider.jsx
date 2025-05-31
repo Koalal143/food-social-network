@@ -151,6 +151,21 @@ export default function RecipeProvider({ children }) {
         }
     };
 
+    const deleteRecipe = async (recipeId) => {
+        try {
+            await RecipesService.deleteRecipe(recipeId);
+
+            setRecipes(prev => prev.filter(recipe => recipe.id !== recipeId));
+
+            setTotalCount(prev => Math.max(0, prev - 1));
+
+            return true;
+        } catch (error) {
+            console.error("Ошибка при удалении рецепта:", error);
+            throw error;
+        }
+    };
+
     return (
         <RecipeContext.Provider
             value={{
@@ -162,7 +177,8 @@ export default function RecipeProvider({ children }) {
                 fetchRecipes,
                 getRecipeBySlug,
                 addRecipe,
-                getRecipesByAuthorId
+                getRecipesByAuthorId,
+                deleteRecipe
             }}
         >
             {children}
