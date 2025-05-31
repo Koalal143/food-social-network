@@ -241,4 +241,50 @@ export default class AuthService {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
     }
+
+    static async getPaginatedRecipes(offset = 0, limit = 10) {
+        try {
+            await tokenManager.ensureValidToken();
+
+            const accessToken = AuthService.getAccessToken();
+            if (!accessToken) {
+                throw new AuthError(ERROR_MESSAGES.not_authenticated);
+            }
+
+            const headers = {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            };
+
+            const url = new URL(`${BASE_API}/v1/users/me/recipes`);
+            url.searchParams.append('offset', offset.toString());
+            url.searchParams.append('limit', limit.toString());
+            
+            const response = await fetch(url.toString(), {headers: headers});
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                
+                if (response.status === 503) {
+                    throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+                }
+                
+                throw new Error(errorData.detail || 'Ошибка при загрузке рецептов');
+            }
+
+            const data = await response.json();
+            const totalCountHeader = response.headers.get('X-Total-Count');
+            
+            return {
+                data: data,
+                totalCount: parseInt(totalCountHeader, 10) || 0
+            };
+        } catch (error) {
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+            }
+            
+            throw error;
+        }
+    }
 }
