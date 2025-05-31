@@ -337,4 +337,61 @@ export default class RecipesService {
             throw error;
         }
     }
+
+    static async deleteRecipe(recipeId, options = {}) {
+        try {
+            await tokenManager.ensureValidToken();
+
+            const accessToken = AuthService.getAccessToken();
+            if (!accessToken) {
+                throw new AuthError(ERROR_MESSAGES.not_authenticated);
+            }
+
+            const headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            };
+
+            const response = await fetch(`${BASE_API}/v1/recipes/${recipeId}`, {
+                method: 'DELETE',
+                headers: headers
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+
+                if (response.status === 401) {
+                    if (errorData.error_key === 'token_expired') {
+                        throw new AuthError(ERROR_MESSAGES.token_expired);
+                    }
+                    throw new AuthError(errorData.detail || ERROR_MESSAGES.not_authenticated);
+                }
+
+                if (response.status === 403) {
+                    if (errorData.error_key === 'recipe_belongs_to_other_user') {
+                        throw new AuthError('У вас нет прав для удаления этого рецепта');
+                    }
+                    throw new AuthError(errorData.detail || ERROR_MESSAGES.insufficient_permissions);
+                }
+
+                if (response.status === 404) {
+                    if (errorData.error_key === 'recipe_not_found') {
+                        throw new NotFoundError(ERROR_MESSAGES.recipe_not_found);
+                    }
+                    throw new NotFoundError(errorData.detail || ERROR_MESSAGES.recipe_not_found);
+                }
+
+                throw new Error(errorData.detail || ERROR_MESSAGES.default);
+            }
+
+            return true;
+        } catch (error) {
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+            }
+
+            throw error;
+        }
+    }
 }
