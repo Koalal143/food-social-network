@@ -21,7 +21,7 @@ class RecipeRepository:
         return select(Recipe).where(Recipe.is_published.is_(True))
 
     def _get_with_author_short(self) -> Select[tuple[Recipe]]:
-        return self._main_query().options(
+        return select(Recipe).options(
             selectinload(Recipe.ingredients),
             selectinload(Recipe.instructions),
             selectinload(Recipe.tags),
