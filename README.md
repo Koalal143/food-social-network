@@ -67,7 +67,7 @@
    ```bash
    cp .env.example .env
    ```
-   Для детальной настройки .env смотрите ![документацию о переменных](ENV_VARIABLES.md)
+   Для детальной настройки .env смотрите ![документацию о переменных](docs/ENV_VARIABLES.md)
 3. **Запустите контейнеры с помощью `docker-compose`**
    ```bash
    docker compose up --build
