@@ -143,7 +143,6 @@ class RecipeRepository:
 
     async def _get_count_with_filters(self, additional_filters: list[Any] | None = None, **filters: Any) -> int:
         count_stmt = select(func.count(Recipe.id)).filter_by(**filters)
-
         if additional_filters:
             for filter_condition in additional_filters:
                 count_stmt = count_stmt.where(filter_condition)
