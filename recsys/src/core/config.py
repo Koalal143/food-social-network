@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -53,6 +54,7 @@ class Settings(BaseSettings):
     postgres: PostgresConfig
     asgi_faststream: AsgiFastStreamConfig
     nats: NatsConfig
+    mode: Literal["dev", "test", "prod"] = "prod"
 
 
 settings = Settings()
