@@ -17,19 +17,11 @@ class RecipeRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    def _main_query(self, recipe_id: int) -> Select[tuple[Recipe]]:
-        return (
-            select(Recipe)
-            .where(Recipe.id == recipe_id)
-            .options(
-                selectinload(Recipe.ingredients),
-                selectinload(Recipe.instructions),
-                selectinload(Recipe.tags),
-            )
-        )
+    def _main_query(self) -> Select[tuple[Recipe]]:
+        return select(Recipe).where(Recipe.is_published.is_(True))
 
     def _get_with_author_short(self) -> Select[tuple[Recipe]]:
-        return select(Recipe).options(
+        return self._main_query().options(
             selectinload(Recipe.ingredients),
             selectinload(Recipe.instructions),
             selectinload(Recipe.tags),
@@ -117,7 +109,7 @@ class RecipeRepository:
         additional_filters: list[Any] | None = None,
         **filters: Any,
     ) -> tuple[Select, list[RecipeWithExtra]]:
-        stmt = select(Recipe).offset(skip).limit(limit)
+        stmt = self._main_query().offset(skip).limit(limit)
         if filters:
             stmt = stmt.filter_by(**filters)
 
@@ -301,8 +293,8 @@ class RecipeRepository:
 
         result = await self.session.execute(stmt)
         row = result.first()
-        recipe, impressions_count = row
-        if recipe:
+        if row:
+            recipe, impressions_count = row
             recipe.is_on_favorites = False
             recipe.impressions_count = impressions_count
         return recipe
