@@ -65,6 +65,7 @@ export default function ProfileTabs({
                         loading={isFavoritesLoading}
                         hasMore={hasMore}
                         onLoadMore={loadMoreFavorites}
+                        source="favorites"
                     />
                 ) : (
                     <EmptyState 

@@ -69,7 +69,7 @@ export default function RecommendationsPage() {
   };
 
   const handleViewRecipe = (recipe) => {
-    router.push(`/recipe/${recipe.id}`);
+    router.push(`/recipe/${recipe.slug}?source=recs-detail`);
   };
 
   const handleRefresh = () => {
