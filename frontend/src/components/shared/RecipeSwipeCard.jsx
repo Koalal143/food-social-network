@@ -8,14 +8,14 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 
-const RecipeSwipeCard = ({ 
+export default function RecipeSwipeCard ({ 
   recipe, 
   direction = null,
   onSkip = () => console.log('Skip'), 
   onDislike = () => console.log('Dislike'), 
   onLike = () => console.log('Like'), 
   onViewRecipe = () => console.log('View recipe') 
-}) => {
+}) {
   const [isDragging, setIsDragging] = useState(false);
   const constraintsRef = useRef(null);
   const router = useRouter();
@@ -62,12 +62,6 @@ const RecipeSwipeCard = ({
       }
     })
   };
-
-  // Сброс direction после анимации выхода
-  const handleAnimationComplete = () => {
-    if (direction) setDirection(null);
-  };
-
   const handleDislike = () => {
     onDislike(recipe);
   };
@@ -272,55 +266,3 @@ const RecipeSwipeCard = ({
     </div>
   );
 };
-
-// Компонент демонстрации для тестирования
-const SwipeDemo = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const router = useRouter();
-  const [recipes] = useState([
-    {
-      id: 1,
-      title: "Паста Карбонара",
-      short_description: "Классическая итальянская паста с беконом, яйцами и сыром пармезан. Простое, но невероятно вкусное блюдо.",
-      image_url: "https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=600&fit=crop",
-      cook_time_minutes: 25,
-      difficulty: "MEDIUM",
-    },
-    {
-      id: 2,
-      title: "Суши роллы",
-      short_description: "Свежие суши роллы с лососем, авокадо и огурцом. Идеальный баланс вкусов японской кухни.",
-      image_url: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=600&fit=crop",
-      cook_time_minutes: 45,
-      difficulty: "HARD",
-    },
-    {
-      id: 3,
-      title: "Шоколадный торт",
-      short_description: "Нежный шоколадный торт с кремом из маскарпоне. Идеальный десерт для особых случаев.",
-      image_url: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=600&fit=crop",
-      cook_time_minutes: 90,
-      difficulty: "MEDIUM",
-    }
-  ]);
-
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % recipes.length);
-  };
-
-  return (
-    <div className="flex items-center justify-center">
-      <div className="max-w-md w-full">
-        <RecipeSwipeCard
-          recipe={recipes[currentIndex]}
-          onLike={handleNext}
-          onDislike={handleNext}
-          onSkip={handleNext}
-          onViewRecipe={(recipe) => router.push(`/recipe/${recipe.slug}?source=recs-detail`)}
-        />
-      </div>
-    </div>
-  );
-};
-
-export default SwipeDemo;
