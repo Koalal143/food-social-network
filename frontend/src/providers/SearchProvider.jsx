@@ -1,10 +1,7 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import SearchService from '@/services/search.service';
 import { handleApiError } from '@/utils/errorHandler';
-
-const SearchContext = createContext(null);
-
-export const useSearch = () => useContext(SearchContext);
+import { SearchContext } from '@/context/SearchContext';
 
 export const SearchProvider = ({ children }) => {
     const [searchResults, setSearchResults] = useState([]);
@@ -12,31 +9,97 @@ export const SearchProvider = ({ children }) => {
     const [searchError, setSearchError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchTotalCount, setSearchTotalCount] = useState(0);
+    const [offset, setOffset] = useState(0);
+    const limit = 10; // Можно вынести в пропсы или константу
+    const [hasMore, setHasMore] = useState(true);
+    const lastQueryRef = useRef('');
+    const loadingRef = useRef(false);
+    const debounceTimerRef = useRef(null);
 
-    const performSearch = useCallback(async (query, offset = 0, limit = 10) => {
+    // Основной поиск (сброс offset)
+    const performSearch = useCallback(async (query) => {
         setSearchLoading(true);
         setSearchError(null);
+        setOffset(0);
+        setHasMore(true);
         try {
-            const result = await SearchService.searchRecipes(query, offset, limit);
-            setSearchResults(prev => offset === 0 ? result.data : [...prev, ...result.data]);
+            const result = await SearchService.searchRecipes(query, {}, 0, limit);
+            setSearchResults(result.data);
             setSearchTotalCount(result.totalCount);
-            setSearchQuery(query); // Сохраняем текущий запрос
-            return result; // Возвращаем результат для возможной пагинации на странице поиска
+            setSearchQuery(query);
+            setOffset(result.data.length);
+            setHasMore(result.data.length < result.totalCount);
+            lastQueryRef.current = query;
+            return result;
         } catch (error) {
             const { message } = handleApiError(error);
             setSearchError(message);
-            console.error("Ошибка при выполнении поиска:", error);
-            throw error; // Пробрасываем ошибку дальше
+            setSearchResults([]);
+            setSearchTotalCount(0);
+            setHasMore(false);
+            throw error;
         } finally {
             setSearchLoading(false);
         }
     }, []);
+
+    // Догрузка следующей страницы с защитой от повторов и debounce
+    const loadMore = useCallback(() => {
+        if (loadingRef.current || !hasMore) return;
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+        debounceTimerRef.current = setTimeout(async () => {
+            if (loadingRef.current || !hasMore) return;
+            loadingRef.current = true;
+            setSearchLoading(true);
+            setSearchError(null);
+            try {
+                setOffset(prevOffset => {
+                    const currentOffset = prevOffset;
+                    SearchService.searchRecipes(lastQueryRef.current, {}, currentOffset, limit).then(result => {
+                        setSearchResults(prev => {
+                            const existingIds = new Set(prev.map(r => r.id));
+                            const uniqueNewRecipes = result.data.filter(r => !existingIds.has(r.id));
+                            return [...prev, ...uniqueNewRecipes];
+                        });
+                        const newOffset = currentOffset + result.data.length;
+                        if (result.data.length === 0) {
+                            setHasMore(false);
+                        } else {
+                            setHasMore(newOffset < result.totalCount);
+                        }
+                        setOffset(newOffset);
+                        setSearchTotalCount(result.totalCount);
+                        setSearchLoading(false);
+                        loadingRef.current = false;
+                    }).catch(error => {
+                        const { message } = handleApiError(error);
+                        setSearchError(message);
+                        setHasMore(false);
+                        setSearchLoading(false);
+                        loadingRef.current = false;
+                    });
+                    return currentOffset;
+                });
+            } catch (error) {
+                setSearchLoading(false);
+                loadingRef.current = false;
+            }
+        }, 300);
+    }, [hasMore, limit]);
 
     const clearSearchResults = useCallback(() => {
         setSearchResults([]);
         setSearchTotalCount(0);
         setSearchQuery('');
         setSearchError(null);
+        setOffset(0);
+        setHasMore(true);
+        lastQueryRef.current = '';
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
     }, []);
 
     return (
@@ -47,7 +110,9 @@ export const SearchProvider = ({ children }) => {
             searchQuery,
             searchTotalCount,
             performSearch,
-            clearSearchResults
+            clearSearchResults,
+            loadMore,
+            hasMore
         }}>
             {children}
         </SearchContext.Provider>
