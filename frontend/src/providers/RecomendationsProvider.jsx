@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react"
 import { RecomendationsContext } from "@/context/RecomendationsContext"
 import RecomendationsService from "@/services/recomendations.service"
+import { useAuth } from '@/context/AuthContext'
 
 export default function RecomendationsProvider({ children }) {
     const [recipes, setRecipes] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const LIMIT = 10
+    const { user } = useAuth()
 
     const fetchRecipes = async (append = false) => {
         try {
@@ -25,8 +27,12 @@ export default function RecomendationsProvider({ children }) {
     }
 
     useEffect(() => {
+        if (!user) {
+            setLoading(false)
+            return
+        }
         fetchRecipes()
-    }, [])
+    }, [user])
 
     return (
         <RecomendationsContext.Provider

@@ -3,6 +3,7 @@
 import { useState,useEffect, useCallback } from "react"
 import { FavoritesContext } from "@/context/FavoritesContext"
 import FavoritesService from "@/services/favorites.service"
+import { useAuth } from '@/context/AuthContext'
 
 export default function FavoritesProvider({ children }) {
     const [favorites, setFavorites] = useState([]) // Все избранные рецепты
@@ -10,6 +11,7 @@ export default function FavoritesProvider({ children }) {
     const [favoritesLoading, setFavoritesLoading] = useState({}) // Загрузка отдельных страниц
     const [favoritesError, setFavoritesError] = useState({}) // Ошибки
     const [favoritesTotalCount, setFavoritesTotalCount] = useState(0) // Общее количество избранных
+    const { user } = useAuth()
 
     const getFavorites = useCallback(async (offset = 0, limit = 10) => {
         try {
@@ -55,6 +57,10 @@ export default function FavoritesProvider({ children }) {
 
     // Для примера: при монтировании компонента можно загрузить первые избранные рецепты
     useEffect(() => {
+        if (!user) {
+            setLoading(false)
+            return
+        }
         const loadInitialData = async () => {
             try {
                 await getFavorites(0, 10)
@@ -64,9 +70,8 @@ export default function FavoritesProvider({ children }) {
                 setLoading(false)
             }
         }
-
         loadInitialData()
-    }, [])
+    }, [user])
 
     return (
         <FavoritesContext.Provider 

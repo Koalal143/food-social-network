@@ -40,7 +40,7 @@ export default class RecipesService {
             
             const data = await response.json();
             const totalCountHeader = response.headers.get('X-Total-Count');
-            
+
             return {
                 data: data,
                 totalCount: parseInt(totalCountHeader, 10) || 0

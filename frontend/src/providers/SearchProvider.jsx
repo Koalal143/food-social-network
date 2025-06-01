@@ -15,6 +15,16 @@ export const SearchProvider = ({ children }) => {
     const lastQueryRef = useRef('');
     const loadingRef = useRef(false);
     const debounceTimerRef = useRef(null);
+    
+    // Новое состояние для фильтров
+    const [filters, setFilters] = useState({
+        includeIngredients: [],
+        excludeIngredients: [],
+        tags: [],
+        cookTimeFrom: null,
+        cookTimeTo: null,
+        sortBy: ''
+    });
 
     // Основной поиск (сброс offset)
     const performSearch = useCallback(async (query) => {
@@ -23,7 +33,7 @@ export const SearchProvider = ({ children }) => {
         setOffset(0);
         setHasMore(true);
         try {
-            const result = await SearchService.searchRecipes(query, {}, 0, limit);
+            const result = await SearchService.searchRecipes(query, filters, 0, limit);
             setSearchResults(result.data);
             setSearchTotalCount(result.totalCount);
             setSearchQuery(query);
@@ -41,7 +51,13 @@ export const SearchProvider = ({ children }) => {
         } finally {
             setSearchLoading(false);
         }
-    }, []);
+    }, [filters]);
+
+    // Функция для обновления фильтров
+    const updateFilters = (newFilters) => {
+        setFilters(newFilters);
+        performSearch(searchQuery); // Перезапускаем поиск с новыми фильтрами
+    };
 
     // Догрузка следующей страницы с защитой от повторов и debounce
     const loadMore = useCallback(() => {
@@ -110,6 +126,7 @@ export const SearchProvider = ({ children }) => {
             searchQuery,
             searchTotalCount,
             performSearch,
+            updateFilters,
             clearSearchResults,
             loadMore,
             hasMore
