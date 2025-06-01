@@ -18,8 +18,11 @@ import { useFavorites } from '@/context/FavoritesContext'
 import { useRouter } from 'next/navigation'
 import { handleApiError } from '@/utils/errorHandler'
 
-export default function DeleteRecipeDialog({ recipe, className = "", trigger }) {
-    const [isOpen, setIsOpen] = useState(false)
+export default function DeleteRecipeDialog({ recipe, className = "", trigger, open, onOpenChange }) {
+    const [internalOpen, setInternalOpen] = useState(false)
+    const isControlled = open !== undefined && onOpenChange !== undefined
+    const isOpen = isControlled ? open : internalOpen
+    const setIsOpen = isControlled ? onOpenChange : setInternalOpen
     const [isDeleting, setIsDeleting] = useState(false)
     const { deleteRecipe } = useRecipes()
     const { removeFromFavoritesOnDelete } = useFavorites()

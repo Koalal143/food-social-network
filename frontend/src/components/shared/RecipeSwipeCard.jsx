@@ -5,8 +5,6 @@ import { ThumbsDown, Bookmark, Eye, FastForward, Clock, ChefHat } from 'lucide-r
 import { DIFFICULTY } from '@/constants/difficulty';
 import minutesToHuman from '@/utils/minutesToHuman';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-
 
 export default function RecipeSwipeCard ({ 
   recipe, 
@@ -18,7 +16,6 @@ export default function RecipeSwipeCard ({
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const constraintsRef = useRef(null);
-  const router = useRouter();
 
   // Motion values для плавной анимации
   const x = useMotionValue(0);
@@ -117,7 +114,7 @@ export default function RecipeSwipeCard ({
           className="relative w-full max-w-xs md:max-w-md aspect-[3/4] md:h-[650px] h-[70vw] min-h-[340px] rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl cursor-grab active:cursor-grabbing bg-white"
           whileHover={{ scale: 1.02, y: -5 }}
           whileTap={{ scale: 0.98 }}
-          onAnimationComplete={handleAnimationComplete}
+          // onAnimationComplete={handleAnimationComplete}
         >
           {/* Overlay индикаторы свайпа */}
           <motion.div 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,20 +13,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash } from "lucide-react";
+import { Plus, Trash, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRecipes } from '@/context/RecipeContext';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const AddRecipeForm = () => {
   const { addRecipe } = useRecipes()
 
-  const { control, handleSubmit, register, setValue } = useForm({
+  // Локальный стейт для тэгов
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
+  const [tagError, setTagError] = useState("");
+
+  const { control, handleSubmit, register, setValue, formState: { errors } } = useForm({
     defaultValues: {
       ingredients: [{ name: '', quantity: '' }],
       instructions: [{ step_number: 1, description: '', photo: null }],
       difficulty: '',
-      tag: ''
+      // tag: '' // убираем, теперь массив tags
     },
   });
   
@@ -62,9 +68,85 @@ const AddRecipeForm = () => {
   
   const { toast } = useToast();
 
+  // Валидация названия
+  const validateTitle = (value) => {
+    if (!value) return 'Название обязательно';
+    if (value.length > 135) return 'Название не должно превышать 135 символов';
+    const trimmed = value.trim();
+    if (trimmed.indexOf(' ') === -1 && trimmed.length > 25) {
+      return 'Название не должно быть одним длинным словом (>25 символов)';
+    }
+    return true;
+  };
+
+  // Валидация описания
+  const validateDescription = (value) => {
+    if (!value) return 'Описание обязательно';
+    if (value.length > 255) return 'Описание не должно превышать 255 символов';
+    return true;
+  };
+
+  // Валидация времени
+  const validateCookTime = (value) => {
+    if (!value) return 'Время обязательно';
+    const num = Number(value);
+    if (isNaN(num) || num <= 0) return 'Время должно быть больше 0';
+    if (num >= 1440) return 'Время не должно превышать 24 часа (1440 минут)';
+    return true;
+  };
+
+  // Функции для работы с тэгами
+  const handleAddTag = () => {
+    const newTag = tagInput.trim();
+    if (!newTag) return;
+    if (tags.length >= 15) {
+      setTagError('Максимум 15 тэгов');
+      return;
+    }
+    if (newTag.length > 30) {
+      setTagError('Тэг не должен превышать 30 символов');
+      return;
+    }
+    if (tags.includes(newTag)) {
+      setTagError('Такой тэг уже добавлен');
+      return;
+    }
+    setTags([...tags, newTag]);
+    setTagInput("");
+    setTagError("");
+  };
+  const handleRemoveTag = (idx) => {
+    setTags(tags.filter((_, i) => i !== idx));
+    setTagError("");
+  };
+
   const onSubmit = (data) => {
+    if (tags.length === 0) {
+      setTagError('Добавьте хотя бы один тэг');
+      return;
+    }
+    if (tags.length > 15) {
+      setTagError('Максимум 15 тэгов');
+      return;
+    }
+    if (data.ingredients.length > 50) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Максимум 50 ингредиентов',
+      });
+      return;
+    }
+    if (data.instructions.length > 50) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Максимум 50 шагов инструкции',
+      });
+      return;
+    }
     try {
-      addRecipe(data)
+      addRecipe({ ...data, tags });
       toast({
         title: "Рецепт успешно добавлен",
         description: "Ваш рецепт был сохранен.",
@@ -89,29 +171,70 @@ const AddRecipeForm = () => {
           <div className="space-y-2">
             <Label>Название рецепта</Label>
             <Input
-              {...register('title', { required: 'Название обязательно' })}
+              {...register('title', { validate: validateTitle })}
               type="text"
               placeholder="Введите название рецепта"
             />
+            {errors.title && <p className="text-destructive text-sm">{errors.title.message}</p>}
           </div>
 
           <div className="space-y-2">
             <Label>Описание</Label>
             <Textarea
-              {...register('short_description', { required: 'Описание обязательно' })}
+              {...register('short_description', { validate: validateDescription })}
               rows={3}
               placeholder="Краткое описание рецепта"
             />
+            {errors.short_description && <p className="text-destructive text-sm">{errors.short_description.message}</p>}
+          </div>
+
+          {/* Конструктор тэгов */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Label>Тэги</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" className="text-muted-foreground hover:text-primary">
+                      <Info className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Подбирайте тэги тщательнее, они влияют на продвижение вашего рецепта</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); }}}
+                placeholder="Введите тэг и нажмите Enter или +"
+                maxLength={30}
+              />
+              <Button type="button" onClick={handleAddTag} disabled={tags.length >= 15}>+</Button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {tags.map((tag, idx) => (
+                <span key={idx} className="bg-primary/10 px-2 py-1 rounded flex items-center gap-1">
+                  {tag}
+                  <button type="button" className="ml-1 text-destructive" onClick={() => handleRemoveTag(idx)}>&times;</button>
+                </span>
+              ))}
+            </div>
+            {tagError && <p className="text-destructive text-sm">{tagError}</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Время приготовления (в минутах)</Label>
               <Input
-                {...register('cook_time_minutes', { required: 'Время обязательно' })}
+                {...register('cook_time_minutes', { validate: validateCookTime })}
                 type="number"
                 placeholder="Например: 60"
               />
+              {errors.cook_time_minutes && <p className="text-destructive text-sm">{errors.cook_time_minutes.message}</p>}
             </div>
 
             {/* Порции */}
@@ -233,6 +356,7 @@ const AddRecipeForm = () => {
               )}
             </div>
           ))}
+          {ingredientFields.length > 50 && <p className="text-destructive text-sm">Максимум 50 ингредиентов</p>}
         </CardContent>
       </Card>
 
@@ -313,6 +437,7 @@ const AddRecipeForm = () => {
               )}
             </div>
           ))}
+          {instructionFields.length > 50 && <p className="text-destructive text-sm">Максимум 50 шагов</p>}
         </CardContent>
       </Card>
 
