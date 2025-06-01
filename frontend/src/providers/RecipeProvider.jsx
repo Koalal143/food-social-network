@@ -21,7 +21,7 @@ export default function RecipeProvider({ children }) {
             const currentOffset = resetExisting ? 0 : offset
             
             const { data, totalCount } = await RecipesService.getPaginatedRecipes(currentOffset, LIMIT)
-            
+
             setTotalCount(totalCount)
             
             const newOffset = resetExisting ? LIMIT : currentOffset + LIMIT;

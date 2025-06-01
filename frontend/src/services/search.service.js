@@ -65,6 +65,13 @@ export default class SearchService {
                 url.searchParams.append('sort_by', filters.sortBy.trim());
             }
 
+            if (filters.cookTimeFrom !== undefined && filters.cookTimeFrom !== null) {
+                url.searchParams.append('cook_time_from', filters.cookTimeFrom.toString());
+            }
+            if (filters.cookTimeTo !== undefined && filters.cookTimeTo !== null) {
+                url.searchParams.append('cook_time_to', filters.cookTimeTo.toString());
+            }
+
             console.log('SearchService: Итоговый URL для запроса:', url.toString());
 
             await tokenManager.ensureValidToken();

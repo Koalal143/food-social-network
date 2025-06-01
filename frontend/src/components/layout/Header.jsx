@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { LogOut, User, PlusCircle, Search, Menu, X } from 'lucide-react'
 import Container from './Container'
-import SearchInput from '../ui/SearchInput'
+import SearchInput from '../ui/search/SearchInput'
 import { useState } from 'react'
 
 export default function Header() {
