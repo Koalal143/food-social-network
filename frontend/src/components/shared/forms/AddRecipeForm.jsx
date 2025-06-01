@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRecipes } from '@/context/RecipeContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRouter } from 'next/navigation';
 
 const AddRecipeForm = () => {
   const { addRecipe } = useRecipes()
@@ -27,12 +28,13 @@ const AddRecipeForm = () => {
   const [tagInput, setTagInput] = useState("");
   const [tagError, setTagError] = useState("");
 
+  const router = useRouter();
+
   const { control, handleSubmit, register, setValue, formState: { errors } } = useForm({
     defaultValues: {
       ingredients: [{ name: '', quantity: '' }],
       instructions: [{ step_number: 1, description: '', photo: null }],
       difficulty: '',
-      // tag: '' // убираем, теперь массив tags
     },
   });
   
@@ -151,6 +153,7 @@ const AddRecipeForm = () => {
         title: "Рецепт успешно добавлен",
         description: "Ваш рецепт был сохранен.",
       });
+      router.push('/')
     } catch (error) {
       const { message, type } = handleApiError(error);
       toast({
@@ -236,42 +239,6 @@ const AddRecipeForm = () => {
               />
               {errors.cook_time_minutes && <p className="text-destructive text-sm">{errors.cook_time_minutes.message}</p>}
             </div>
-
-            {/* Порции */}
-            {/* <div className="space-y-2">
-              <Label>Количество порций</Label>
-              <Input
-                {...register('servings', { required: 'Количество порций обязательно' })}
-                type="number"
-                min="1"
-                placeholder="2"
-              />
-            </div> */}
-
-            {/* ТЭГИ */}
-            {/* <div className="space-y-2">
-              <Label>Тэг</Label>
-              <Controller
-                name="tag"
-                control={control}
-                rules={{ required: 'Сложность обязательна' }}
-                render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите сложность" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Завтрак">Завтрак</SelectItem>
-                      <SelectItem value="Обед">Обед</SelectItem>
-                      <SelectItem value="Ужин">Ужин</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div> */}
 
             <div className="space-y-2">
               <Label>Сложность</Label>
