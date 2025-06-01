@@ -43,8 +43,9 @@ export default function FavoritesProvider({ children }) {
 
     // Удаление рецепта из избранного
     const removeFavorite = (recipeId) => {
-        const updatedFavorites = FavoritesService.removeFromFavorites(recipeId)
-        setFavorites(updatedFavorites)
+        FavoritesService.removeFromFavorites(recipeId)
+        setFavorites(prev => prev.filter(recipe => recipe.id !== recipeId))
+        setFavoritesTotalCount(prev => Math.max(0, prev - 1))
     }
 
     const removeFromFavoritesOnDelete = (recipeId) => {
