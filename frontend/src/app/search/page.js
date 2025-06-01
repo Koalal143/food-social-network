@@ -10,11 +10,12 @@ import { ArrowLeft } from 'lucide-react';
 import InfiniteRecipesList from '@/components/shared/InfiniteRecipeList';
 import { useSearch } from '@/context/SearchContext';
 import { SearchProvider } from '@/providers/SearchProvider';
+import SearchFilters from '@/components/ui/search/SearchFilters';
 
 export default function SearchPage() {
   const router = useRouter();
   const { searchHistory, addToHistory } = useSearchHistory();
-  const { searchResults, searchLoading, searchError, searchQuery: contextSearchQuery, performSearch, loadMore, hasMore } = useSearch();
+  const { searchResults, searchLoading, searchError, searchQuery, performSearch, loadMore, hasMore, updateFilters } = useSearch();
 
   console.log("Search Results:", searchResults);
 
@@ -48,6 +49,8 @@ export default function SearchPage() {
             На главную
           </Button>
 
+          <SearchFilters filters={{}} onChange={updateFilters} />
+
           {!urlQuery && searchHistory.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-xl font-semibold">Недавние запросы</h3>
@@ -74,7 +77,7 @@ export default function SearchPage() {
               <p className="text-xl">Ошибка при выполнении поиска:</p>
               <p>{searchError}</p>
             </div>
-          ) : contextSearchQuery && searchResults && searchResults.length > 0 ? (
+          ) : searchQuery && searchResults && searchResults.length > 0 ? (
             <InfiniteRecipesList
               recipes={searchResults}
               loading={searchLoading}
@@ -82,10 +85,10 @@ export default function SearchPage() {
               onLoadMore={loadMore}
               source="search"
             />
-          ) : contextSearchQuery && searchResults ? (
+          ) : searchQuery && searchResults ? (
             <div className="text-center py-12">
               <p className="text-xl text-muted-foreground">
-                По запросу "{contextSearchQuery}" ничего не найдено
+                По запросу "{searchQuery}" ничего не найдено
               </p>
             </div>
           ) : (

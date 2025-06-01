@@ -17,7 +17,8 @@ export default class SearchHistoryService {
         }
 
         const response = await fetch(`${BASE_API}/v1/recipes/search/history?limit=5`, {
-            headers: headers
+            headers: headers,
+            credentials: 'include'
         })
         if (!response.ok) {
             throw new Error('Failed to fetch last five searches')
