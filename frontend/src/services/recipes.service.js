@@ -68,7 +68,15 @@ export default class RecipesService {
                 headers['Authorization'] = `Bearer ${accessToken}`;
             }
 
-            const response = await fetch(`${BASE_API}/v1/recipes/by-slug/${slug}?source=${source}`, {
+            let url = ''
+
+            if (source === null) {
+                url = `${BASE_API}/v1/recipes/by-slug/${slug}`
+            } else {
+                url = `${BASE_API}/v1/recipes/by-slug/${slug}?source=${source}`
+            }
+
+            const response = await fetch(url, {
                 headers: headers
             });
 

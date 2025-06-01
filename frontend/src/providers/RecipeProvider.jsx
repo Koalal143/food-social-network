@@ -70,7 +70,7 @@ export default function RecipeProvider({ children }) {
                 short_description: formData.short_description,
                 difficulty: formData.difficulty,
                 cook_time_minutes: formData.cook_time_minutes,
-                tags: [{ name: "Dinner" }],
+                tags: formData.tags.map(tag => ({ name: tag })),
                 ingredients: formData.ingredients
             };
     
@@ -166,6 +166,76 @@ export default function RecipeProvider({ children }) {
         }
     };
 
+    const isFile = v => v && typeof v === 'object' && (v instanceof File || v.constructor?.name === 'File');
+
+    const updateRecipe = async (formData) => {
+        try {
+            // 1. Обновляем основные поля
+            const updatedRecipe = {
+                id: formData.id,
+                title: formData.title,
+                short_description: formData.short_description,
+                difficulty: formData.difficulty,
+                cook_time_minutes: formData.cook_time_minutes,
+                tags: formData.tags.map(tag => ({ name: tag })),
+                ingredients: formData.ingredients,
+            };
+
+            console.log(formData);
+            
+
+            // 2. Фото блюда
+            let mainPhotoKey = formData.image_path;
+            if (isFile(formData.main_photo)) {
+                const mainPhotoPresigned = await RecipesService.getUploadImageUrl(formData.id);
+                await S3Service.uploadImage(mainPhotoPresigned, formData.main_photo);
+                mainPhotoKey = mainPhotoPresigned.fields.key;
+            }
+            // 3. Фото шагов
+            let presignedPostDatas = [];
+            const stepsWithPhotos = formData.instructions
+                .map((inst, idx) => ({ ...inst, idx }))
+                .filter(inst => isFile(inst.photo))
+                .map(inst => inst.step_number);
+            if (stepsWithPhotos.length > 0) {
+                presignedPostDatas = await RecipesService.getUploadInstructionsUrls(formData.id, stepsWithPhotos);
+                await Promise.all(
+                    presignedPostDatas.map(async (presignedData) => {
+                        const instruction = formData.instructions.find(
+                            inst => inst.step_number === presignedData.step_number
+                        );
+                        if (isFile(instruction?.photo)) {
+                            await S3Service.uploadImage(presignedData, instruction.photo);
+                        }
+                    })
+                );
+            }
+            // 4. Формируем массив инструкций с image_path
+            const instructions = formData.instructions.map(instruction => {
+                const presignedData = presignedPostDatas.find(
+                    item => item.step_number === instruction.step_number
+                );
+                return {
+                    step_number: instruction.step_number,
+                    description: instruction.description,
+                    image_path: presignedData?.fields?.key || instruction.image_path || null
+                };
+            });
+            // 5. Собираем финальный объект для PATCH
+            const recipeWithPhotos = {
+                ...updatedRecipe,
+                image_path: mainPhotoKey,
+                instructions,
+            };
+            const updated = await RecipesService.updateRecipe(recipeWithPhotos);
+            setRecipes(prev => prev.map(r => r.id === updated.id ? updated : r));
+            return updated;
+        } catch (error) {
+            setError(error);
+            throw error;
+        }
+    };
+
     return (
         <RecipeContext.Provider
             value={{
@@ -178,7 +248,8 @@ export default function RecipeProvider({ children }) {
                 getRecipeBySlug,
                 addRecipe,
                 getRecipesByAuthorId,
-                deleteRecipe
+                deleteRecipe,
+                updateRecipe
             }}
         >
             {children}
