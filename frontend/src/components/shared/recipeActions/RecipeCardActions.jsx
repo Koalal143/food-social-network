@@ -10,28 +10,18 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useAuth } from '@/context/AuthContext'
+import { useRouter } from 'next/navigation'
 import DeleteRecipeDialog from './DeleteRecipeDialog'
 
 export default function RecipeCardActions({ recipe, className = "" }) {
     const [isOpen, setIsOpen] = useState(false)
-    // const { user } = useAuth()
-
-    // Проверяем, может ли пользователь редактировать/удалять рецепт
-    // const canModifyRecipe = user && recipe && (
-    //     user.id === recipe.author?.id || user.is_superuser
-    // )
-
-    // Если пользователь не может модифицировать рецепт, не показываем меню
-    // if (!canModifyRecipe) {
-    //     return null
-    // }
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const router = useRouter()
 
     const handleEdit = (e) => {
         e.preventDefault()
         e.stopPropagation()
-        // TODO: Реализовать редактирование рецепта
-        console.log('Редактирование рецепта:', recipe.id)
+        router.push(`/recipe/edit/${recipe.slug}`)
     }
 
     return (
@@ -46,7 +36,7 @@ export default function RecipeCardActions({ recipe, className = "" }) {
                         <MoreVertical className="w-4 h-4" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" className="w-44">
                     <DropdownMenuItem onClick={handleEdit}>
                         <Edit className="w-4 h-4 mr-2" />
                         Редактировать
@@ -56,21 +46,20 @@ export default function RecipeCardActions({ recipe, className = "" }) {
                         className="text-destructive focus:text-destructive"
                         onSelect={(e) => {
                             e.preventDefault()
-                            setIsOpen(false)
+                            setIsDeleteDialogOpen(true)
                         }}
                     >
-                        <DeleteRecipeDialog 
-                            recipe={recipe}
-                            trigger={
-                                <div className="flex items-center w-full">
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Удалить
-                                </div>
-                            }
-                        />
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Удалить
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
+            <DeleteRecipeDialog
+                className="hidden"
+                recipe={recipe}
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+            />
         </div>
     )
 }

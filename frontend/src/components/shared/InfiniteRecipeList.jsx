@@ -23,9 +23,9 @@ export default function InfiniteRecipesList({ recipes, loading, hasMore, onLoadM
         observerRef.current = observer;
 
         return () => {
-        if (observerRef.current && loadMoreRef.current) {
-            observerRef.current.unobserve(loadMoreRef.current);
-        }
+            if (observerRef.current && loadMoreRef.current) {
+                observerRef.current.unobserve(loadMoreRef.current);
+            }
         };
     }, [loading, hasMore, onLoadMore]);
 

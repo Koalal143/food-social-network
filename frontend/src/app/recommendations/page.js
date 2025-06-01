@@ -67,11 +67,6 @@ export default function RecommendationsPage() {
     router.push(`/recipe/${recipe.slug}?source=recs-detail`);
   };
 
-  const handleRefresh = () => {
-    setCurrentIndex(0);
-    setDirection(null);
-  };
-
   useEffect(() => {
     // Если пользователь дошёл до конца массива — подгружаем новые рецепты
     if (currentIndex >= recipes.length - 1 && recipes.length > 0) {
@@ -171,18 +166,11 @@ export default function RecommendationsPage() {
                   🍽️
                 </motion.div>
                 <h3 className="text-gray-700 text-lg md:text-xl font-bold mb-2 text-center">
-                  Рецепты закончились
+                  Нам еще не понятно, что вам нравится
                 </h3>
                 <p className="text-gray-500 text-sm md:text-base text-center mb-4 px-2 md:px-4">
-                  Попробуйте обновить рекомендации
+                  Попробуйте добавлять рецепты в избранное, чтобы мы могли понять ваши предпочтения.
                 </p>
-                <Button 
-                  onClick={handleRefresh}
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium px-6 py-2 rounded-full shadow-lg text-base md:text-sm"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Обновить список
-                </Button>
               </motion.div>
             )}
           </AnimatePresence>

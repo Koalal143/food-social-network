@@ -64,7 +64,7 @@ export default function RecipePage({ params }) {
         if (isSaved) {
             removeFavorite(recipe.id);
         } else {
-            addFavorite(recipe.id, 'feed'); // TODO: change to 'feed-detail'
+            addFavorite(recipe.id);
         }
         setIsSaved(!isSaved);
     };
@@ -85,65 +85,65 @@ export default function RecipePage({ params }) {
     return (
         <Container>
         <article className="py-8">
-            <div className="max-w-3xl mx-auto space-y-8 bg-secondary/60 rounded-lg pb-4">
-            {/* Фотография и кнопки */}
-            <div className="relative aspect-[16/9] rounded-t-lg overflow-hidden">
-                <Image
-                src={recipe.image_url || '/images/image-dummy.svg'}
-                alt={recipe.title}
-                fill
-                className="object-cover"
-                priority
-                unoptimized={true}
-                />
-                <div className="absolute top-4 right-4 flex gap-2">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="bg-background/80 backdrop-blur rounded-full"
-                    onClick={handleSave}
-                    disabled={!isAuth}
-                >
-                    <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-primary' : ''} ${!isAuth && 'text-gray-500'}`} />
-                </Button>
-                <CopyLinkButton
-                    link={`${window.location.origin}/recipe/${recipe.slug}?source=shared`}
-                    tooltipText="Скопировать ссылку на рецепт"
-                />
-                {canDeleteRecipe() && (
-                    <DeleteRecipeDialog
-                        recipe={recipe}
-                        trigger={
-                            <Button
-                                variant="destructive"
-                                size="icon"
-                                className="bg-destructive/80 backdrop-blur rounded-full hover:bg-destructive"
-                            >
-                                <Trash2 className="w-5 h-5" />
-                            </Button>
-                        }
+            <div className="max-w-3xl mx-auto space-y-8 bg-secondary/100 rounded-3xl pb-4">
+                {/* Фотография и кнопки */}
+                <div className="relative aspect-[16/9] rounded-t-3xl overflow-hidden">
+                    <Image
+                    src={recipe.image_url || '/images/image-dummy.svg'}
+                    alt={recipe.title}
+                    fill
+                    className="object-cover"
+                    priority
+                    unoptimized={true}
                     />
-                )}
+                    <div className="absolute top-0 right-0 flex gap-2 bg-background backdrop-blur p-1.5 rounded-bl-3xl">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="bg-transparent backdrop-blur rounded-full"
+                            onClick={handleSave}
+                            disabled={!isAuth}
+                        >
+                            <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-primary' : ''} ${!isAuth && 'text-gray-500'}`} />
+                        </Button>
+                        <CopyLinkButton
+                            link={`${window.location.origin}/recipe/${recipe.slug}?source=shared`}
+                            tooltipText="Скопировать ссылку на рецепт"
+                        />
+                        {canDeleteRecipe() && (
+                            <DeleteRecipeDialog
+                                recipe={recipe}
+                                trigger={
+                                    <Button
+                                        variant="destructive"
+                                        size="icon"
+                                        className="bg-destructive/80 backdrop-blur rounded-full hover:bg-destructive"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </Button>
+                                }
+                            />
+                        )}
+                    </div>
                 </div>
-            </div>
 
-            {/* Заголовок */}
-            <div className="space-y-2 m-4">
-                <h1 className="text-3xl font-bold tracking-tight">{recipe.title}</h1>
-                <p className="text-lg text-muted-foreground">{recipe.short_description}</p>
-            </div>
+                {/* Заголовок */}
+                <div className="space-y-2 m-4">
+                    <h1 className="text-3xl font-bold tracking-tight">{recipe.title}</h1>
+                    <p className="text-lg text-muted-foreground">{recipe.short_description}</p>
+                </div>
 
-            {/* Информация о рецепте */}
-            <RecipeInfoCards recipe={recipe} />
+                {/* Информация о рецепте */}
+                <RecipeInfoCards recipe={recipe} />
 
-            {/* Карточка автора */}
-            <AuthorCard author={recipe.author} />
+                {/* Карточка автора */}
+                <AuthorCard author={recipe.author} />
 
-            {/* Ингредиенты */}
-            <RecipeIngridients recipe={recipe} />
+                {/* Ингредиенты */}
+                <RecipeIngridients recipe={recipe} />
 
-            {/* Инструкция */}
-            <RecipeInstruction recipe={recipe} />
+                {/* Инструкция */}
+                <RecipeInstruction recipe={recipe} />
             </div>
         </article>
         </Container>
