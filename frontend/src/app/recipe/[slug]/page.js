@@ -129,8 +129,10 @@ export default function RecipePage({ params }) {
 
                 {/* Заголовок */}
                 <div className="space-y-2 m-4">
-                    <h1 className="text-3xl font-bold tracking-tight">{recipe.title}</h1>
-                    <p className="text-lg text-muted-foreground">{recipe.short_description}</p>
+                    <h1 className="text-3xl font-bold tracking-tight overflow-wrap break-word word-break break-all">{recipe.title}</h1>
+                    <p className="text-lg text-muted-foreground overflow-wrap break-word word-break break-all">
+                        {recipe.short_description}
+                    </p>
                 </div>
 
                 {/* Информация о рецепте */}
