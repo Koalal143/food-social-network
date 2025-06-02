@@ -115,12 +115,12 @@ export default function RecipeCard({ recipe, source='feed', editable }) {
                     </div>
                     
                     {/* Content */}
-                    <div className="p-4 sm:p-5 flex-1 flex flex-col gap-2.5">
-                        <h3 className="font-semibold text-lg sm:text-xl leading-tight text-gray-900 line-clamp-2 group-hover:text-primary transition-colors duration-200">
+                    <div className="p-4 sm:p-5 flex-1 flex flex-col gap-2.5 overflow-hidden">
+                        <h3 className="truncate font-semibold text-lg sm:text-xl leading-tight text-gray-900 group-hover:text-primary transition-colors duration-200">
                             {recipe.title}
                         </h3>
-                        
-                        <p className="text-gray-600 text-sm sm:text-base leading-relaxed line-clamp-2 flex-1">
+  
+                        <p className="truncate text-gray-600 text-sm sm:text-base leading-relaxed">
                             {recipe.short_description}
                         </p>
                     </div>
