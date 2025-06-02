@@ -8,21 +8,24 @@ import EggBackground from "@/components/ui/EggBackground";
 export default function RegistrationPage() {
   return (
     <>
-      <EggBackground />
-      <Container className="h-[calc(100vh-200px)] flex items-center justify-center overflow-hidden">
-        <div className="w-full max-w-md space-y-6 bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-lg border border-gray-100">
-          <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold">Регистрация</h1>
-          </div>
-          <RegistrationForm />
-          <p className="text-center text-sm text-gray-600">
-            Уже есть аккаунт?{" "}
-            <Link href="/login" className="text-orange-500 hover:text-orange-600 font-medium hover:underline">
-              Войти
-            </Link>
-          </p>
-        </div>
-      </Container>
+        <EggBackground />
+        <Container className="h-screen flex items-center justify-center overflow-hidden">
+            <div className="w-full max-w-md space-y-6 bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-lg border border-gray-100">
+            <div className="space-y-2 text-center">
+                <h1 className="text-3xl font-bold">Регистрация</h1>
+            </div>
+            <RegistrationForm />
+            <div className='text-center text-sm'>
+                Нажимая на кнопку, вы даете согласие на <a className="text-blue-600 hover:underline" href='/docs/policy'>обработку персональных данных</a>.
+            </div>
+            <p className="text-center text-sm text-gray-600">
+                Уже есть аккаунт?{" "}
+                <Link href="/login" className="text-orange-500 hover:text-orange-600 font-medium hover:underline">
+                    Войти
+                </Link>
+            </p>
+            </div>
+        </Container>
     </>
   );
 }
