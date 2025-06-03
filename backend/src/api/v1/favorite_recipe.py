@@ -1,9 +1,10 @@
 from typing import Annotated
 
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, Path, Query, Response, status
 
 from src.core.security import CurrentUserDependency
-from src.dependencies import S3StorageDependency, UnitOfWorkDependency
+from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions import AppHTTPException, RecipeNotFoundError
 from src.exceptions.favorite_recipe import RecipeAlreadyInFavoritesError, RecipeNotInFavoritesError
 from src.schemas.favorite_recipe import FavoriteRecipeCreate
@@ -12,7 +13,7 @@ from src.services.favorite_recipe import FavoriteRecipeService
 from src.services.recipe import RecipeService
 from src.utils.examples_factory import json_example_factory
 
-router = APIRouter(prefix="/favorite-recipes", tags=["Favorite Recipes"])
+router = APIRouter(route_class=DishkaRoute, prefix="/favorite-recipes", tags=["Favorite Recipes"])
 
 
 _favorite_recipe_example = {
@@ -38,15 +39,13 @@ _favorite_recipe_example = {
     "The total count of recipes is returned in the X-Total-Count header. "
     "Authentication required.",
 )
-async def get_favorite_recipes(  # noqa: PLR0913
+async def get_favorite_recipes(
     current_user: CurrentUserDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    favorite_service: FromDishka[FavoriteRecipeService],
     response: Response,
     offset: Annotated[int, Query(ge=0, description="Смещение для пагинации")] = 0,
     limit: Annotated[int, Query(ge=1, le=50, description="Количество рецептов на странице")] = 10,
 ) -> list[RecipeReadShort]:
-    favorite_service = FavoriteRecipeService(uow=uow, s3_storage=s3_storage)
     total, favorites = await favorite_service.get_user_favorites(user_id=current_user.id, skip=offset, limit=limit)
     response.headers["X-Total-Count"] = str(total)
     return favorites
@@ -56,7 +55,8 @@ async def get_favorite_recipes(  # noqa: PLR0913
     "",
     status_code=status.HTTP_200_OK,
     summary="Add recipe to favorites",
-    description="Adds a recipe to user's favorites. Authentication required.",
+    description="Adds a recipe to user's favorites. If the recipe is already in dislikes, "
+    "it will be automatically removed from there. Authentication required.",
     responses={
         status.HTTP_200_OK: {
             "description": "Recipe added to favorites successfully",
@@ -79,18 +79,25 @@ async def get_favorite_recipes(  # noqa: PLR0913
 async def add_to_favorites(
     favorite_data: FavoriteRecipeCreate,
     current_user: CurrentUserDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    favorite_service: FromDishka[FavoriteRecipeService],
+    recipe_service: FromDishka[RecipeService],
+    uow: FromDishka[SQLAlchemyUnitOfWork],
 ) -> RecipeReadFull:
-    favorite_service = FavoriteRecipeService(uow=uow, s3_storage=s3_storage)
-    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
-    try:
-        await favorite_service.add_to_favorites(user=current_user, favorite_data=favorite_data)
-        return await recipe_service.get_by_id(recipe_id=favorite_data.recipe_id, user_id=current_user.id)
-    except RecipeNotFoundError as e:
-        raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
-    except RecipeAlreadyInFavoritesError as e:
-        raise AppHTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e), error_key=e.error_key) from None
+    async with uow:
+        try:
+            await favorite_service.add_to_favorites(user=current_user, favorite_data=favorite_data)
+            result = await recipe_service.get_by_id(recipe_id=favorite_data.recipe_id, user_id=current_user.id)
+            await uow.commit()
+        except RecipeNotFoundError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
+            ) from None
+        except RecipeAlreadyInFavoritesError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e), error_key=e.error_key
+            ) from None
+        else:
+            return result
 
 
 @router.delete(
@@ -116,13 +123,18 @@ async def add_to_favorites(
 async def remove_from_favorites(
     recipe_id: Annotated[int, Path(title="Recipe ID", ge=1)],
     current_user: CurrentUserDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    favorite_service: FromDishka[FavoriteRecipeService],
+    uow: FromDishka[SQLAlchemyUnitOfWork],
 ) -> None:
-    favorite_service = FavoriteRecipeService(uow=uow, s3_storage=s3_storage)
-    try:
-        await favorite_service.remove_from_favorites(user=current_user, recipe_id=recipe_id)
-    except RecipeNotFoundError as e:
-        raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
-    except RecipeNotInFavoritesError as e:
-        raise AppHTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e), error_key=e.error_key) from None
+    async with uow:
+        try:
+            await favorite_service.remove_from_favorites(user=current_user, recipe_id=recipe_id)
+            await uow.commit()
+        except RecipeNotFoundError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
+            ) from None
+        except RecipeNotInFavoritesError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e), error_key=e.error_key
+            ) from None

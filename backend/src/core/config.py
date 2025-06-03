@@ -61,12 +61,23 @@ class ElasticSearchConfig(BaseModel):
     password: str
 
 
+class CookiePolicyConfig(BaseModel):
+    httponly: bool = True
+    samesite: str = "lax"
+    secure: bool = False
+
+
+class NatsConfig(BaseModel):
+    url: str = "nats://nats:4222"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_nested_delimiter="__",
-        env_file=PATH / ".env",
+        env_file=PATH.parent / ".env",
         extra="ignore",
+        env_prefix="API__"
     )
 
     project_name: str = "Food Social Network"
@@ -74,8 +85,10 @@ class Settings(BaseSettings):
     postgres: PostgresConfig
     s3_storage: S3Config
     jwt: JWTConfig
+    cookie_policy: CookiePolicyConfig
     redis: RedisConfig
     elasticsearch: ElasticSearchConfig
+    nats: NatsConfig = NatsConfig()
     mode: Literal["dev", "test", "prod"] = Field(default="prod", description="Application mode")
 
 

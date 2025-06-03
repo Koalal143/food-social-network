@@ -166,6 +166,7 @@ export default function ProfileIdPage({ params }) {
                 loading={isLoading}
                 hasMore={hasMore}
                 onLoadMore={loadMoreRecipes}
+                source="author-page"
             />
             
             {recipes.length === 0 && !isLoading && (

@@ -142,6 +142,10 @@ export default function AuthProvider({ children }) {
         }
     }
 
+    const isAuth = useMemo(() => {
+        return user !== null
+    }, [user])
+
     const contextValue = useMemo(() => ({
         user,
         loading,
@@ -153,7 +157,8 @@ export default function AuthProvider({ children }) {
         updateProfile,
         updateAvatar,
         deleteAvatar,
-        clearError
+        clearError,
+        isAuth
     }), [
         user,
         loading,
@@ -165,7 +170,8 @@ export default function AuthProvider({ children }) {
         updateProfile,
         updateAvatar,
         deleteAvatar,
-        clearError
+        clearError,
+        isAuth
     ])
 
     return (

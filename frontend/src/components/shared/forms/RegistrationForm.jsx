@@ -161,7 +161,7 @@ export default function RegistrationForm() {
             />
             <Button 
               type="submit" 
-              className="w-full"
+              className="w-full bg-orange-400 hover:bg-orange-500 text-white font-medium"
               disabled={isLoading}
             >
               {isLoading ? "Регистрация..." : "Зарегистрироваться"}

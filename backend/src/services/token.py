@@ -1,10 +1,8 @@
 from datetime import UTC, datetime, timedelta
 
 from jose import ExpiredSignatureError, JWTError, jwt
-from redis.asyncio import Redis
 
 from src.core.config import settings
-from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions.auth import (
     InactiveOrNotExistingUserError,
     InvalidJWTError,
@@ -13,13 +11,18 @@ from src.exceptions.auth import (
 )
 from src.models.token import RefreshToken
 from src.models.user import User
+from src.repositories.interfaces import RefreshTokenRepositoryProtocol, UserRepositoryProtocol
 from src.schemas.token import Token
 
 
 class TokenService:
-    def __init__(self, uow: SQLAlchemyUnitOfWork, redis: Redis) -> None:
-        self.uow = uow
-        self.redis = redis
+    def __init__(
+        self,
+        refresh_token_repository: RefreshTokenRepositoryProtocol,
+        user_repository: UserRepositoryProtocol,
+    ) -> None:
+        self.refresh_token_repository = refresh_token_repository
+        self.user_repository = user_repository
 
     def create_access_token(self, data: dict, expires_delta: timedelta | None = None) -> str:
         to_encode = data.copy()
@@ -56,7 +59,7 @@ class TokenService:
             raise InvalidTokenError(msg)
 
         user_id = int(user_id_str)
-        user = await self.uow.users.get(user_id)
+        user = await self.user_repository.get(user_id)
         if not user or not user.is_active:
             msg = "Could not validate credentials: user is inactive or user does not exists"
             raise InactiveOrNotExistingUserError(msg)
@@ -70,19 +73,17 @@ class TokenService:
             expires_delta=timedelta(days=settings.jwt.refresh_token_expire_days),
         )
 
-        await self.redis.set(
-            f"refresh_token:{refresh_token}",
-            "1",
-            ex=settings.jwt.refresh_token_expire_days * 24 * 60 * 60,
+        await self.refresh_token_repository.cache_refresh_token(
+            token=refresh_token,
+            expires_in=settings.jwt.refresh_token_expire_days * 24 * 60 * 60,
         )
 
         expires_at = datetime.now(tz=UTC) + timedelta(days=settings.jwt.refresh_token_expire_days)
-        await self.uow.refresh_tokens.create(
+        await self.refresh_token_repository.create(
             user_id=user_id,
             token=refresh_token,
             expires_at=expires_at,
         )
-        await self.uow.commit()
 
         return Token(
             access_token=access_token,
@@ -91,17 +92,16 @@ class TokenService:
 
 
 class RefreshTokenService:
-    def __init__(self, uow: SQLAlchemyUnitOfWork, redis: Redis) -> None:
-        self.uow = uow
-        self.redis = redis
+    def __init__(self, refresh_token_repository: RefreshTokenRepositoryProtocol) -> None:
+        self.refresh_token_repository = refresh_token_repository
 
     async def verify_refresh_token(self, token: str) -> RefreshToken:
-        token_in_redis = await self.redis.get(f"refresh_token:{token}")
-        if not token_in_redis:
+        token_in_cache = await self.refresh_token_repository.get_cached_refresh_token(token)
+        if not token_in_cache:
             msg = "Invalid refresh token"
             raise InvalidTokenError(msg)
 
-        refresh_token = await self.uow.refresh_tokens.get_by_token(token)
+        refresh_token = await self.refresh_token_repository.get_by_token(token)
         if not refresh_token:
             msg = "Invalid refresh token"
             raise InvalidTokenError(msg)
@@ -109,18 +109,15 @@ class RefreshTokenService:
         return refresh_token
 
     async def update_token(self, refresh_token: RefreshToken, new_token: str, new_expires_at: datetime) -> RefreshToken:
-        await self.uow.refresh_tokens.update(refresh_token, new_token=new_token, new_expires_at=new_expires_at)
-        await self.uow.commit()
+        await self.refresh_token_repository.update(refresh_token, new_token=new_token, new_expires_at=new_expires_at)
         return refresh_token
 
     async def deactivate(self, refresh_token: RefreshToken) -> None:
-        await self.uow.refresh_tokens.deactivate(refresh_token)
-        await self.uow.commit()
+        await self.refresh_token_repository.deactivate(refresh_token)
 
-    async def generate_new_refresh_token(self, refresh_token_str: str) -> Token:
+    async def generate_new_refresh_token(self, refresh_token_str: str, token_service: TokenService) -> Token:
         refresh_token_model = await self.verify_refresh_token(refresh_token_str)
 
-        token_service = TokenService(uow=self.uow, redis=self.redis)
         access_token = token_service.create_access_token(data={"sub": str(refresh_token_model.user_id)})
         new_refresh_token = token_service.create_access_token(
             data={"sub": str(refresh_token_model.user_id)},
@@ -134,11 +131,10 @@ class RefreshTokenService:
             new_expires_at=expires_at,
         )
 
-        await self.redis.delete(f"refresh_token:{refresh_token_str}")
-        await self.redis.set(
-            f"refresh_token:{new_refresh_token}",
-            "1",
-            ex=settings.jwt.refresh_token_expire_days * 24 * 60 * 60,
+        await self.refresh_token_repository.delete_cached_refresh_token(refresh_token_str)
+        await self.refresh_token_repository.cache_refresh_token(
+            token=new_refresh_token,
+            expires_in=settings.jwt.refresh_token_expire_days * 24 * 60 * 60,
         )
 
         return Token(

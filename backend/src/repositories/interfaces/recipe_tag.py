@@ -1,0 +1,16 @@
+from collections.abc import Sequence
+from typing import Any, Protocol
+
+from src.models.recipe_tag import RecipeTag
+
+
+class RecipeTagRepositoryProtocol(Protocol):
+    async def get_by_id(self, tag_id: int) -> RecipeTag | None: ...
+
+    async def get_all(self, skip: int = 0, limit: int = 100) -> Sequence[RecipeTag]: ...
+
+    async def create(self, **fields: Any) -> RecipeTag: ...
+
+    async def bulk_create(self, tags_list: list[dict[str, Any]]) -> Sequence[RecipeTag]: ...
+
+    async def delete_by_recipe_id(self, recipe_id: int) -> None: ...

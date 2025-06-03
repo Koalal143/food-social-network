@@ -7,8 +7,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models.base import Base
 
 if TYPE_CHECKING:
+    from src.models.disliked_recipes import DislikedRecipe
     from src.models.favorite_recipes import FavoriteRecipe
     from src.models.recipe import Recipe
+    from src.models.recipe_impression import RecipeImpression
+    from src.models.search_query import SearchQuery
     from src.models.token import RefreshToken
     from src.models.user_profile import UserProfile
 
@@ -26,4 +29,7 @@ class User(Base):
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
     profile: Mapped["UserProfile"] = relationship(back_populates="user", uselist=False)
     recipes: Mapped[list["Recipe"]] = relationship(back_populates="author")
+    recipe_impressions: Mapped[list["RecipeImpression"]] = relationship(back_populates="user")
     favorite_recipes: Mapped[list["FavoriteRecipe"]] = relationship(back_populates="user")
+    disliked_recipes: Mapped[list["DislikedRecipe"]] = relationship(back_populates="user")
+    search_queries: Mapped[list["SearchQuery"]] = relationship(back_populates="user")

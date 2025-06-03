@@ -8,13 +8,16 @@ dependencies = [
     "aiobotocore==2.21.1",
     "alembic>=1.13.1",
     "asyncpg>=0.29.0",
+    "dishka[fastapi]>=1.6.0",
     "elasticsearch>=9.0.1",
     "fastapi>=0.109.0",
+    "faststream[nats]>=0.5.42",
     "passlib[argon2]>=1.7.4",
     "pydantic[email]>=2.5.3",
     "pydantic-settings>=2.1.0",
     "python-jose>=3.4.0",
     "python-multipart>=0.0.20",
+    "python-slugify>=8.0.4",
     "redis>=5.2.1",
     "sqlalchemy>=2.0.25",
     "uvicorn[standard]>=0.27.0",
@@ -71,6 +74,7 @@ lint.ignore = [
     "ARG001", # unused function argument
     "ANN401", # disallow Any type
     "RUF001", # string contrains ambigious o
+    "PLR0913", # too many arguments in function signature
 ]
 format.skip-magic-trailing-comma = false
 

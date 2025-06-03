@@ -1,10 +1,16 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, Response, status
+from dishka.integrations.fastapi import DishkaRoute, FromDishka
+from fastapi import APIRouter, Path, Query, Response, status
 from pydantic import PositiveInt
 
-from src.core.security import CurrentUserDependency, CurrentUserOrNoneDependency, get_current_user
-from src.dependencies import S3StorageDependency, UnitOfWorkDependency
+from src.core.security import (
+    AnonymousUserOrNoneDependency,
+    CurrentUserDependency,
+    CurrentUserOrNoneDependency,
+)
+from src.db.uow import SQLAlchemyUnitOfWork
+from src.enums.recipe_get_source import RecipeGetSourceEnum
 from src.exceptions import (
     AppHTTPException,
     AttachInstructionStepError,
@@ -13,6 +19,7 @@ from src.exceptions import (
     RecipeNotFoundError,
     RecipeOwnershipError,
 )
+from src.exceptions.recipe_impression import RecipeImpressionAlreadyExistsError
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.recipe import (
     MAX_RECIPE_INSTRUCTIONS_COUNT,
@@ -21,70 +28,14 @@ from src.schemas.recipe import (
     RecipeRead,
     RecipeReadFull,
     RecipeReadShort,
-    RecipeSearchQuery,
     RecipeUpdate,
 )
 from src.services.recipe import RecipeService
+from src.services.recipe_impression import RecipeImpressionService
 from src.services.recipe_instructions import RecipeInstructionsService
 from src.utils.examples_factory import json_example_factory, json_examples_factory
 
-router = APIRouter(prefix="/recipes", tags=["Recipes"])
-
-
-_recipe_example = {
-    "id": 1,
-    "title": "Паста Карбонара",
-    "short_description": "Классическая итальянская паста с беконом и сыром",
-    "image_url": "https://example.com/images/recipes/1/main.png",
-    "difficulty": "MEDIUM",
-    "cook_time_minutes": 30,
-    "is_published": True,
-    "created_at": "2025-05-10T12:00:00Z",
-    "updated_at": "2025-05-10T14:30:00Z",
-    "ingredients": [
-        {"name": "Спагетти", "quantity": "200 г"},
-        {"name": "Бекон", "quantity": "150 г"},
-        {"name": "Яйца", "quantity": "2 шт"},
-    ],
-    "instructions": [
-        {"step_number": 1, "description": "Отварите спагетти", "image_url": None},
-        {
-            "step_number": 2,
-            "description": "Обжарьте бекон",
-            "image_url": "https://example.com/images/recipes/1/instructions/2/step.png",
-        },
-    ],
-    "tags": [{"name": "Итальянская кухня"}, {"name": "Ужин"}],
-}
-
-_recipe_full_example = {
-    **_recipe_example,
-    "author": {
-        "id": 1,
-        "username": "john_doe",
-        "profile": {"avatar_url": "https://example.com/images/avatars/1.jpg"},
-    },
-}
-
-
-@router.get(
-    "/search",
-    summary="Search recipes",
-    description="Search recipes by different criteria using Elasticsearch",
-    responses={
-        200: {"headers": {"X-Total-Count": {"description": "Total number of found recipes", "type": "integer"}}}
-    },
-)
-async def search_recipes(
-    query: Annotated[RecipeSearchQuery, Query()],
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
-    response: Response,
-) -> list[RecipeReadShort]:
-    es_service = RecipeService(uow=uow, s3_storage=s3_storage)
-    total, recipes = await es_service.search(query)
-    response.headers["X-Total-Count"] = str(total)
-    return recipes
+router = APIRouter(route_class=DishkaRoute, prefix="/recipes", tags=["Recipes"])
 
 
 @router.get(
@@ -94,7 +45,6 @@ async def search_recipes(
     responses={
         status.HTTP_200_OK: {
             "description": "Successful response with recipe details",
-            "content": json_example_factory(_recipe_full_example),
         },
         status.HTTP_404_NOT_FOUND: {
             "description": "Recipe not found",
@@ -106,16 +56,77 @@ async def search_recipes(
 )
 async def get_recipe(
     recipe_id: Annotated[int, Path(title="Recipe ID", ge=1)],
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    recipe_service: FromDishka[RecipeService],
+    recipe_impression: FromDishka[RecipeImpressionService],
+    anonymous_user: AnonymousUserOrNoneDependency,
     current_user: CurrentUserOrNoneDependency,
+    uow: FromDishka[SQLAlchemyUnitOfWork],
+    source: Annotated[RecipeGetSourceEnum | None, Query(description="Source of the request")] = None,
 ) -> RecipeReadFull:
-    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
     try:
         user_id = current_user.id if current_user else None
-        return await recipe_service.get_by_id(recipe_id=recipe_id, user_id=user_id)
+        recipe = await recipe_service.get_by_id(recipe_id=recipe_id, user_id=user_id)
     except RecipeNotFoundError as e:
         raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
+    else:
+        async with uow:
+            try:
+                if current_user:
+                    await recipe_impression.record_impression(user_id=user_id, recipe_id=recipe_id, source=source)
+                elif anonymous_user:
+                    await recipe_impression.record_impression_for_anonymous(
+                        recipe_id=recipe_id,
+                        anonymous_user_id=anonymous_user.id,
+                        source=source,
+                    )
+                await uow.commit()
+            except RecipeImpressionAlreadyExistsError:
+                pass
+        return recipe
+
+
+@router.get(
+    "/by-slug/{slug}",
+    summary="Get recipe by slug",
+    description="Returns detailed information about a recipe using its URL-friendly slug identifier.",
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "description": "Recipe not found",
+            "content": json_example_factory(
+                {"detail": "Recipe with slug 'non-existent-recipe-999' not found", "error_key": "recipe_not_found"}
+            ),
+        },
+    },
+)
+async def get_recipe_by_slug(
+    slug: Annotated[str, Path(title="Recipe slug", description="URL-friendly recipe identifier")],
+    recipe_service: FromDishka[RecipeService],
+    current_user: CurrentUserOrNoneDependency,
+    uow: FromDishka[SQLAlchemyUnitOfWork],
+    recipe_impression: FromDishka[RecipeImpressionService],
+    anonymous_user: AnonymousUserOrNoneDependency,
+    source: Annotated[RecipeGetSourceEnum | None, Query(description="Source of the request")] = None,
+) -> RecipeReadFull:
+    try:
+        user_id = current_user.id if current_user else None
+        recipe = await recipe_service.get_by_slug(slug=slug, user_id=user_id)
+    except RecipeNotFoundError as e:
+        raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
+    else:
+        async with uow:
+            try:
+                if current_user:
+                    await recipe_impression.record_impression(user_id=user_id, recipe_id=recipe.id, source=source)
+                elif anonymous_user:
+                    await recipe_impression.record_impression_for_anonymous(
+                        recipe_id=recipe.id,
+                        anonymous_user_id=anonymous_user.id,
+                        source=source,
+                    )
+                await uow.commit()
+            except RecipeImpressionAlreadyExistsError:
+                pass
+        return recipe
 
 
 @router.get(
@@ -125,18 +136,15 @@ async def get_recipe(
         "Returns a list of recipes with pagination. The total count of recipes is returned in the X-Total-Count header."
     ),
 )
-@router.get("/", include_in_schema=False)
-async def get_recipes(  # noqa: PLR0913
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+async def get_recipes(
+    recipe_service: FromDishka[RecipeService],
     response: Response,
     current_user: CurrentUserOrNoneDependency,
     offset: Annotated[int, Query(ge=0, description="Смещение для пагинации")] = 0,
     limit: Annotated[int, Query(ge=1, le=50, description="Количество рецептов на странице")] = 10,
 ) -> list[RecipeReadShort]:
-    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
     total, recipes = await recipe_service.get_all(
-        user_id=current_user.id if current_user else None, skip=offset, limit=limit
+        user_id=current_user.id if current_user else None, skip=offset, limit=limit, is_published=True,
     )
     response.headers["X-Total-Count"] = str(total)
     return list(recipes)
@@ -148,10 +156,6 @@ async def get_recipes(  # noqa: PLR0913
     summary="Create new recipe",
     description="Creates a new recipe with ingredients, instructions, and tags. Authentication required.",
     responses={
-        status.HTTP_201_CREATED: {
-            "description": "Recipe created successfully",
-            "content": json_example_factory(_recipe_example),
-        },
         status.HTTP_401_UNAUTHORIZED: {
             "description": "Unauthorized",
             "content": json_example_factory({"detail": "Not authenticated", "error_key": "not_authenticated"}),
@@ -161,11 +165,13 @@ async def get_recipes(  # noqa: PLR0913
 async def create_recipe(
     recipe_data: RecipeCreate,
     current_user: CurrentUserDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    recipe_service: FromDishka[RecipeService],
+    uow: FromDishka[SQLAlchemyUnitOfWork],
 ) -> RecipeRead:
-    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
-    return await recipe_service.create(user=current_user, recipe_create=recipe_data)
+    async with uow:
+        result = await recipe_service.create(user=current_user, recipe_create=recipe_data)
+        await uow.commit()
+        return result
 
 
 @router.patch(
@@ -174,10 +180,6 @@ async def create_recipe(
     description="Updates an existing recipe. Can update main data and related entities. Authentication required. "
     "Only the owner of the recipe or a superuser can update it.",
     responses={
-        status.HTTP_200_OK: {
-            "description": "Recipe updated successfully",
-            "content": json_example_factory(_recipe_full_example),
-        },
         status.HTTP_400_BAD_REQUEST: {
             "description": "Can't publish recipe without instructions or image",
             "content": json_examples_factory(
@@ -215,18 +217,27 @@ async def update_recipe(
     recipe_id: Annotated[int, Path(title="Recipe ID", ge=1)],
     recipe_data: RecipeUpdate,
     current_user: CurrentUserDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    recipe_service: FromDishka[RecipeService],
+    uow: FromDishka[SQLAlchemyUnitOfWork],
 ) -> RecipeReadFull:
-    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
-    try:
-        return await recipe_service.update(user=current_user, recipe_id=recipe_id, recipe_update=recipe_data)
-    except RecipeNotFoundError as e:
-        raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
-    except RecipeOwnershipError as e:
-        raise AppHTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e), error_key=e.error_key) from None
-    except (NoRecipeInstructionsError, NoRecipeImageError) as e:
-        raise AppHTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e), error_key=e.error_key) from None
+    async with uow:
+        try:
+            result = await recipe_service.update(user=current_user, recipe_id=recipe_id, recipe_update=recipe_data)
+            await uow.commit()
+        except RecipeNotFoundError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
+            ) from None
+        except RecipeOwnershipError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail=str(e), error_key=e.error_key
+            ) from None
+        except (NoRecipeInstructionsError, NoRecipeImageError) as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e), error_key=e.error_key
+            ) from None
+        else:
+            return result
 
 
 @router.delete(
@@ -253,16 +264,21 @@ async def update_recipe(
 async def delete_recipe(
     recipe_id: Annotated[int, Path(title="Recipe ID", ge=1)],
     current_user: CurrentUserDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    recipe_service: FromDishka[RecipeService],
+    uow: FromDishka[SQLAlchemyUnitOfWork],
 ) -> None:
-    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
-    try:
-        await recipe_service.delete(user=current_user, recipe_id=recipe_id)
-    except RecipeNotFoundError as e:
-        raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
-    except RecipeOwnershipError as e:
-        raise AppHTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e), error_key=e.error_key) from None
+    async with uow:
+        try:
+            await recipe_service.delete(user=current_user, recipe_id=recipe_id)
+            await uow.commit()
+        except RecipeNotFoundError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
+            ) from None
+        except RecipeOwnershipError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail=str(e), error_key=e.error_key
+            ) from None
 
 
 @router.get(
@@ -288,10 +304,8 @@ async def delete_recipe(
 async def get_upload_image_url(
     recipe_id: Annotated[int, Path(title="Recipe ID", ge=1)],
     current_user: CurrentUserDependency,
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    recipe_service: FromDishka[RecipeService],
 ) -> DirectUpload:
-    recipe_service = RecipeService(uow=uow, s3_storage=s3_storage)
     try:
         return await recipe_service.get_image_upload_url(user=current_user, recipe_id=recipe_id)
     except RecipeNotFoundError as e:
@@ -302,7 +316,6 @@ async def get_upload_image_url(
 
 @router.get(
     "/{recipe_id}/instructions/upload-urls",
-    dependencies=[Depends(get_current_user)],
     summary="Get URLs for uploading instruction images",
     description="Returns pre-signed URLs for uploading images for recipe instruction steps. Authentication required.",
     responses={
@@ -345,10 +358,9 @@ async def get_upload_image_url(
 async def get_upload_instructions_urls(
     recipe_id: Annotated[int, Path(title="Recipe ID", ge=1)],
     steps: Annotated[list[PositiveInt], Query(description="Номера шагов инструкций для загрузки изображений")],
-    uow: UnitOfWorkDependency,
-    s3_storage: S3StorageDependency,
+    instructions_service: FromDishka[RecipeInstructionsService],
+    _current_user: CurrentUserDependency,  # Ensure user is authenticated
 ) -> list[RecipeInstructionsUploadUrls]:
-    instructions_service = RecipeInstructionsService(uow=uow, s3_storage=s3_storage)
     try:
         return await instructions_service.generate_instructions_post_urls(recipe_id, steps)
     except AttachInstructionStepError as e:

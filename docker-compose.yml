@@ -34,9 +34,9 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - backend/.env
+      - .env
     depends_on:
-      db:
+      api-db:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -52,8 +52,9 @@ services:
       - redis_network
       - minio_network
       - elasticsearch_network
+      - recsys-network
 
-  db:
+  api-db:
     image: postgres:15
     ports:
       - "5433:5432"
@@ -93,7 +94,7 @@ services:
     environment:
       - discovery.type=single-node
       - security.enabled=true
-      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH__PASSWORD:-changeme}
+      - ELASTICSEARCH_PASSWORD=${API__ELASTICSEARCH__PASSWORD:-changeme}
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     volumes:
       - ./elasticsearch_assets/elasticsearch.yml:/opt/bitnami/elasticsearch/config/elasticsearch.yml
@@ -117,10 +118,10 @@ services:
       - "9000:9000"
       - "9001:9001"
     env_file:
-      - backend/.env
+      - .env
     environment:
-      - MINIO_ROOT_USER=${S3_STORAGE__ACCESS_KEY}
-      - MINIO_ROOT_PASSWORD=${S3_STORAGE__SECRET_KEY}
+      - MINIO_ROOT_USER=${API__S3_STORAGE__ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${API__S3_STORAGE__SECRET_KEY}
     command: minio server --console-address ':9001' /data &
     volumes:
       - minio_data:/data
@@ -140,15 +141,82 @@ services:
     entrypoint: >
       /bin/sh -c "
       sleep 5;
-      mc alias set myminio http://minio:9000 $S3_STORAGE__ACCESS_KEY $S3_STORAGE__SECRET_KEY;
+      mc alias set myminio http://minio:9000 $API__S3_STORAGE__ACCESS_KEY $API__S3_STORAGE__SECRET_KEY;
       mc mb myminio/images;
 
       exit 0;
       "
     env_file:
-      - backend/.env
+      - .env
     networks:
       - minio_network
+
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: recsys-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - recsys-network
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: recsys-nats
+    ports:
+      - "4222:4222"
+    volumes:
+      - nats_data:/data
+    networks:
+      - recsys-network
+
+
+  recsys-db:
+    image: postgres:15
+    container_name: recsys-db
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=recsys_db
+    volumes:
+      - recsys_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - recsys-network
+
+  recsys-worker:
+    build:
+      context: ./recsys
+      dockerfile: Dockerfile
+    container_name: recsys-worker
+    env_file:
+      - .env
+    ports:
+      - "8001:8001"  # Interactive faststream documentation
+    depends_on:
+      recsys-db:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      nats:
+        condition: service_started
+    restart: unless-stopped
+    volumes:
+      - ./recsys/asyncapi_docs:/app/asyncapi_docs
+      - ./recsys/alembic:/app/alembic
+    networks:
+      - recsys-network
+
 
 networks:
   db_network:
@@ -161,6 +229,8 @@ networks:
     driver: bridge
   elasticsearch_network:
     driver: bridge
+  recsys-network:
+    driver: bridge
 
 volumes:
   alembic_data:
@@ -168,3 +238,6 @@ volumes:
   redis_data:
   minio_data:
   elasticsearch_data:
+  qdrant_data:
+  nats_data:
+  recsys_db_data:
