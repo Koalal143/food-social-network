@@ -3,8 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import uuid
-
     from src.models.consent import Consent
     from src.repositories.interfaces.consent import ConsentRepositoryProtocol
 
@@ -27,5 +25,5 @@ class ConsentService:
     async def delete(self, consent_id: int) -> None:
         await self.consent_repository.delete(consent_id)
 
-    async def delete_by_anonymous_user_id(self, anonymous_user_id: uuid.UUID) -> None:
+    async def delete_by_anonymous_user_id(self, anonymous_user_id: int) -> None:
         await self.consent_repository.delete_by_anonymous_user_id(anonymous_user_id)
