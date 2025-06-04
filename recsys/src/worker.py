@@ -1,5 +1,5 @@
 from dishka.integrations.faststream import setup_dishka
-from faststream.asgi import AsgiFastStream
+from faststream.asgi import AsgiFastStream, make_ping_asgi
 from faststream.nats import NatsBroker
 
 from src.core.config import settings
@@ -13,4 +13,10 @@ broker = NatsBroker(
 broker.include_router(router)
 setup_dishka(container, broker=broker)
 
-app = AsgiFastStream(broker, asyncapi_path="/docs/asyncapi" if settings.mode == "dev" else None)
+app = AsgiFastStream(
+    broker,
+    asyncapi_path="/docs/asyncapi" if settings.mode == "dev" else None,
+    asgi_routes=[
+        ("/health", make_ping_asgi(broker, timeout=5.0)),
+    ],
+)
