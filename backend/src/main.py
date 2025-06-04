@@ -34,7 +34,7 @@ def create_app(app_settings: Settings, app_lifespan: Callable) -> FastAPI:
         },
     )
 
-    app.add_exception_handler(AppHTTPException, http_exception_handler) # type: ignore[arg-type]
+    app.add_exception_handler(AppHTTPException, http_exception_handler)  # type: ignore[arg-type]
     app.add_exception_handler(RequestValidationError, request_validation_error_handler)  # type: ignore[arg-type]
 
     app.add_middleware(
