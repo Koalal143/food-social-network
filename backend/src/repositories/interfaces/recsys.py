@@ -8,8 +8,6 @@ if TYPE_CHECKING:
 
 
 class RecsysRepositoryProtocol(Protocol):
-    """Protocol for recommendations service repository."""
-
     async def get_recommendations(
         self,
         user_id: int,
@@ -21,9 +19,9 @@ class RecsysRepositoryProtocol(Protocol):
     ) -> list[RecommendationItem]:
         ...
 
-    async def add_recipe(self, author_id: int, recipe_id: int, title: str, tags: str) -> None:
-        """Add recipe to recommendations service."""
-        ...
+    async def add_recipe(self, author_id: int, recipe_id: int, title: str, tags: str) -> None: ...
+
+    async def delete_recipe(self, recipe_id: int) -> None: ...
 
     async def delete_recipe(self, recipe_id: int) -> None: ...
 
@@ -33,14 +31,8 @@ class RecsysRepositoryProtocol(Protocol):
 
     async def delete_feedback(self, user_id: int, recipe_id: int, feedback_type: FeedbackTypeEnum) -> None: ...
 
-    async def delete_feedback(self, user_id: int, recipe_id: int, feedback_type: str) -> None:
-        """Delete user feedback."""
-        ...
+    async def delete_feedback(self, user_id: int, recipe_id: int, feedback_type: FeedbackTypeEnum) -> None: ...
 
-    async def add_impression(self, user_id: int, recipe_id: int, source: str) -> None:
-        """Add recipe impression for user."""
-        ...
+    async def add_impression(self, user_id: int, recipe_id: int, source: str) -> None: ...
 
-    async def add_impressions_bulk(self, impressions: list[Any]) -> None:
-        """Add multiple recipe impressions."""
-        ...
+    async def add_impressions_bulk(self, impressions: list[Any]) -> None: ...
