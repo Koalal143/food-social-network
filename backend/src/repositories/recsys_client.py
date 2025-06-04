@@ -41,6 +41,10 @@ class RecsysRepository(RecsysRepositoryProtocol):
         """Add recipe to recommendations service."""
         await self.adapter.add_recipe(author_id=author_id, recipe_id=recipe_id, title=title, tags=tags)
 
+    async def delete_recipe(self, recipe_id: int) -> None:
+        """Delete recipe from recommendations service."""
+        await self.adapter.delete_recipe(recipe_id=recipe_id)
+
     async def update_recipe(self, recipe_id: int, title: str, tags: str) -> None:
         """Update recipe in recommendations service."""
         await self.adapter.update_recipe(recipe_id=recipe_id, title=title, tags=tags)

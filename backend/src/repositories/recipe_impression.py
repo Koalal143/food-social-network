@@ -79,7 +79,9 @@ class RecipeImpressionRepository(RecipeImpressionRepositoryProtocol):
         )
         return await self.session.scalar(stmt) or 0
 
-    async def create(self, user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None) -> RecipeImpression:
+    async def create(
+        self, user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None
+    ) -> RecipeImpression | None:
         stmt = (
             insert(RecipeImpression)
             .values(user_id=user_id, recipe_id=recipe_id, source=source)
@@ -94,7 +96,7 @@ class RecipeImpressionRepository(RecipeImpressionRepositoryProtocol):
 
     async def create_for_anonymous(
         self, anonymous_user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None
-    ) -> RecipeImpression:
+    ) -> RecipeImpression | None:
         stmt = (
             insert(RecipeImpression)
             .values(anonymous_user_id=anonymous_user_id, recipe_id=recipe_id, source=source)

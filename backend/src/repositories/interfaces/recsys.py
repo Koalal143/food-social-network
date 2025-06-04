@@ -1,11 +1,13 @@
-from typing import Any, Protocol
+from __future__ import annotations
 
-from src.schemas.recsys_messages import RecommendationItem
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:
+    from src.enums.feedback_type import FeedbackTypeEnum
+    from src.schemas.recsys_messages import RecommendationItem
 
 
 class RecsysRepositoryProtocol(Protocol):
-    """Protocol for recommendations service repository."""
-
     async def get_recommendations(
         self,
         user_id: int,
@@ -15,29 +17,18 @@ class RecsysRepositoryProtocol(Protocol):
         *,
         exclude_viewed: bool = True,
     ) -> list[RecommendationItem]:
-        """Get recommendations from recommendations service."""
         ...
 
-    async def add_recipe(self, author_id: int, recipe_id: int, title: str, tags: str) -> None:
-        """Add recipe to recommendations service."""
-        ...
+    async def add_recipe(self, author_id: int, recipe_id: int, title: str, tags: str) -> None: ...
 
-    async def update_recipe(self, recipe_id: int, title: str, tags: str) -> None:
-        """Update recipe in recommendations service."""
-        ...
+    async def delete_recipe(self, recipe_id: int) -> None: ...
 
-    async def add_feedback(self, user_id: int, recipe_id: int, feedback_type: str) -> None:
-        """Add user feedback."""
-        ...
+    async def update_recipe(self, recipe_id: int, title: str, tags: str) -> None: ...
 
-    async def delete_feedback(self, user_id: int, recipe_id: int, feedback_type: str) -> None:
-        """Delete user feedback."""
-        ...
+    async def add_feedback(self, user_id: int, recipe_id: int, feedback_type: FeedbackTypeEnum) -> None: ...
 
-    async def add_impression(self, user_id: int, recipe_id: int, source: str) -> None:
-        """Add recipe impression for user."""
-        ...
+    async def delete_feedback(self, user_id: int, recipe_id: int, feedback_type: FeedbackTypeEnum) -> None: ...
 
-    async def add_impressions_bulk(self, impressions: list[Any]) -> None:
-        """Add multiple recipe impressions."""
-        ...
+    async def add_impression(self, user_id: int, recipe_id: int, source: str) -> None: ...
+
+    async def add_impressions_bulk(self, impressions: list[Any]) -> None: ...

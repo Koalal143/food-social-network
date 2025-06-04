@@ -18,7 +18,7 @@ class RecipeSearchRepositoryProtocol(Protocol):
 
     async def save_search_query(
         self, query_text: str, user_id: int | None, anonymous_user_id: int | None
-    ) -> SearchQuery: ...
+    ) -> SearchQuery | None: ...
 
     async def get_user_search_history(
         self, user_id: int, limit: int = 10, offset: int = 0

@@ -97,7 +97,7 @@ class RecipeRepository(RecipeRepositoryProtocol):
             return recipe
         return None
 
-    async def get_by_ids(self, recipe_ids: Sequence[int]) -> Sequence[Recipe] | None:
+    async def get_by_ids(self, recipe_ids: Sequence[int]) -> Sequence[Recipe]:
         stmt = self._get_with_author_short().where(Recipe.id.in_(recipe_ids))  # TODO: add impressions and favorites
         result = await self.session.scalars(stmt)
         return result.all()

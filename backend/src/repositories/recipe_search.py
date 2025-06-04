@@ -52,7 +52,7 @@ class RecipeSearchRepository(RecipeSearchRepositoryProtocol):
             search = search.sort(params.sort_by)
 
         result = await search.execute()
-        total = result.hits.total.value
+        total = result.hits.total.value  # type: ignore[attr-defined]
         recipe_ids = [hit.to_dict()["id"] for hit in result]
 
         return total, recipe_ids
@@ -71,7 +71,7 @@ class RecipeSearchRepository(RecipeSearchRepositoryProtocol):
 
     async def save_search_query(
         self, query_text: str, user_id: int | None, anonymous_user_id: int | None
-    ) -> SearchQuery:
+    ) -> SearchQuery | None:
         if not (user_id or anonymous_user_id):
             msg = "One of user_id or anonymous_user_id must be provided"
             raise ValueError(msg)
