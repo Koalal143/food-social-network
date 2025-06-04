@@ -94,13 +94,13 @@ class RecipeRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def add_recipe(self, recipe_id: int, author_id: int) -> Recipe:
+    async def add_recipe(self, recipe_id: int, author_id: int) -> Recipe | None:
         stmt = insert(Recipe).values(id=recipe_id, author_id=author_id).on_conflict_do_nothing().returning(Recipe)
         result = await self.session.scalars(stmt)
         await self.session.commit()
         return result.first()
 
-    async def publish_recipe(self, recipe_id: int) -> Recipe:
+    async def publish_recipe(self, recipe_id: int) -> Recipe | None:
         stmt = update(Recipe).where(Recipe.id == recipe_id).values(is_published=True).returning(Recipe)
         result = await self.session.scalars(stmt)
         await self.session.commit()

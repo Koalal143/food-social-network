@@ -43,7 +43,7 @@ class RecommendationService:
 
     async def add_impressions_bulk(self, impressions: list[AddImpressionRequest]) -> list[UserImpression]:
         impressions_list = [impression.model_dump() for impression in impressions]
-        return await self.impression_repo.add_impressions_bulk(impressions_list)
+        return list(await self.impression_repo.add_impressions_bulk(impressions_list))
 
     async def delete_recipe(self, recipe_id: int) -> None:
         await self.recipe_repo.delete_recipe(recipe_id)

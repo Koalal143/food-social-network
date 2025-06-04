@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 import numpy as np
 
 from src.repositories.embeddings import EmbeddingsRepository
@@ -51,7 +53,7 @@ class RecommendationAlgorithm:
 
     def _compute_component_embedding(
         self,
-        recipe_ids: list[int],
+        recipe_ids: Sequence[int] | None,
         recipe_embeddings: dict[int, list[float]],
     ) -> np.ndarray | None:
         if not recipe_ids:
@@ -75,10 +77,21 @@ class RecommendationAlgorithm:
             return np.mean(normalized_embeddings, axis=0)
         return None
 
+    def _construct_recipe_ids_list(self, user_preferences: UserPreferences) -> list[int]:
+        all_recipe_ids_list: list[int] = []
+        if user_preferences.favorite_recipes_ids:
+            all_recipe_ids_list += user_preferences.favorite_recipes_ids
+        if user_preferences.disliked_recipes_ids:
+            all_recipe_ids_list += user_preferences.disliked_recipes_ids
+        if user_preferences.recs_detail_recipes_ids:
+            all_recipe_ids_list += user_preferences.recs_detail_recipes_ids
+        return all_recipe_ids_list
+
     async def compute_user_preference_vector(self, user_id: int) -> list[float] | None:
         user_preferences = await self._get_user_interactions(user_id)
+        all_recipe_ids_list = self._construct_recipe_ids_list(user_preferences)
 
-        all_recipe_ids = list(set(user_preferences.favorite_recipes_ids + user_preferences.disliked_recipes_ids))
+        all_recipe_ids = list(set(all_recipe_ids_list))
         if all_recipe_ids:
             recipe_embeddings = await self.qdrant_repo.get_recipe_embeddings(all_recipe_ids)
             if not recipe_embeddings:
@@ -181,13 +194,20 @@ class RecommendationAlgorithm:
         exclude_ids = []
         if exclude_viewed:
             user_preferences = await self._get_user_interactions(user_id)
-            exclude_ids = list(
-                set(
-                    user_preferences.favorite_recipes_ids
-                    + user_preferences.disliked_recipes_ids
-                    + user_preferences.author_recipes_ids
-                )
-            )
+            exclude_ids_list: list[int] = []
+            if user_preferences.viewed_recipes_ids:
+                exclude_ids_list += user_preferences.viewed_recipes_ids
+
+            if user_preferences.favorite_recipes_ids:
+                exclude_ids_list += user_preferences.favorite_recipes_ids
+
+            if user_preferences.disliked_recipes_ids:
+                exclude_ids_list += user_preferences.disliked_recipes_ids
+
+            if user_preferences.author_recipes_ids:
+                exclude_ids_list += user_preferences.author_recipes_ids
+
+            exclude_ids = list(set(exclude_ids_list)) if exclude_ids_list else []
         candidates_result = await self.qdrant_repo.get_recommendations(
             query_vector=user_vector, limit=fetch_k, exclude_ids=exclude_ids
         )
