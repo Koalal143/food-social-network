@@ -44,7 +44,6 @@ class RecipeInstructionCreate(BaseRecipeInstruction):
     pass
 
 
-
 def validate_instructions_steps(
     instructions: list[BaseRecipeInstruction] | None,
 ) -> list[BaseRecipeInstruction] | None:
@@ -117,6 +116,7 @@ class RecipeCreate(_IngredientsMixin, _TagsMixin, BaseRecipeSchema):
     instructions: Annotated[list[RecipeInstructionCreate] | None, AfterValidator(validate_instructions_steps)] = Field(
         default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT
     )
+
 
 @partial_model
 class RecipeUpdate(_IsPublishedMixin, BaseRecipeSchema):
