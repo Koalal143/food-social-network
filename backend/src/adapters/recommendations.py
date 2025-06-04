@@ -232,7 +232,7 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
         """
         try:
             await self.broker.publish(
-                message=impressions,
+                message=[impression.model_dump() for impression in impressions],
                 subject="tasks.add_impressions_bulk",
             )
         except Exception:
