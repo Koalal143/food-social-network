@@ -63,7 +63,7 @@ class ElasticSearchConfig(BaseModel):
 
 class CookiePolicyConfig(BaseModel):
     httponly: bool = True
-    samesite: str = "lax"
+    samesite: Literal["lax", "strict", "none"] = "lax"
     secure: bool = False
 
 
