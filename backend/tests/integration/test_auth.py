@@ -1,0 +1,383 @@
+from datetime import UTC
+
+import pytest
+from dirty_equals import IsNow, IsPositiveInt
+from faker import Faker
+from fastapi import status
+from freezegun import freeze_time
+from httpx import AsyncClient
+
+pytestmark = pytest.mark.asyncio(loop_scope="session")
+
+fake = Faker()
+
+
+class TestAuthRegisterIntegration:
+    async def test_register_success(self, api_client: AsyncClient):
+        user_data = {
+            "username": fake.user_name(),
+            "email": fake.email(),
+            "password": "TestPass123!",
+        }
+
+        response = await api_client.post("/v1/auth/register", json=user_data)
+
+        assert response.status_code == status.HTTP_201_CREATED
+        data = response.json()
+        assert data == {
+            "id": IsPositiveInt(),
+            "username": user_data["username"],
+            "email": user_data["email"],
+            "is_active": True,
+            "is_superuser": False,
+            "profile": {
+                "id": IsPositiveInt,
+                "about": None,
+                "avatar_url": None,
+                "created_at": IsNow(iso_string=True, delta=3, tz=UTC),
+                "updated_at": IsNow(iso_string=True, delta=3, tz=UTC),
+                "user_id": data["id"],
+            },
+            "last_login": None,
+            "created_at": IsNow(iso_string=True, delta=3, tz=UTC),
+            "updated_at": IsNow(iso_string=True, delta=3, tz=UTC),
+        }
+
+    @pytest.mark.parametrize(
+        ("payload", "expected_error_fragment"),
+        [
+            ({}, "Field required"),
+            ({"email": "test@example.com", "password": "TestPass123!"}, "Field required"),
+            ({"username": "test", "password": "TestPass123!"}, "Field required"),
+            ({"username": "test", "email": "test@example.com"}, "Field required"),
+        ],
+    )
+    async def test_register_missing_required_fields(
+        self,
+        api_client: AsyncClient,
+        payload: dict,
+        expected_error_fragment: str,
+    ):
+        response = await api_client.post("/v1/auth/register", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        data = response.json()
+        assert expected_error_fragment in str(data["detail"])
+
+    @pytest.mark.parametrize(
+        "username",
+        [123, None, -1, [], {"username": "username"}],
+    )
+    async def test_register_invalid_username_type(self, api_client: AsyncClient, username):
+        payload = {"username": username, "email": "test@example.com", "password": "TestPass123!"}
+        response = await api_client.post("/v1/auth/register", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize(
+        "email",
+        [
+            123,
+            None,
+            -1,
+            {"email": "email@mail.com"},
+            [],
+        ],
+    )
+    async def test_register_invalid_email_type(self, api_client: AsyncClient, email):
+        payload = {"username": "testuser", "email": email, "password": "TestPass123!"}
+        response = await api_client.post("/v1/auth/register", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize(
+        "password",
+        [
+            123,
+            -1,
+            None,
+            [],
+        ],
+    )
+    async def test_register_invalid_password_type(self, api_client: AsyncClient, password):
+        payload = {"username": "testuser", "email": "test@example.com", "password": password}
+        response = await api_client.post("/v1/auth/register", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize(
+        "username",
+        [
+            "ab",  # too short (min 3)
+            "a" * 31,  # too long (max 30)
+            "test@user",  # invalid characters (only a-zA-Z0-9_- allowed)
+            "test user",  # space not allowed
+            "test.user",  # dot not allowed
+            "admin",  # banned username
+            "administrator",  # banned username
+            "root",  # banned username
+            "moderator",  # banned username
+            "support",  # banned username
+            "help",  # banned username
+            "owner",  # banned username
+            "staff",  # banned username
+            "avatar",  # banned username
+            "me",  # banned username
+        ],
+    )
+    async def test_register_username_validation_errors(self, api_client: AsyncClient, username: str):
+        payload = {"username": username, "email": "test@example.com", "password": "TestPass123!"}
+        response = await api_client.post("/v1/auth/register", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize(
+        "email",
+        [
+            "invalid-email",  # no @ symbol
+            "test@",  # no domain
+            "@example.com",  # no local part
+            "test.example.com",  # no @ symbol
+            "",  # empty
+        ],
+    )
+    async def test_register_email_validation_errors(self, api_client: AsyncClient, email: str):
+        payload = {"username": "testuser", "email": email, "password": "TestPass123!"}
+        response = await api_client.post("/v1/auth/register", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize(
+        "password",
+        [
+            "short",  # too short (min 8)
+            "nouppercase123!",  # no uppercase letter
+            "NOLOWERCASE123!",  # no lowercase letter
+            "NoNumbers!",  # no numbers
+            "NoSpecialChars123",  # no special characters
+            "Simple1",  # no special characters
+            "",  # empty
+        ],
+    )
+    async def test_register_password_validation_errors(self, api_client: AsyncClient, password: str):
+        payload = {"username": "testuser", "email": "test@example.com", "password": password}
+        response = await api_client.post("/v1/auth/register", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    async def test_register_duplicate_username(self, api_client: AsyncClient, registered_user: dict):
+        user_data = {
+            "username": registered_user["username"],
+            "email": fake.email(),
+            "password": "TestPass123!",
+        }
+
+        response = await api_client.post("/v1/auth/register", json=user_data)
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        data = response.json()
+        assert data["error_key"] == "user_nickname_already_exists"
+        assert "Username already taken" in data["detail"]
+
+    async def test_register_duplicate_email(self, api_client: AsyncClient, registered_user: dict):
+        user_data = {
+            "username": fake.user_name(),
+            "email": registered_user["email"],
+            "password": "TestPass123!",
+        }
+
+        response = await api_client.post("/v1/auth/register", json=user_data)
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        data = response.json()
+        assert data["error_key"] == "user_email_already_exists"
+        assert "Email already registered" in data["detail"]
+
+
+class TestAuthLoginIntegration:
+    async def test_login_with_email_success(self, api_client: AsyncClient, registered_user: dict):
+        login_data = {
+            "email": registered_user["email"],
+            "password": "TestPass123!",
+        }
+
+        response = await api_client.post("/v1/auth/login", json=login_data)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "access_token" in data
+        assert "refresh_token" in data
+        assert isinstance(data["access_token"], str)
+        assert isinstance(data["refresh_token"], str)
+
+    async def test_login_with_username_success(self, api_client: AsyncClient, registered_user: dict):
+        login_data = {
+            "username": registered_user["username"],
+            "password": "TestPass123!",
+        }
+
+        response = await api_client.post("/v1/auth/login", json=login_data)
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "access_token" in data
+        assert "refresh_token" in data
+        assert isinstance(data["access_token"], str)
+        assert isinstance(data["refresh_token"], str)
+
+    @pytest.mark.parametrize(
+        ("payload", "expected_error_fragment"),
+        [
+            ({}, "Field required"),
+            ({"email": "test@example.com"}, "Field required"),
+            ({"username": "test"}, "Field required"),
+            ({"password": "TestPass123!"}, "Either email or username must be provided"),
+            (
+                {"email": None, "username": None, "password": "TestPass123!"},
+                "Either email or username must be provided",
+            ),
+        ],
+    )
+    async def test_login_missing_required_fields(
+        self,
+        api_client: AsyncClient,
+        payload: dict,
+        expected_error_fragment: str,
+    ):
+        response = await api_client.post("/v1/auth/login", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        data = response.json()
+        assert expected_error_fragment in str(data["detail"])
+
+    @pytest.mark.parametrize(
+        "email",
+        [
+            123,
+            [],
+            {},
+        ],
+    )
+    async def test_login_invalid_email_type(self, api_client: AsyncClient, email):
+        payload = {"email": email, "password": "TestPass123!"}
+        response = await api_client.post("/v1/auth/login", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize(
+        "username",
+        [
+            123,
+            [],
+            {},
+        ],
+    )
+    async def test_login_invalid_username_type(self, api_client: AsyncClient, username):
+        payload = {"username": username, "password": "TestPass123!"}
+        response = await api_client.post("/v1/auth/login", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize(
+        "password",
+        [
+            123,
+            [],
+            {},
+        ],
+    )
+    async def test_login_invalid_password_type(self, api_client: AsyncClient, password):
+        payload = {"email": "test@example.com", "password": password}
+        response = await api_client.post("/v1/auth/login", json=payload)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    async def test_login_incorrect_email(self, api_client: AsyncClient):
+        login_data = {
+            "email": "wrongexample.com",
+            "password": "TestPass123!",
+        }
+
+        response = await api_client.post("/v1/auth/login", json=login_data)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        data = response.json()
+        assert data["error_key"] == "validation_error"
+
+    async def test_login_incorrect_username(self, api_client: AsyncClient):
+        login_data = {
+            "username": "wronguser@",
+            "password": "TestPass123!",
+        }
+
+        response = await api_client.post("/v1/auth/login", json=login_data)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        data = response.json()
+        assert data["error_key"] == "validation_error"
+
+    async def test_empassword(self, api_client: AsyncClient, registered_user: dict):
+        login_data = {
+            "email": registered_user["email"],
+            "password": "WrongPassword123!",
+        }
+
+        response = await api_client.post("/v1/auth/login", json=login_data)
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        data = response.json()
+        assert data["error_key"] == "username_or_email_or_password_is_incorrect"
+        assert "Incorrect email/username or password" in data["detail"]
+
+
+class TestAuthRefreshIntegration:
+    async def test_refresh_token_success(self, api_client: AsyncClient, registered_user: dict):
+        with freeze_time() as frozen_time:
+            login_data = {
+                "email": registered_user["email"],
+                "password": "TestPass123!",
+            }
+            login_response = await api_client.post("/v1/auth/login", json=login_data)
+            tokens = login_response.json()
+
+            # Advance time by 1 second to ensure different token generation
+            frozen_time.tick(delta=1)
+
+            response = await api_client.post("/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
+
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert "access_token" in data
+            assert "refresh_token" in data
+            assert isinstance(data["access_token"], str)
+            assert isinstance(data["refresh_token"], str)
+            assert data["access_token"] != tokens["access_token"]
+            assert data["refresh_token"] != tokens["refresh_token"]
+
+    async def test_refresh_token_invalid_token(self, api_client: AsyncClient):
+        response = await api_client.post("/v1/auth/refresh", json={"refresh_token": "invalid_token"})
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        data = response.json()
+        assert data["error_key"] == "invalid_token"
+        assert "Invalid refresh token" in data["detail"]
+
+    async def test_refresh_token_missing_token(self, api_client: AsyncClient):
+        response = await api_client.post("/v1/auth/refresh", json={})
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize(
+        "refresh_token",
+        [
+            "123",
+            "",
+            "invalid_token_format",
+            "short",
+            "very_long_invalid_token_that_should_fail_validation",
+        ],
+    )
+    async def test_refresh_token_invalid_values(self, api_client: AsyncClient, refresh_token: str):
+        response = await api_client.post("/v1/auth/refresh", json={"refresh_token": refresh_token})
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
