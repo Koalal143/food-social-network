@@ -121,5 +121,5 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
-    username: str | None = Field(None, min_length=3, max_length=30, description="New username for the user")
+    username: Nickname | None = Field(None, min_length=3, max_length=30, description="New username for the user")
     profile: UserProfileUpdate | None = Field(None, description="User profile information")
