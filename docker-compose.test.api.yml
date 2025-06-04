@@ -1,0 +1,238 @@
+services:
+
+  test-backend:
+    build:
+      context: ./backend
+      args:
+        - SERVER__HOST=localhost
+        - SERVER__PORT=8000
+        - API__MODE=test
+    ports:
+      - "8004:8000"
+    environment:
+      - API__POSTGRES__HOST=test-api-db
+      - API__POSTGRES__PORT=5432
+      - API__POSTGRES__USER=postgres
+      - API__POSTGRES__PASSWORD=postgres
+      - API__POSTGRES__DB=food_social_network
+      - API__REDIS__HOST=test-redis
+      - API__REDIS__PORT=6379
+      - API__REDIS__PASSWORD=redis
+      - API__NATS__URL=nats://test-nats:4222
+      - API__MINIO__ENDPOINT_URL=http://test-minio:9000
+      - API__MINIO__HOST=http://test-minio
+      - API__MINIO__PORT=9000
+      - API__MINIO__ACCESS_KEY=${API__S3_STORAGE__ACCESS_KEY}
+      - API__MINIO__SECRET_KEY=${API__S3_STORAGE__SECRET_KEY}
+      - API__ELASTICSEARCH__HOST=http://test-elasticsearch
+      - API__ELASTICSEARCH__PORT=9200
+      - API__ELASTICSEARCH__PASSWORD=${API__ELASTICSEARCH__PASSWORD:-changeme}
+      - API__S3_STORAGE__ACCESS_KEY=${API__S3_STORAGE__ACCESS_KEY}
+      - API__S3_STORAGE__SECRET_KEY=${API__S3_STORAGE__SECRET_KEY}
+      - API__NATS__URL=nats://test-nats:4222
+      - API__MODE=test
+    env_file:
+      - path: .env
+        required: true
+      - path: .test.env
+        required: false
+    depends_on:
+      test-api-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+      test-minio:
+        condition: service_healthy
+      test-elasticsearch:
+        condition: service_healthy
+      test-recsys-worker:
+        condition: service_healthy
+    volumes:
+      - ./backend/alembic:/app/alembic
+    networks:
+      - app_network
+      - db_network
+      - redis_network
+      - minio_network
+      - elasticsearch_network
+      - recsys-network
+
+  test-api-db:
+    image: postgres:15
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=food_social_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - db_network
+
+  test-redis:
+    image: redis:7
+    ports:
+      - "6381:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - redis_network
+
+  test-elasticsearch:
+    image: bitnami/elasticsearch:9.0.1
+
+    environment:
+      - discovery.type=single-node
+      - security.enabled=true
+      - ELASTICSEARCH_PASSWORD=${API__ELASTICSEARCH__PASSWORD:-changeme}
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - ./elasticsearch_assets/elasticsearch.yml:/opt/bitnami/elasticsearch/config/elasticsearch.yml
+      - ./elasticsearch_assets/analysis:/opt/bitnami/elasticsearch/config/analysis
+      - test-elasticsearch-data:/bitnami/elasticsearch/data
+    ports:
+      - "9201:9200"
+      - "9301:9300"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - elasticsearch_network
+
+  test-minio:
+    image: minio/minio:latest
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    env_file:
+      - .env
+    environment:
+      - MINIO_ROOT_USER=${API__S3_STORAGE__ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${API__S3_STORAGE__SECRET_KEY}
+    command: minio server --console-address ':9001' /data &
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - minio_network
+
+  test-createbuckets:
+    image: minio/mc
+    depends_on:
+      - test-minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set myminio http://test-minio:9000 $API__S3_STORAGE__ACCESS_KEY $API__S3_STORAGE__SECRET_KEY;
+      mc mb myminio/images;
+
+      exit 0;
+      "
+    env_file:
+      - .env
+    networks:
+      - minio_network
+    volumes:
+      - test-minio-data:/data
+
+
+  test-qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6335:6333"
+      - "6336:6334"
+    networks:
+      - recsys-network
+
+  test-nats:
+    image: nats:2.10-alpine
+    ports:
+      - "4223:4222"
+    networks:
+      - recsys-network
+
+
+  test-recsys-db:
+    image: postgres:15
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=recsys_db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - recsys-network
+
+  test-recsys-worker:
+    build:
+      context: ./recsys
+      dockerfile: Dockerfile
+    environment:
+      - RECSYS__POSTGRES__HOST=test-recsys-db
+      - RECSYS__POSTGRES__USER=postgres
+      - RECSYS__POSTGRES__PASSWORD=postgres
+      - RECSYS__POSTGRES__DB=recsys_db
+      - RECSYS__QDRANT__HOST=test-qdrant
+      - RECSYS__QDRANT__PORT=6333
+      - RECSYS__NATS__HOST=nats://test-nats
+      - RECSYS__NATS__PORT=4222
+      - RECSYS__MODE=prod
+    env_file:
+      - .env
+    ports:
+      - "8003:8001"  # Interactive faststream documentation
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      test-recsys-db:
+        condition: service_healthy
+      test-qdrant:
+        condition: service_started
+      test-nats:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - recsys-network
+
+
+networks:
+  db_network:
+    driver: bridge
+  redis_network:
+    driver: bridge
+  minio_network:
+    driver: bridge
+  app_network:
+    driver: bridge
+  elasticsearch_network:
+    driver: bridge
+  recsys-network:
+    driver: bridge
+
+volumes:
+  test-elasticsearch-data:
+  test-minio-data:
