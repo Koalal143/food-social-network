@@ -88,6 +88,7 @@ format.skip-magic-trailing-comma = false
 [tool.ruff.lint.per-file-ignores]
 "alembic/*" = ["INP001"]
 "tests/*" = ["ANN", "INP001"]
+"src/core/di/providers/*" = ["TC001"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
