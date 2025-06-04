@@ -329,6 +329,46 @@ class TestAuthLoginIntegration:
         assert data["error_key"] == "username_or_email_or_password_is_incorrect"
         assert "Incorrect email/username or password" in data["detail"]
 
+    async def test_login_updates_last_login_timestamp(self, api_client: AsyncClient, registered_user: dict):
+        with freeze_time() as frozen_time:
+            login_data = {
+                "email": registered_user["email"],
+                "password": "TestPass123!",
+            }
+            first_login_response = await api_client.post("/v1/auth/login", json=login_data)
+
+            assert first_login_response.status_code == status.HTTP_200_OK
+            first_tokens = first_login_response.json()
+            assert "access_token" in first_tokens
+            assert "refresh_token" in first_tokens
+
+            auth_header = {"Authorization": f"Bearer {first_tokens['access_token']}"}
+            first_user_response = await api_client.get("/v1/users/me", headers=auth_header)
+            assert first_user_response.status_code == status.HTTP_200_OK
+            first_user_data = first_user_response.json()
+
+            assert first_user_data["last_login"] == IsNow(iso_string=True, delta=3, tz=UTC)
+            first_last_login = first_user_data["last_login"]
+
+            frozen_time.tick(delta=60)
+
+            second_login_response = await api_client.post("/v1/auth/login", json=login_data)
+
+            assert second_login_response.status_code == status.HTTP_200_OK
+            second_tokens = second_login_response.json()
+            assert "access_token" in second_tokens
+            assert "refresh_token" in second_tokens
+
+            auth_header = {"Authorization": f"Bearer {second_tokens['access_token']}"}
+            second_user_response = await api_client.get("/v1/users/me", headers=auth_header)
+            assert second_user_response.status_code == status.HTTP_200_OK
+            second_user_data = second_user_response.json()
+
+            assert second_user_data["last_login"] == IsNow(iso_string=True, delta=3, tz=UTC)
+            second_last_login = second_user_data["last_login"]
+
+            assert second_last_login != first_last_login
+
 
 class TestAuthRefreshIntegration:
     async def test_refresh_token_success(self, api_client: AsyncClient, registered_user: dict):
@@ -340,7 +380,6 @@ class TestAuthRefreshIntegration:
             login_response = await api_client.post("/v1/auth/login", json=login_data)
             tokens = login_response.json()
 
-            # Advance time by 1 second to ensure different token generation
             frozen_time.tick(delta=1)
 
             response = await api_client.post("/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
