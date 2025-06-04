@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from collections.abc import AsyncIterator
 
 from dishka import Provider, Scope, provide
 from types_aiobotocore_s3 import S3Client
