@@ -7,6 +7,7 @@ from src.core.di.providers import (
     ExternalProvider,
     FastStreamProvider,
     RepositoryProvider,
+    S3Provider,
     ServiceProvider,
 )
 
@@ -17,5 +18,6 @@ container = make_async_container(
     FastStreamProvider(),
     RepositoryProvider(),
     ServiceProvider(),
+    S3Provider(),
     FastapiProvider(),
 )
