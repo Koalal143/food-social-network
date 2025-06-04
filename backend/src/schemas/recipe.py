@@ -23,11 +23,6 @@ class Ingredient(BaseSchema):
     quantity: str = Field(max_length=135, examples=["2 pieces", "два зубчика"])
 
 
-@partial_model
-class IngredientUpdate(Ingredient):
-    pass
-
-
 class BaseRecipeInstruction(BaseSchema):
     step_number: PositiveInt = Field(le=MAX_RECIPE_INSTRUCTIONS_COUNT)
     description: str = Field(max_length=1000, examples=["Boil water", "Добавьте соль"])
@@ -62,11 +57,6 @@ class RecipeInstructionsUploadUrls(DirectUpload):
 
 class RecipeTag(BaseSchema):
     name: str = Field(max_length=50, examples=["Dinner", "Африканская кухня"])
-
-
-@partial_model
-class RecipeTagUpdate(RecipeTag):
-    pass
 
 
 class BaseRecipeSchema(BaseModel):
@@ -126,8 +116,8 @@ class RecipeUpdate(_IsPublishedMixin, BaseRecipeSchema):
     instructions: Annotated[list[RecipeInstructionCreate] | None, AfterValidator(validate_instructions_steps)] = Field(
         default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT
     )
-    ingredients: list[IngredientUpdate] | None = Field(default=None)
-    tags: list[RecipeTagUpdate] | None = Field(default=None)
+    ingredients: list[Ingredient] | None = Field(default=None)
+    tags: list[RecipeTag] | None = Field(default=None)
 
 
 class RecipeSearchQuery(BaseModel):
