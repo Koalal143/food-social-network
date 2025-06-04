@@ -10,9 +10,10 @@ from src.enums.recipe_get_source import RecipeGetSourceEnum
 from src.models.recipe import Recipe
 from src.models.recipe_impression import RecipeImpression
 from src.models.user import User
+from src.repositories.interfaces.recipe_impression import RecipeImpressionRepositoryProtocol
 
 
-class RecipeImpressionRepository:
+class RecipeImpressionRepository(RecipeImpressionRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 

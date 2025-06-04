@@ -10,10 +10,11 @@ from src.models.recipe import Recipe
 from src.models.recipe_impression import RecipeImpression
 from src.models.user import User
 from src.models.user_profile import UserProfile
+from src.repositories.interfaces.recipe import RecipeRepositoryProtocol
 from src.typings.recipe_with_favorite import RecipeWithExtra
 
 
-class RecipeRepository:
+class RecipeRepository(RecipeRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 

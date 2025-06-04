@@ -5,9 +5,10 @@ from sqlalchemy import delete, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.recipe_tag import RecipeTag
+from src.repositories.interfaces.recipe_tag import RecipeTagRepositoryProtocol
 
 
-class RecipeTagRepository:
+class RecipeTagRepository(RecipeTagRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 

@@ -4,9 +4,10 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.user_profile import UserProfile
+from src.repositories.interfaces.user_profile import UserProfileRepositoryProtocol
 
 
-class UserProfileRepository:
+class UserProfileRepository(UserProfileRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -20,7 +21,7 @@ class UserProfileRepository:
         await self.session.flush()
         return profile
 
-    async def update(self, user_id: int, **fields: Any) -> UserProfile:
+    async def update(self, user_id: int, **fields: Any) -> UserProfile | None:
         result = await self.session.scalars(
             update(UserProfile).where(UserProfile.user_id == user_id).values(**fields).returning(UserProfile)
         )

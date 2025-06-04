@@ -7,10 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.search.indexes import RecipeIndex
 from src.models.search_query import SearchQuery
+from src.repositories.interfaces.recipe_search import RecipeSearchRepositoryProtocol
 from src.schemas.recipe import RecipeSearchQuery
 
 
-class RecipeSearchRepository:
+class RecipeSearchRepository(RecipeSearchRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 

@@ -4,9 +4,10 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.consent import Consent
+from src.repositories.interfaces.consent import ConsentRepositoryProtocol
 
 
-class ConsentRepository:
+class ConsentRepository(ConsentRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 

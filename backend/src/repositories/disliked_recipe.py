@@ -6,9 +6,10 @@ from sqlalchemy.orm import joinedload
 
 from src.models.disliked_recipes import DislikedRecipe
 from src.models.recipe import Recipe
+from src.repositories.interfaces.disliked_recipe import DislikedRecipeRepositoryProtocol
 
 
-class DislikedRecipeRepository:
+class DislikedRecipeRepository(DislikedRecipeRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
