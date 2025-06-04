@@ -214,12 +214,10 @@ async def get_current_user_recipes(
 
 
 @router.get(
-    "/me/recipes",
-    summary="Get user's recipes",
-    description=(
-        "Returns a list of current user's recipes with pagination. The total count of recipes is returned in the "
-        "X-Total-Count header."
-    ),
+    "/{username}/recipes",
+    summary="Get user's recipes by username",
+    description="Returns a list of user's recipes with pagination. The total count of recipes is returned in the "
+    "X-Total-Count header.",
 )
 async def get_user_recipes(
     author_nickname: Annotated[str, Path(alias="username")],
