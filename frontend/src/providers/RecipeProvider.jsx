@@ -77,7 +77,7 @@ export default function RecipeProvider({ children }) {
             const recipe = await RecipesService.addRecipe(newRecipe);
     
             const mainPhotoPresigned = await RecipesService.getUploadImageUrl(recipe.id);
-            await S3Service.uploadImage(mainPhotoPresigned, formData.main_photo[0]);
+            await S3Service.uploadImage(mainPhotoPresigned, formData.main_photo);
     
             let presignedPostDatas = [];
             const stepsWithPhotos = formData.instructions
