@@ -194,7 +194,7 @@ class RecipeService:
                     existing_tags = [tag.name for tag in existing_recipe.tags] if existing_recipe.tags else []
                     new_tags_str = ", ".join(existing_tags)
                 await self.recsys_repository.update_recipe(
-                    cast("int", existing_recipe.id), new_title, new_tags_str
+                    cast("int", existing_recipe.author_id), cast("int", existing_recipe.id), new_title, new_tags_str
                 )
             else:
                 tags = ", ".join([tag.name for tag in existing_recipe.tags]) if existing_recipe.tags else ""
