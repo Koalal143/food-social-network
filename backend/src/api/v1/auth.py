@@ -12,7 +12,6 @@ from src.exceptions import (
 )
 from src.exceptions.auth import InvalidTokenError, SuspiciousEmailError
 from src.exceptions.user import UserNotFoundError
-from src.models.user import User
 from src.schemas.token import Token
 from src.schemas.user import UserCreate, UserLogin, UserRead
 from src.services import RecipeImpressionService, SearchService, SecurityService, TokenService, UserService
@@ -26,7 +25,6 @@ router = APIRouter(route_class=DishkaRoute, prefix="/auth", tags=["Auth"])
     "/register",
     summary="Register a new user",
     description="Register a new user with a username, email, and password",
-    response_model=UserRead,
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_409_CONFLICT: {
@@ -59,7 +57,7 @@ async def register(
     user_in: UserCreate,
     user_service: FromDishka[UserService],
     uow: FromDishka[SQLAlchemyUnitOfWork],
-) -> User:
+) -> UserRead:
     async with uow:
         try:
             user = await user_service.create(
