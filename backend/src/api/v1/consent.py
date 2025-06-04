@@ -84,7 +84,7 @@ async def create_consent(
         )
 
     async with uow:
-        is_analytics_allowed = consent_data["is_analytics_allowed"] == "true"
+        is_analytics_allowed = consent_data.is_analytics_allowed
         await uow.commit()
         _set_cookie(settings, response, "analytics_allowed", str(is_analytics_allowed))
         if is_analytics_allowed:
