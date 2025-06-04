@@ -24,6 +24,10 @@ class RecommendationsAdapterProtocol(Protocol):
         """Add recipe to recommendations service."""
         ...
 
+    async def delete_recipe(self, recipe_id: int) -> None:
+        """Delete recipe from recommendations service."""
+        ...
+
     async def update_recipe(self, recipe_id: int, title: str, tags: str) -> None:
         """Update recipe in recommendations service."""
         ...

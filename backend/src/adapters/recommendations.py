@@ -108,6 +108,25 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
             logger.exception(msg)
             raise
 
+    async def delete_recipe(self, recipe_id: int) -> None:
+        """Delete recipe from recommendations service.
+
+        Args:
+            recipe_id: Recipe ID
+
+        Raises:
+            Exception: When message publishing fails
+
+        """
+        try:
+            await self.broker.publish(
+                message={"recipe_id": recipe_id},
+                subject="tasks.delete_recipe",
+            )
+        except Exception:
+            msg = f"Error publishing delete_recipe task for recipe {recipe_id}"
+            logger.exception(msg)
+
     async def update_recipe(self, recipe_id: int, title: str, tags: str) -> None:
         """Update recipe in recommendations service.
 
