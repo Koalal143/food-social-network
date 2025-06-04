@@ -1,10 +1,12 @@
 from redis.asyncio import Redis
 from redis.asyncio.connection import ConnectionPool
 
-from src.core.config import settings
+from src.adapters.interfaces.redis import RedisAdapterProtocol
 
 
-class RedisManager:
+class RedisAdapter(RedisAdapterProtocol):
+    """Adapter for Redis connection management."""
+
     def __init__(self, host: str, port: str) -> None:
         self.host = host
         self.port = port
@@ -13,6 +15,7 @@ class RedisManager:
         self._initialized: bool = False
 
     async def init(self) -> None:
+        """Initialize Redis connection."""
         try:
             self.pool = ConnectionPool.from_url(
                 f"redis://{self.host}:{self.port}",
@@ -21,12 +24,14 @@ class RedisManager:
             )
             self.client = Redis(connection_pool=self.pool)
             await self.client.ping()
+            self._initialized = True
         except Exception as e:
             await self.close()
             msg = f"Failed to initialize Redis connection: {e}"
             raise RuntimeError(msg) from e
 
     async def close(self) -> None:
+        """Close Redis connection and cleanup resources."""
         if self.client:
             await self.client.close()
         if self.pool:
@@ -34,19 +39,18 @@ class RedisManager:
         self._initialized = False
 
     async def __aenter__(self) -> Redis:
+        """Context manager entry - initialize and return Redis client."""
         if not self._initialized:
             await self.init()
         if not self.client:
-            msg = "Redis client is not _initialized"
+            msg = "Redis client is not initialized"
             raise RuntimeError(msg)
         return self.client
 
     async def __aexit__(self, *args, **kwargs) -> None:  # noqa: ANN002, ANN003
-        pass
+        """Context manager exit - cleanup handled by DI container."""
 
     @property
     def is_initialized(self) -> bool:
+        """Check if Redis adapter is initialized."""
         return self._initialized and self.client is not None
-
-
-redis_manager = RedisManager(settings.redis.host, settings.redis.port)

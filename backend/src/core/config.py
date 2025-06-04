@@ -77,7 +77,7 @@ class Settings(BaseSettings):
         env_nested_delimiter="__",
         env_file=PATH.parent / ".env",
         extra="ignore",
-        env_prefix="API__"
+        env_prefix="API__",
     )
 
     project_name: str = "Food Social Network"
