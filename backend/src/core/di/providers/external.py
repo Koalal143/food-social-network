@@ -24,6 +24,8 @@ class ExternalProvider(Provider):
             hosts=[f"{config.host}:{config.port}"],
             basic_auth=(config.user, config.password),
             verify_certs=False,
+            retry_on_timeout=True,
+            max_retries=10,
         ) as client:
             yield client
 
