@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Annotated, Final
+from typing import Annotated, Final, Self
 
 from pydantic import (
     AfterValidator,
@@ -8,8 +8,8 @@ from pydantic import (
     ConfigDict,
     EmailStr,
     Field,
-    ValidationInfo,
     field_validator,
+    model_validator,
 )
 
 from src.schemas.base import BaseReadSchema, BaseSchema
@@ -74,7 +74,7 @@ class UserProfileUpdate(BaseModel):
 
 class UserCreate(BaseModel):
     username: Nickname = Field(min_length=3, max_length=30)
-    email: EmailStr
+    email: EmailStr = Field(min_length=3, max_length=100)
     password: Password
 
     @field_validator("username")
@@ -110,13 +110,12 @@ class UserLogin(BaseModel):
     username: Nickname | None = Field(None, description="Username")
     password: Password
 
-    @field_validator("email", mode="after")
-    @classmethod
-    def validate_email(cls, email: str | None, values: ValidationInfo) -> str | None:
-        if not email and not values.data.get("username"):
+    @model_validator(mode="after")
+    def validate_email(self) -> Self:
+        if not self.email and not self.username:
             msg = "Either email or username must be provided"
             raise ValueError(msg)
-        return email
+        return self
 
 
 class UserUpdate(BaseModel):
