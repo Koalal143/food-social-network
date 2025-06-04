@@ -45,7 +45,7 @@ class RecipeSearchRepository:
 
         query = Q("bool", must=must_queries, must_not=must_not_queries, filter=filter_queries)
 
-        search = search.query(query).extra(from_=params.offset, size=params.limit)
+        search = search.query(query).extra(from_=params.offset, size=params.limit, track_total_hits=True)
 
         if params.sort_by:
             search = search.sort(params.sort_by)
@@ -58,6 +58,7 @@ class RecipeSearchRepository:
 
     async def index_recipe(self, recipe_data: dict) -> None:
         schema = recipe_data.copy()
+        schema["_id"] = schema["id"]
         schema["tags"] = [tag["name"] for tag in schema.get("tags", [])]
         schema["ingredients"] = [ingredient["name"] for ingredient in schema.get("ingredients", [])]
         recipe_index = RecipeIndex(**schema)
