@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import SearchService from '@/services/search.service';
 import { handleApiError } from '@/utils/errorHandler';
 import { SearchContext } from '@/context/SearchContext';
+import { useSearchHistory } from '@/context/SearchHistoryContext';
 
 export const SearchProvider = ({ children }) => {
     const [searchResults, setSearchResults] = useState([]);
@@ -26,6 +27,8 @@ export const SearchProvider = ({ children }) => {
         sortBy: ''
     });
 
+    const { addToHistory } = useSearchHistory();
+
     // Основной поиск (сброс offset)
     const performSearch = useCallback(async (query) => {
         setSearchLoading(true);
@@ -40,6 +43,7 @@ export const SearchProvider = ({ children }) => {
             setOffset(result.data.length);
             setHasMore(result.data.length < result.totalCount);
             lastQueryRef.current = query;
+            addToHistory(query);
             return result;
         } catch (error) {
             const { message } = handleApiError(error);
@@ -51,7 +55,7 @@ export const SearchProvider = ({ children }) => {
         } finally {
             setSearchLoading(false);
         }
-    }, [filters]);
+    }, [filters, addToHistory]);
 
     // Функция для обновления фильтров
     const updateFilters = (newFilters) => {
