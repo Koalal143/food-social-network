@@ -19,12 +19,13 @@ class ExternalProvider(Provider):
             yield redis
 
     @provide
-    def get_elasticsearch_client(self, config: ElasticSearchConfig) -> AsyncElasticsearch:
-        return AsyncElasticsearch(
+    async def get_elasticsearch_client(self, config: ElasticSearchConfig) -> AsyncIterator[AsyncElasticsearch]:
+        async with AsyncElasticsearch(
             hosts=[f"{config.host}:{config.port}"],
             basic_auth=(config.user, config.password),
             verify_certs=False,
-        )
+        ) as client:
+            yield client
 
     @provide
     async def get_s3_client(self, config: S3Config) -> AsyncIterator[S3Client]:
