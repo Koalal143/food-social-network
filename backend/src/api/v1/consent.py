@@ -109,6 +109,7 @@ async def revoke_consent(
         raise AppHTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Anonymous user not found",
+            error_key="anonymous_user_not_found",
         )
     async with uow:
         await consent_service.delete_by_anonymous_user_id(anonymous_user.id)
