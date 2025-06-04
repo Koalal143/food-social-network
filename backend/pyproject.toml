@@ -113,7 +113,7 @@ env_files = [".test.env"]
 [tool.mypy]
 python_version = "3.12"
 plugins = ["pydantic.mypy"]
-exclude = ["typings/external", "typings/external/aiobotocore_s3/type_defs.pyi"]
+exclude = ["typings/external", "typings/external/aiobotocore_s3/type_defs.pyi", "tests/"]
 show_error_context = true
 show_absolute_path = true
 pretty = true
