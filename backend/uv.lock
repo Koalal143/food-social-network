@@ -550,6 +550,7 @@ dev = [
     { name = "pre-commit" },
     { name = "ruff" },
     { name = "types-aiobotocore", extra = ["essential"] },
+    { name = "types-aiofiles" },
     { name = "uv-sort" },
 ]
 test = [
@@ -590,6 +591,7 @@ dev = [
     { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "ruff", specifier = ">=0.1.13" },
     { name = "types-aiobotocore", extras = ["essential"], specifier = "==2.21.1" },
+    { name = "types-aiofiles", specifier = ">=24.1.0.20250516" },
     { name = "uv-sort", specifier = ">=0.5.1" },
 ]
 test = [
@@ -1703,6 +1705,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/3c/bd/c3329cde101bb85b6b3013e1ae2b708fcc36b430b2a68e934318522dd60d/types_aiobotocore_sqs-2.21.1.tar.gz", hash = "sha256:180364c4efd05c60498c3294297e8b359559598b2c51fb6a449178f5634f8e18", size = 23575 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0d/10/ec067cfde1cbc1d6208b1f3a6c83e05f1f589efeefd1e30ba9c76c13cec3/types_aiobotocore_sqs-2.21.1-py3-none-any.whl", hash = "sha256:c593349a2b4d9f2e145993408a16df7871b857f46286e9816553c46a1896a937", size = 34278 },
+]
+
+[[package]]
+name = "types-aiofiles"
+version = "24.1.0.20250516"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/13/41faafda1d85fc8afa744ee67a2d788b3ba63e5f1c7303e5d10c2d784d2d/types_aiofiles-24.1.0.20250516.tar.gz", hash = "sha256:7fd2a7f793bbe180b7b22cd4f59300fe61fdc9940b3bbc9899ffe32849b95188", size = 14304 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/70/e7/828287ba5d1107db1093a123fe8e481eb5aab55c911f1100f28d0df80d5a/types_aiofiles-24.1.0.20250516-py3-none-any.whl", hash = "sha256:ec265994629146804b656a971c46f393ce860305834b3cacb4b8b6fb7dba7e33", size = 14253 },
 ]
 
 [[package]]

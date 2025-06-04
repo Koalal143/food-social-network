@@ -29,6 +29,7 @@ dev = [
     "pre-commit>=4.2.0",
     "ruff>=0.1.13",
     "types-aiobotocore[essential]==2.21.1",
+    "types-aiofiles>=24.1.0.20250516",
     "uv-sort>=0.5.1",
 ]
 test = [
