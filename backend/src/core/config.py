@@ -71,6 +71,10 @@ class NatsConfig(BaseModel):
     url: str = "nats://nats:4222"
 
 
+class TestsConfig(BaseModel):
+    use_real_recs_microservice: bool = False
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -89,6 +93,7 @@ class Settings(BaseSettings):
     redis: RedisConfig
     elasticsearch: ElasticSearchConfig
     nats: NatsConfig = NatsConfig()
+    tests: TestsConfig = TestsConfig()
     mode: Literal["dev", "test", "prod"] = Field(default="prod", description="Application mode")
 
 
