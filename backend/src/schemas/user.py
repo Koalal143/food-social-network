@@ -8,7 +8,6 @@ from pydantic import (
     ConfigDict,
     EmailStr,
     Field,
-    field_validator,
     model_validator,
 )
 
@@ -31,7 +30,17 @@ NICKNAME_PATTERN: Final[re.Pattern] = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 SPECIAL_CHARACTERS: Final[str] = r"!\"#\$%&'\(\)\*\+,\-./:;<=>\?@\[\\\]\^_`{\|}~"
 
-Nickname = Annotated[str, Field(pattern=NICKNAME_PATTERN, min_length=3, max_length=30)]
+
+def validate_username(username: str) -> str:
+    if username.lower() in BANNED_USERNAMES:
+        msg = "Username is not allowed"
+        raise ValueError(msg)
+    return username
+
+
+Nickname = Annotated[
+    str, Field(pattern=NICKNAME_PATTERN, min_length=3, max_length=30), AfterValidator(validate_username)
+]
 
 
 def validate_password(password: str) -> str:
@@ -76,14 +85,6 @@ class UserCreate(BaseModel):
     username: Nickname = Field(min_length=3, max_length=30)
     email: EmailStr = Field(min_length=3, max_length=100)
     password: Password
-
-    @field_validator("username")
-    @classmethod
-    def validate_username(cls, username: str) -> str:
-        if username.lower() in BANNED_USERNAMES:
-            msg = "Username is not allowed"
-            raise ValueError(msg)
-        return username
 
 
 class UserRead(BaseReadSchema):
