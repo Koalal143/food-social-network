@@ -80,9 +80,7 @@ class RecipeService:
         recipe_schema = await self._to_recipe_schema(recipe)
         author = UserReadShort.model_validate(recipe.author, from_attributes=True)
         if author.profile.avatar_url:
-            author.profile.avatar_url = await self.recipe_image_repository.get_image_url(
-                author.profile.avatar_url
-            )
+            author.profile.avatar_url = await self.recipe_image_repository.get_image_url(author.profile.avatar_url)
         new_recipe_schema = recipe_schema.model_dump()
         new_recipe_schema["author"] = author.model_dump()
         return RecipeReadFull.model_validate(new_recipe_schema)
@@ -234,7 +232,7 @@ class RecipeService:
             raise RecipeOwnershipError(msg)
         is_image_path_reseted = recipe_data.get("image_path", "unset")
         if recipe_update.is_published and not (
-            is_image_path_reseted is not None or recipe_data.get("image_path") or existing_recipe.image_path
+            is_image_path_reseted != "unset" or recipe_data.get("image_path") or existing_recipe.image_path
         ):
             msg = "Recipe can not be published without image"
             raise NoRecipeImageError(msg)
