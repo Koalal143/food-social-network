@@ -318,7 +318,8 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
               {...register('title', { validate: validateTitle })}
               type="text"
               placeholder="Введите название рецепта"
-              maxLength='135'
+              maxLength={135}
+              minLength={3}
             />
             {errors.title && <p className="text-destructive text-sm">{errors.title.message}</p>}
           </div>
@@ -327,9 +328,10 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
             <Label>Описание</Label>
             <Textarea
               {...register('short_description', { validate: validateDescription })}
-              rows={3}
+              rows={2}
               placeholder="Краткое описание рецепта"
-              maxLength='255'
+              minLength={3}
+              maxLength={255}
             />
             {errors.short_description && <p className="text-destructive text-sm">{errors.short_description.message}</p>}
           </div>
@@ -357,7 +359,8 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                 onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); }}}
                 placeholder="Введите тэг и нажмите Enter или +"
-                maxLength={30}
+                minLength={2}
+                maxLength={50}
               />
               <Button type="button" onClick={handleAddTag} disabled={tags.length >= 15}>+</Button>
             </div>
@@ -483,11 +486,14 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                 {...register(`ingredients.${index}.name`, { required: 'Название обязательно' })}
                 type="text"
                 placeholder="Название (например, Мука)"
+                minLength={2}
+                maxLength={135}
               />
               <Input
                 {...register(`ingredients.${index}.quantity`, { required: 'Количество обязательно' })}
                 type="text"
                 placeholder="Количество (например, 200 г)"
+                maxLength={30}
               />
               {ingredientFields.length > 1 && (
                 <Button
@@ -533,6 +539,8 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                   {...register(`instructions.${index}.description`, { required: 'Текст шага обязателен' })}
                   placeholder={`Шаг ${field.step_number}`}
                   rows={2}
+                  minLength={2}
+                  maxLength={255}
                 />
                 <div className="flex items-center gap-2">
                   <Controller
@@ -581,7 +589,6 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                   size="icon"
                   onClick={() => {
                     removeInstruction(index);
-                    // Удаляем превью при удалении шага
                     setInstructionPhotoPreviews(prev => {
                       const newPreviews = { ...prev };
                       delete newPreviews[index];
