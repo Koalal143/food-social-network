@@ -1,10 +1,10 @@
 from collections.abc import AsyncIterator
 
 from dishka import Provider, Scope, provide
+from types_aiobotocore_s3 import S3Client
 
 from src.adapters.storage import S3Storage, S3StorageClientManager
 from src.core.config import S3Config
-from src.typings.external.aiobotocore_s3.client import S3Client
 
 
 class S3Provider(Provider):

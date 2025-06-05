@@ -85,6 +85,7 @@ async def create_consent(
 
     async with uow:
         is_analytics_allowed = consent_data.is_analytics_allowed
+        await uow.commit()
         _set_cookie(settings, response, "analytics_allowed", str(is_analytics_allowed))
         if is_analytics_allowed:
             anonymous_user = await anonymous_user_service.create(
@@ -108,6 +109,7 @@ async def revoke_consent(
         raise AppHTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Anonymous user not found",
+            error_key="anonymous_user_not_found",
         )
     async with uow:
         await consent_service.delete_by_anonymous_user_id(anonymous_user.id)

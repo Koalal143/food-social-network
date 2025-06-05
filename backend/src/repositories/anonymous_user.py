@@ -5,9 +5,10 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.anonymous_user import AnonymousUser
+from src.repositories.interfaces.anonymous_user import AnonymousUserRepositoryProtocol
 
 
-class AnonymousUserRepository:
+class AnonymousUserRepository(AnonymousUserRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 

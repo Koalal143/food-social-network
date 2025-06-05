@@ -63,12 +63,16 @@ class ElasticSearchConfig(BaseModel):
 
 class CookiePolicyConfig(BaseModel):
     httponly: bool = True
-    samesite: str = "lax"
+    samesite: Literal["lax", "strict", "none"] = "lax"
     secure: bool = False
 
 
 class NatsConfig(BaseModel):
     url: str = "nats://nats:4222"
+
+
+class TestsConfig(BaseModel):
+    use_real_recs_microservice: bool = False
 
 
 class Settings(BaseSettings):
@@ -77,7 +81,7 @@ class Settings(BaseSettings):
         env_nested_delimiter="__",
         env_file=PATH.parent / ".env",
         extra="ignore",
-        env_prefix="API__"
+        env_prefix="API__",
     )
 
     project_name: str = "Food Social Network"
@@ -89,6 +93,7 @@ class Settings(BaseSettings):
     redis: RedisConfig
     elasticsearch: ElasticSearchConfig
     nats: NatsConfig = NatsConfig()
+    tests: TestsConfig = TestsConfig()
     mode: Literal["dev", "test", "prod"] = Field(default="prod", description="Application mode")
 
 

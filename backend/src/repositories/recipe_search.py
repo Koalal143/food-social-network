@@ -7,10 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.search.indexes import RecipeIndex
 from src.models.search_query import SearchQuery
+from src.repositories.interfaces.recipe_search import RecipeSearchRepositoryProtocol
 from src.schemas.recipe import RecipeSearchQuery
 
 
-class RecipeSearchRepository:
+class RecipeSearchRepository(RecipeSearchRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -20,7 +21,7 @@ class RecipeSearchRepository:
         must_queries = []
         must_not_queries = []
         filter_queries = []
-
+        must_queries.append(Q("term", is_published=True))
         if params.query:
             must_queries.append(Q("multi_match", query=params.query, fields=["title", "short_description"]))
 
@@ -51,7 +52,7 @@ class RecipeSearchRepository:
             search = search.sort(params.sort_by)
 
         result = await search.execute()
-        total = result.hits.total.value
+        total = result.hits.total.value  # type: ignore[attr-defined]
         recipe_ids = [hit.to_dict()["id"] for hit in result]
 
         return total, recipe_ids
@@ -70,7 +71,7 @@ class RecipeSearchRepository:
 
     async def save_search_query(
         self, query_text: str, user_id: int | None, anonymous_user_id: int | None
-    ) -> SearchQuery:
+    ) -> SearchQuery | None:
         if not (user_id or anonymous_user_id):
             msg = "One of user_id or anonymous_user_id must be provided"
             raise ValueError(msg)

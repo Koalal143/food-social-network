@@ -4,10 +4,11 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.banned_email import BannedEmail
+from src.repositories.interfaces.banned_email import BannedEmailRepositoryProtocol
 from src.schemas.banned_email import BannedEmailDomainCreate
 
 
-class BannedEmailRepository:
+class BannedEmailRepository(BannedEmailRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 

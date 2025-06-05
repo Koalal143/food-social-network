@@ -1,6 +1,9 @@
-from typing import Any, Protocol
+from __future__ import annotations
 
-from src.models.consent import Consent
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:
+    from src.models.consent import Consent
 
 
 class ConsentRepositoryProtocol(Protocol):
@@ -11,3 +14,5 @@ class ConsentRepositoryProtocol(Protocol):
     async def update(self, anonymous_user_id: int, **fields: Any) -> Consent | None: ...
 
     async def delete(self, consent_id: int) -> None: ...
+
+    async def delete_by_anonymous_user_id(self, anonymous_user_id: int) -> None: ...

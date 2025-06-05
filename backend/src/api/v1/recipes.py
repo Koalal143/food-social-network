@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Path, Query, Response, status
+from fastapi import APIRouter, Body, Path, Query, Response, status
 from pydantic import PositiveInt
 
 from src.core.security import (
@@ -71,7 +71,7 @@ async def get_recipe(
     else:
         async with uow:
             try:
-                if current_user:
+                if user_id:
                     await recipe_impression.record_impression(user_id=user_id, recipe_id=recipe_id, source=source)
                 elif anonymous_user:
                     await recipe_impression.record_impression_for_anonymous(
@@ -115,7 +115,7 @@ async def get_recipe_by_slug(
     else:
         async with uow:
             try:
-                if current_user:
+                if user_id:
                     await recipe_impression.record_impression(user_id=user_id, recipe_id=recipe.id, source=source)
                 elif anonymous_user:
                     await recipe_impression.record_impression_for_anonymous(
@@ -144,7 +144,10 @@ async def get_recipes(
     limit: Annotated[int, Query(ge=1, le=50, description="Количество рецептов на странице")] = 10,
 ) -> list[RecipeReadShort]:
     total, recipes = await recipe_service.get_all(
-        user_id=current_user.id if current_user else None, skip=offset, limit=limit, is_published=True,
+        user_id=current_user.id if current_user else None,
+        skip=offset,
+        limit=limit,
+        is_published=True,
     )
     response.headers["X-Total-Count"] = str(total)
     return list(recipes)
@@ -281,7 +284,7 @@ async def delete_recipe(
             ) from None
 
 
-@router.get(
+@router.post(
     "/{recipe_id}/image/upload-url",
     summary="Get URL for uploading recipe image",
     description="Returns a pre-signed URL for uploading a recipe image. "
@@ -314,7 +317,7 @@ async def get_upload_image_url(
         raise AppHTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e), error_key=e.error_key) from None
 
 
-@router.get(
+@router.post(
     "/{recipe_id}/instructions/upload-urls",
     summary="Get URLs for uploading instruction images",
     description="Returns pre-signed URLs for uploading images for recipe instruction steps. Authentication required.",
@@ -357,7 +360,7 @@ async def get_upload_image_url(
 )
 async def get_upload_instructions_urls(
     recipe_id: Annotated[int, Path(title="Recipe ID", ge=1)],
-    steps: Annotated[list[PositiveInt], Query(description="Номера шагов инструкций для загрузки изображений")],
+    steps: Annotated[list[PositiveInt], Body(description="Steps number for instructions")],
     instructions_service: FromDishka[RecipeInstructionsService],
     _current_user: CurrentUserDependency,  # Ensure user is authenticated
 ) -> list[RecipeInstructionsUploadUrls]:
