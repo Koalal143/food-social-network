@@ -13,19 +13,19 @@ MAX_RECIPE_INSTRUCTIONS_COUNT = 25
 
 RecipeTitle = Annotated[
     str,
-    Field(max_length=135, examples=["Pasta Carbonara", "Салат Цезарь"]),
+    Field(min_length=3, max_length=135, examples=["Pasta Carbonara", "Салат Цезарь"]),
     AfterValidator(validate_recipe_title),
 ]
 
 
 class Ingredient(BaseSchema):
-    name: str = Field(max_length=135, examples=["Tomato", "Чеснок"])
-    quantity: str = Field(max_length=135, examples=["2 pieces", "два зубчика"])
+    name: str = Field(min_length=2, max_length=135, examples=["Tomato", "Чеснок"])
+    quantity: str | None = Field(default=None, max_length=30, examples=["2 pieces", "два зубчика"])
 
 
 class BaseRecipeInstruction(BaseSchema):
     step_number: PositiveInt = Field(le=MAX_RECIPE_INSTRUCTIONS_COUNT)
-    description: str = Field(max_length=1000, examples=["Boil water", "Добавьте соль"])
+    description: str = Field(max_length=255, examples=["Boil water", "Добавьте соль"])
     image_path: str | None = Field(default=None, max_length=255, examples=["images/recipes/1/instructions/1/step.png"])
 
 
@@ -56,24 +56,24 @@ class RecipeInstructionsUploadUrls(DirectUpload):
 
 
 class RecipeTag(BaseSchema):
-    name: str = Field(max_length=50, examples=["Dinner", "Африканская кухня"])
+    name: str = Field(min_length=2, max_length=50, examples=["Dinner", "Африканская кухня"])
 
 
 class BaseRecipeSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
     title: RecipeTitle
-    short_description: str = Field(max_length=255, examples=["Рецепт салата Цезарь"])
+    short_description: str = Field(min_length=3, max_length=255, examples=["Рецепт салата Цезарь"])
     difficulty: RecipeDifficultyEnum = Field(examples=["EASY"])
     cook_time_minutes: int = Field(gt=0)
 
 
 class _IngredientsMixin(BaseSchema):
-    ingredients: list[Ingredient] = Field(max_length=50)
+    ingredients: list[Ingredient] = Field(min_length=1, max_length=50)
 
 
 class _TagsMixin(BaseSchema):
-    tags: list[RecipeTag] = Field(max_length=15)
+    tags: list[RecipeTag] = Field(min_length=1, max_length=15)
 
 
 class _IsPublishedMixin(BaseSchema):
@@ -110,8 +110,6 @@ class RecipeCreate(_IngredientsMixin, _TagsMixin, BaseRecipeSchema):
 
 @partial_model
 class RecipeUpdate(_IsPublishedMixin, BaseRecipeSchema):
-    """Schema for updating all recipe fields, except instruction."""
-
     image_path: str | None = Field(default=None, max_length=255, examples=["images/recipes/1/main.png"])
     instructions: Annotated[list[RecipeInstructionCreate] | None, AfterValidator(validate_instructions_steps)] = Field(
         default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT
