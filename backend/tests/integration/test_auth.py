@@ -51,6 +51,12 @@ class TestAuthRegisterIntegration:
             ({"username": "test", "password": "TestPass123!"}, "Field required"),
             ({"username": "test", "email": "test@example.com"}, "Field required"),
         ],
+        ids=[
+            "empty_payload",
+            "missing_username",
+            "missing_email",
+            "missing_password",
+        ],
     )
     async def test_register_missing_required_fields(
         self,
@@ -67,6 +73,13 @@ class TestAuthRegisterIntegration:
     @pytest.mark.parametrize(
         "username",
         [123, None, -1, [], {"username": "username"}],
+        ids=[
+            "username_integer",
+            "username_none",
+            "username_negative",
+            "username_list",
+            "username_dict",
+        ],
     )
     async def test_register_invalid_username_type(self, api_client: AsyncClient, username):
         payload = {"username": username, "email": "test@example.com", "password": "TestPass123!"}
@@ -83,6 +96,13 @@ class TestAuthRegisterIntegration:
             {"email": "email@mail.com"},
             [],
         ],
+        ids=[
+            "email_integer",
+            "email_none",
+            "email_negative",
+            "email_dict",
+            "email_list",
+        ],
     )
     async def test_register_invalid_email_type(self, api_client: AsyncClient, email):
         payload = {"username": "testuser", "email": email, "password": "TestPass123!"}
@@ -97,6 +117,12 @@ class TestAuthRegisterIntegration:
             -1,
             None,
             [],
+        ],
+        ids=[
+            "password_integer",
+            "password_negative",
+            "password_none",
+            "password_list",
         ],
     )
     async def test_register_invalid_password_type(self, api_client: AsyncClient, password):
@@ -124,6 +150,23 @@ class TestAuthRegisterIntegration:
             "avatar",  # banned username
             "me",  # banned username
         ],
+        ids=[
+            "username_too_short",
+            "username_too_long",
+            "username_invalid_at_symbol",
+            "username_with_space",
+            "username_with_dot",
+            "banned_username_admin",
+            "banned_username_administrator",
+            "banned_username_root",
+            "banned_username_moderator",
+            "banned_username_support",
+            "banned_username_help",
+            "banned_username_owner",
+            "banned_username_staff",
+            "banned_username_avatar",
+            "banned_username_me",
+        ],
     )
     async def test_register_username_validation_errors(self, api_client: AsyncClient, username: str):
         payload = {"username": username, "email": "test@example.com", "password": "TestPass123!"}
@@ -139,6 +182,13 @@ class TestAuthRegisterIntegration:
             "@example.com",  # no local part
             "test.example.com",  # no @ symbol
             "",  # empty
+        ],
+        ids=[
+            "email_no_at_symbol",
+            "email_no_domain",
+            "email_no_local_part",
+            "email_no_at_symbol_with_dot",
+            "email_empty",
         ],
     )
     async def test_register_email_validation_errors(self, api_client: AsyncClient, email: str):
@@ -157,6 +207,15 @@ class TestAuthRegisterIntegration:
             "NoSpecialChars123",  # no special characters
             "Simple1",  # no special characters
             "",  # empty
+        ],
+        ids=[
+            "password_too_short",
+            "password_no_uppercase",
+            "password_no_lowercase",
+            "password_no_numbers",
+            "password_no_special_chars_long",
+            "password_no_special_chars_short",
+            "password_empty",
         ],
     )
     async def test_register_password_validation_errors(self, api_client: AsyncClient, password: str):
@@ -237,6 +296,13 @@ class TestAuthLoginIntegration:
                 "Either email or username must be provided",
             ),
         ],
+        ids=[
+            "empty_payload",
+            "missing_password_with_email",
+            "missing_password_with_username",
+            "missing_email_and_username",
+            "null_email_and_username",
+        ],
     )
     async def test_login_missing_required_fields(
         self,
@@ -257,6 +323,11 @@ class TestAuthLoginIntegration:
             [],
             {},
         ],
+        ids=[
+            "email_integer",
+            "email_list",
+            "email_dict",
+        ],
     )
     async def test_login_invalid_email_type(self, api_client: AsyncClient, email):
         payload = {"email": email, "password": "TestPass123!"}
@@ -271,6 +342,11 @@ class TestAuthLoginIntegration:
             [],
             {},
         ],
+        ids=[
+            "username_integer",
+            "username_list",
+            "username_dict",
+        ],
     )
     async def test_login_invalid_username_type(self, api_client: AsyncClient, username):
         payload = {"username": username, "password": "TestPass123!"}
@@ -284,6 +360,11 @@ class TestAuthLoginIntegration:
             123,
             [],
             {},
+        ],
+        ids=[
+            "password_integer",
+            "password_list",
+            "password_dict",
         ],
     )
     async def test_login_invalid_password_type(self, api_client: AsyncClient, password):
@@ -414,6 +495,13 @@ class TestAuthRefreshIntegration:
             "invalid_token_format",
             "short",
             "very_long_invalid_token_that_should_fail_validation",
+        ],
+        ids=[
+            "token_numeric",
+            "token_empty",
+            "token_invalid_format",
+            "token_too_short",
+            "token_too_long",
         ],
     )
     async def test_refresh_token_invalid_values(self, api_client: AsyncClient, refresh_token: str):

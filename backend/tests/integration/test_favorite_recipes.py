@@ -200,6 +200,12 @@ class TestFavoriteRecipesIntegration:
             {"recipe_id": -1},
             {"recipe_id": 0},
         ],
+        ids=[
+            "empty_payload",
+            "invalid_recipe_id_string",
+            "negative_recipe_id",
+            "zero_recipe_id",
+        ],
     )
     async def test_add_recipe_to_favorites_invalid_data(
         self,
@@ -216,6 +222,11 @@ class TestFavoriteRecipesIntegration:
             "invalid",
             "-1",
             "0",
+        ],
+        ids=[
+            "invalid_string_id",
+            "negative_string_id",
+            "zero_string_id",
         ],
     )
     async def test_remove_recipe_invalid_id(

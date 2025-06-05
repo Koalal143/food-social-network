@@ -139,6 +139,15 @@ class TestRecipeUpdate:
             ("cook_time_minutes", 0),
             ("cook_time_minutes", -5),
         ],
+        ids=[
+            "empty_title",
+            "title_too_long",
+            "empty_description",
+            "description_too_long",
+            "invalid_difficulty",
+            "zero_cook_time",
+            "negative_cook_time",
+        ],
     )
     async def test_update_recipe_validation_errors(
         self, api_client: AsyncClient, auth_headers: dict[str, str], field: str, value

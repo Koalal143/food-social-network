@@ -160,6 +160,14 @@ class TestUserMeUpdateIntegration:
             ("profile", 123),
             ("profile", []),
         ],
+        ids=[
+            "username_integer",
+            "username_list",
+            "username_dict",
+            "profile_string",
+            "profile_integer",
+            "profile_list",
+        ],
     )
     async def test_update_invalid_field_types(
         self,
@@ -184,14 +192,24 @@ class TestUserMeUpdateIntegration:
     @pytest.mark.parametrize(
         "username",
         [
-            "ab",  # too short
-            "a" * 31,  # too long
-            "test@user",  # invalid characters
-            "test user",  # space not allowed
-            "test.user",  # dot not allowed
-            "admin",  # banned username
-            "root",  # banned username
-            "moderator",  # banned username
+            "ab",
+            "a" * 31,
+            "test@user",
+            "test user",
+            "test.user",
+            "admin",
+            "root",
+            "moderator",
+        ],
+        ids=[
+            "username_too_short",
+            "username_too_long",
+            "username_invalid_at_symbol",
+            "username_with_space",
+            "username_with_dot",
+            "banned_username_admin",
+            "banned_username_root",
+            "banned_username_moderator",
         ],
     )
     async def test_update_username_validation_errors(
@@ -307,6 +325,11 @@ class TestUserAvatarUpdateIntegration:
             ("test.txt", "text/plain"),
             ("test.pdf", "application/pdf"),
             ("test.doc", "application/msword"),
+        ],
+        ids=[
+            "text_file",
+            "pdf_file",
+            "doc_file",
         ],
     )
     async def test_update_avatar_wrong_format(

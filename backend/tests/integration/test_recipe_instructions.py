@@ -49,6 +49,10 @@ class TestRecipeInstructionsUploadUrls:
             [0],
             [-1],
         ],
+        ids=[
+            "step_zero",
+            "step_negative",
+        ],
     )
     async def test_get_upload_instructions_urls_validation_errors(
         self, api_client: AsyncClient, auth_headers: dict[str, str], steps: list[int]
@@ -79,6 +83,11 @@ class TestRecipeInstructionsUploadUrls:
             [26],
             list(range(1, 27)),
             [1, 1],  # duplicate steps
+        ],
+        ids=[
+            "step_too_high",
+            "too_many_steps",
+            "duplicate_steps",
         ],
     )
     async def test_get_upload_instructions_urls_business_logic_errors(

@@ -87,6 +87,12 @@ class TestRecipeRetrieval:
             (51, 0),
             (10, -1),
         ],
+        ids=[
+            "negative_limit",
+            "zero_limit",
+            "limit_too_high",
+            "negative_offset",
+        ],
     )
     async def test_get_recipes_list_validation_errors(self, api_client: AsyncClient, limit: int, offset: int):
         response = await api_client.get(f"/v1/recipes/?limit={limit}&offset={offset}")

@@ -77,6 +77,16 @@ class TestRecipeCreation:
             ("cook_time_minutes", 0),
             ("cook_time_minutes", -5),
         ],
+        ids=[
+            "empty_title",
+            "title_too_long",
+            "title_too_many_words",
+            "empty_description",
+            "description_too_long",
+            "invalid_difficulty",
+            "zero_cook_time",
+            "negative_cook_time",
+        ],
     )
     async def test_create_recipe_validation_errors(
         self, api_client: AsyncClient, auth_headers: dict[str, str], field: str, value
@@ -105,6 +115,13 @@ class TestRecipeCreation:
             [{"name": "a" * 136, "quantity": "1 piece"}],
             [{"name": "Test", "quantity": "a" * 136}],
         ],
+        ids=[
+            "empty_ingredients_list",
+            "too_many_ingredients",
+            "empty_ingredient_name",
+            "ingredient_name_too_long",
+            "ingredient_quantity_too_long",
+        ],
     )
     async def test_create_recipe_ingredients_validation(
         self, api_client: AsyncClient, auth_headers: dict[str, str], ingredients: list
@@ -130,6 +147,12 @@ class TestRecipeCreation:
             [{"name": "test"}] * 16,
             [{"name": ""}],
             [{"name": "a" * 51}],
+        ],
+        ids=[
+            "empty_tags_list",
+            "too_many_tags",
+            "empty_tag_name",
+            "tag_name_too_long",
         ],
     )
     async def test_create_recipe_tags_validation(
@@ -157,6 +180,13 @@ class TestRecipeCreation:
             [{"step_number": 26, "description": "Test"}],
             [{"step_number": 2, "description": "Test"}],
             [{"step_number": 1, "description": "Test"}, {"step_number": 3, "description": "Test"}],
+        ],
+        ids=[
+            "instruction_description_too_long",
+            "instruction_step_zero",
+            "instruction_step_too_high",
+            "instruction_step_not_sequential",
+            "instruction_steps_with_gaps",
         ],
     )
     async def test_create_recipe_instructions_validation(
