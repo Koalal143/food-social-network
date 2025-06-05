@@ -28,6 +28,8 @@ FROM python:3.12-slim-bookworm
 WORKDIR /app
 COPY --from=builder --chown=app:app /app /app
 
+RUN apt-get update && apt-get install -y curl
+
 ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
