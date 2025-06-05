@@ -52,6 +52,7 @@ export default function AdminDashboard() {
         fetchStatistics()
     }, [toast])
 
+    
     if (loading) {
         return (
             <AdminRoute>
