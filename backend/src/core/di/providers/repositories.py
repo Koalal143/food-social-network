@@ -1,8 +1,8 @@
 from dishka import Provider, Scope, provide
-from faststream.nats import NatsBroker
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.adapters.interfaces.recommendations import RecommendationsAdapterProtocol
 from src.adapters.storage import S3Storage
 from src.repositories.anonymous_user import AnonymousUserRepository
 from src.repositories.banned_email import BannedEmailRepository
@@ -113,5 +113,5 @@ class RepositoryProvider(Provider):
         return DislikedRecipeRepository(session)
 
     @provide
-    def get_recsys_repository(self, broker: NatsBroker) -> RecsysRepositoryProtocol:
-        return RecsysRepository(broker)
+    def get_recsys_repository(self, adapter: RecommendationsAdapterProtocol) -> RecsysRepositoryProtocol:
+        return RecsysRepository(adapter)

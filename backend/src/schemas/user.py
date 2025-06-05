@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Annotated, Final
+from typing import Annotated, Final, Self
 
 from pydantic import (
     AfterValidator,
@@ -8,8 +8,7 @@ from pydantic import (
     ConfigDict,
     EmailStr,
     Field,
-    ValidationInfo,
-    field_validator,
+    model_validator,
 )
 
 from src.schemas.base import BaseReadSchema, BaseSchema
@@ -31,7 +30,17 @@ NICKNAME_PATTERN: Final[re.Pattern] = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 SPECIAL_CHARACTERS: Final[str] = r"!\"#\$%&'\(\)\*\+,\-./:;<=>\?@\[\\\]\^_`{\|}~"
 
-Nickname = Annotated[str, Field(pattern=NICKNAME_PATTERN, min_length=3, max_length=30)]
+
+def validate_username(username: str) -> str:
+    if username.lower() in BANNED_USERNAMES:
+        msg = "Username is not allowed"
+        raise ValueError(msg)
+    return username
+
+
+Nickname = Annotated[
+    str, Field(pattern=NICKNAME_PATTERN, min_length=3, max_length=30), AfterValidator(validate_username)
+]
 
 
 def validate_password(password: str) -> str:
@@ -74,16 +83,8 @@ class UserProfileUpdate(BaseModel):
 
 class UserCreate(BaseModel):
     username: Nickname = Field(min_length=3, max_length=30)
-    email: EmailStr
+    email: EmailStr = Field(min_length=3, max_length=100)
     password: Password
-
-    @field_validator("username")
-    @classmethod
-    def validate_username(cls, username: str) -> str:
-        if username.lower() in BANNED_USERNAMES:
-            msg = "Username is not allowed"
-            raise ValueError(msg)
-        return username
 
 
 class UserRead(BaseReadSchema):
@@ -110,17 +111,16 @@ class UserLogin(BaseModel):
     username: Nickname | None = Field(None, description="Username")
     password: Password
 
-    @field_validator("email", mode="after")
-    @classmethod
-    def validate_email(cls, email: str | None, values: ValidationInfo) -> str | None:
-        if not email and not values.data.get("username"):
+    @model_validator(mode="after")
+    def validate_email(self) -> Self:
+        if not self.email and not self.username:
             msg = "Either email or username must be provided"
             raise ValueError(msg)
-        return email
+        return self
 
 
 class UserUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
-    username: str | None = Field(None, min_length=3, max_length=30, description="New username for the user")
+    username: Nickname | None = Field(None, min_length=3, max_length=30, description="New username for the user")
     profile: UserProfileUpdate | None = Field(None, description="User profile information")

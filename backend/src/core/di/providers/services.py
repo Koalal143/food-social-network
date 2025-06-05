@@ -1,5 +1,4 @@
 from dishka import Provider, Scope, provide
-from faststream.nats import NatsBroker
 
 from src.repositories.interfaces import (
     AnonymousUserRepositoryProtocol,
@@ -20,7 +19,6 @@ from src.repositories.interfaces import (
     UserProfileRepositoryProtocol,
     UserRepositoryProtocol,
 )
-from src.repositories.recsys_client import RecsysRepository
 from src.services.anonymous_user import AnonymousUserService
 from src.services.avatar import UserAvatarService
 from src.services.banned_email import BannedEmailService
@@ -191,10 +189,6 @@ class ServiceProvider(Provider):
         return BannedEmailService(banned_email_repository=banned_email_repository)
 
     # External services
-    @provide
-    def get_recsys_repository(self, broker: NatsBroker) -> RecsysRepository:
-        return RecsysRepository(broker=broker)
-
     @provide
     def get_recommendation_service(
         self,

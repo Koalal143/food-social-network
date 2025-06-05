@@ -10,7 +10,7 @@ from src.repositories.interfaces import (
     RecipeRepositoryProtocol,
     RecsysRepositoryProtocol,
 )
-from src.schemas.disliked_recipe import DislikedRecipeCreate, DislikedRecipeRead
+from src.schemas.disliked_recipe import DislikedRecipeCreate
 from src.schemas.recipe import RecipeReadShort
 
 
@@ -29,12 +29,11 @@ class DislikedRecipeService:
         self.recipe_image_repository = recipe_image_repository
         self.recsys_repository = recsys_repository
 
-    async def _to_recipe_with_dislike_schema(self, disliked_recipe: Recipe) -> DislikedRecipeRead:
+    async def _to_recipe_with_dislike_schema(self, disliked_recipe: Recipe) -> RecipeReadShort:
         recipe = RecipeReadShort.model_validate(disliked_recipe)
-        if recipe.image_path:
-            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
+        if disliked_recipe.image_path:
+            recipe.image_url = await self.recipe_image_repository.get_image_url(disliked_recipe.image_path)
 
-        recipe.is_disliked = True
         return recipe
 
     async def get_user_dislikes(
@@ -46,7 +45,7 @@ class DislikedRecipeService:
 
         return count, disliked_recipes
 
-    async def add_to_dislikes(self, user: User, dislike_data: DislikedRecipeCreate) -> DislikedRecipeRead:
+    async def add_to_dislikes(self, user: User, dislike_data: DislikedRecipeCreate) -> RecipeReadShort:
         recipe_id = dislike_data.recipe_id
 
         recipe = await self.recipe_repository.get_by_id(recipe_id)
@@ -61,10 +60,9 @@ class DislikedRecipeService:
         if await self.favorite_recipe_repository.exists(user_id=user.id, recipe_id=recipe_id):
             await self.favorite_recipe_repository.delete(user_id=user.id, recipe_id=recipe_id)
 
-        disliked = await self.disliked_recipe_repository.create(user_id=user.id, recipe_id=recipe_id)
-        await self.recsys_repository.add_feedback(user.id, recipe_id, FeedbackTypeEnum.dislike)
-
-        return await self._to_recipe_with_dislike_schema(disliked)
+        await self.disliked_recipe_repository.create(user_id=user.id, recipe_id=recipe_id)
+        await self.recsys_repository.add_feedback(user.id, recipe_id, FeedbackTypeEnum.DISLIKE)
+        return await self._to_recipe_with_dislike_schema(recipe)
 
     async def remove_from_dislikes(self, user: User, recipe_id: int) -> None:
         recipe = await self.recipe_repository.get_by_id(recipe_id)
@@ -77,7 +75,7 @@ class DislikedRecipeService:
             raise RecipeNotDislikedError(msg)
 
         await self.disliked_recipe_repository.delete(user_id=user.id, recipe_id=recipe_id)
-        await self.recsys_repository.delete_feedback(user.id, recipe_id, FeedbackTypeEnum.dislike)
+        await self.recsys_repository.delete_feedback(user.id, recipe_id, FeedbackTypeEnum.DISLIKE)
 
     async def is_disliked(self, user_id: int, recipe_id: int) -> bool:
         return await self.disliked_recipe_repository.exists(user_id=user_id, recipe_id=recipe_id)

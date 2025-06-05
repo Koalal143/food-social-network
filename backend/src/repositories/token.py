@@ -42,6 +42,7 @@ class RefreshTokenRepository(RefreshTokenRepositoryProtocol):
         if new_expires_at is not None:
             refresh_token.expires_at = new_expires_at
         await self.session.flush()
+        await self.session.refresh(refresh_token)
 
     async def deactivate(self, refresh_token: RefreshToken) -> None:
         refresh_token.is_active = False

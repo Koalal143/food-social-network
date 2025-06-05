@@ -1,4 +1,7 @@
 from collections.abc import Sequence
+from typing import cast
+
+from pydantic import HttpUrl
 
 from src.exceptions.recipe import (
     NoRecipeImageError,
@@ -21,7 +24,7 @@ from src.schemas.direct_upload import DirectUpload
 from src.schemas.recipe import (
     Ingredient,
     RecipeCreate,
-    RecipeInstruction,
+    RecipeInstructionCreate,
     RecipeRead,
     RecipeReadFull,
     RecipeReadShort,
@@ -52,31 +55,33 @@ class RecipeService:
         self.recipe_search_repository = recipe_search_repository
         self.recsys_repository = recsys_repository
 
-    async def _to_recipe_schema(self, recipe: Recipe) -> RecipeReadFull:
+    async def _to_recipe_schema(self, recipe: RecipeWithExtra) -> RecipeReadFull:
         recipe_schema = RecipeReadFull.model_validate(recipe)
 
         if recipe.image_path:
             recipe_schema.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
 
-        for i, instruction in enumerate(recipe_schema.instructions):
-            if instruction.image_path:
-                recipe_schema.instructions[i].image_url = await self.recipe_image_repository.get_image_url(
-                    instruction.image_path
-                )
+        if recipe_schema.instructions:
+            for i, instruction in enumerate(recipe_schema.instructions):
+                if instruction.image_path:
+                    recipe_schema.instructions[i].image_url = HttpUrl(
+                        await self.recipe_image_repository.get_image_url(str(instruction.image_path))
+                    )
 
         return recipe_schema
 
     async def _to_recipe_short_schema(self, recipe: Recipe) -> RecipeReadShort:
+        schema = RecipeReadShort.model_validate(recipe, from_attributes=True)
         if recipe.image_path:
-            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
-        return RecipeReadShort.model_validate(recipe, from_attributes=True)
+            schema.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
+        return schema
 
     async def _to_recipe_full_schema(self, recipe: RecipeWithExtra) -> RecipeReadFull:
         recipe_schema = await self._to_recipe_schema(recipe)
         author = UserReadShort.model_validate(recipe.author, from_attributes=True)
         if author.profile.avatar_url:
             author.profile.avatar_url = await self.recipe_image_repository.get_image_url(
-                recipe.author.profile.avatar_url
+                author.profile.avatar_url
             )
         new_recipe_schema = recipe_schema.model_dump()
         new_recipe_schema["author"] = author.model_dump()
@@ -148,7 +153,7 @@ class RecipeService:
         if ingredients_data:
             await self.recipe_ingredient_repository.bulk_create(ingredients_data)
 
-    async def _create_instructions(self, recipe_id: int, instructions: list[RecipeInstruction]) -> None:
+    async def _create_instructions(self, recipe_id: int, instructions: list[RecipeInstructionCreate]) -> None:
         instructions_data = []
         for instruction in instructions:
             instruction_dict = instruction.model_dump()
@@ -189,12 +194,12 @@ class RecipeService:
                     existing_tags = [tag.name for tag in existing_recipe.tags] if existing_recipe.tags else []
                     new_tags_str = ", ".join(existing_tags)
                 await self.recsys_repository.update_recipe(
-                    existing_recipe.author_id, existing_recipe.id, new_title, new_tags_str
+                    cast("int", existing_recipe.author_id), cast("int", existing_recipe.id), new_title, new_tags_str
                 )
             else:
                 tags = ", ".join([tag.name for tag in existing_recipe.tags]) if existing_recipe.tags else ""
                 await self.recsys_repository.add_recipe(
-                    existing_recipe.author_id, existing_recipe.id, existing_recipe.title, tags
+                    cast("int", existing_recipe.author_id), existing_recipe.id, existing_recipe.title, tags
                 )
 
         if existing_recipe.is_published and recipe_update.is_published is False:
@@ -213,7 +218,7 @@ class RecipeService:
 
         await self._create_tags(recipe.id, recipe_create.tags)
 
-        created_recipe = await self.recipe_repository.get_by_id(recipe.id)
+        created_recipe = cast("RecipeWithExtra", await self.recipe_repository.get_by_id(recipe.id))
         await self._update_elasticsearch_index(created_recipe)
         return await self._to_recipe_schema(created_recipe)
 
@@ -255,7 +260,7 @@ class RecipeService:
             await self.recipe_tag_repository.delete_by_recipe_id(recipe_id)
             await self._create_tags(recipe_id, recipe_update.tags)
 
-        updated_recipe = await self.recipe_repository.get_by_id(recipe_id, user_id=user.id)
+        updated_recipe = cast("RecipeWithExtra", await self.recipe_repository.get_by_id(recipe_id, user_id=user.id))
 
         await self._update_elasticsearch_index(updated_recipe)
 

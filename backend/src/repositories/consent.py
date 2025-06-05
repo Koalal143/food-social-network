@@ -1,12 +1,17 @@
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import delete, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.consent import Consent
+from src.repositories.interfaces.consent import ConsentRepositoryProtocol
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class ConsentRepository:
+class ConsentRepository(ConsentRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -30,5 +35,10 @@ class ConsentRepository:
 
     async def delete(self, consent_id: int) -> None:
         stmt = delete(Consent).where(Consent.id == consent_id)
+        await self.session.execute(stmt)
+        await self.session.flush()
+
+    async def delete_by_anonymous_user_id(self, anonymous_user_id: int) -> None:
+        stmt = delete(Consent).where(Consent.anonymous_user_id == anonymous_user_id)
         await self.session.execute(stmt)
         await self.session.flush()

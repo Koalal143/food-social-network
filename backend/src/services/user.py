@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import cast
 
 from src.exceptions.auth import InactiveOrNotExistingUserError, IncorrectCredentialsError, SuspiciousEmailError
 from src.exceptions.user import UserEmailAlreadyExistsError, UserNicknameAlreadyExistsError, UserNotFoundError
@@ -70,7 +71,7 @@ class UserService:
         )
         await self.user_profile_repository.create(user_id=user.id)
 
-        user = await self.user_repository.get_with_profile(user.id)
+        user = cast("User", await self.user_repository.get_with_profile(user.id))
         return await self._to_user_model(user)
 
     async def authenticate(self, *, email: str | None, username: str | None, password: str) -> UserRead:
@@ -124,7 +125,7 @@ class UserService:
         if profile and profile.about is not None:
             await self.user_profile_repository.update(user_id=user_id, about=profile.about)
 
-        user = await self.user_repository.get_with_profile(user_id)
+        user = cast("User", await self.user_repository.get_with_profile(user_id))
         return await self._to_user_model(user)
 
     async def _to_user_model(self, user: User) -> UserRead:

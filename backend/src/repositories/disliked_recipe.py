@@ -6,9 +6,10 @@ from sqlalchemy.orm import joinedload
 
 from src.models.disliked_recipes import DislikedRecipe
 from src.models.recipe import Recipe
+from src.repositories.interfaces.disliked_recipe import DislikedRecipeRepositoryProtocol
 
 
-class DislikedRecipeRepository:
+class DislikedRecipeRepository(DislikedRecipeRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -29,6 +30,7 @@ class DislikedRecipeRepository:
                     Recipe.image_path,
                     Recipe.difficulty,
                     Recipe.cook_time_minutes,
+                    Recipe.slug,
                 )
             )
             .order_by(DislikedRecipe.created_at.desc())

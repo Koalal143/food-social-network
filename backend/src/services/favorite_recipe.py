@@ -1,3 +1,6 @@
+from typing import TYPE_CHECKING, cast
+
+from src.enums.feedback_type import FeedbackTypeEnum
 from src.exceptions.favorite_recipe import RecipeAlreadyInFavoritesError, RecipeNotInFavoritesError
 from src.exceptions.recipe import RecipeNotFoundError
 from src.models.recipe import Recipe
@@ -9,8 +12,11 @@ from src.repositories.interfaces import (
     RecipeRepositoryProtocol,
     RecsysRepositoryProtocol,
 )
-from src.schemas.favorite_recipe import FavoriteRecipeCreate, FavoriteRecipeRead
+from src.schemas.favorite_recipe import FavoriteRecipeCreate
 from src.schemas.recipe import RecipeReadShort
+
+if TYPE_CHECKING:
+    from src.typings.recipe_with_favorite import RecipeWithExtra
 
 
 class FavoriteRecipeService:
@@ -28,8 +34,8 @@ class FavoriteRecipeService:
         self.recipe_image_repository = recipe_image_repository
         self.recsys_repository = recsys_repository
 
-    async def _to_recipe_with_like_schema(self, favorite_recipe: Recipe) -> FavoriteRecipeRead:
-        recipe = RecipeReadShort.model_validate(favorite_recipe)
+    async def _to_recipe_with_like_schema(self, favorite_recipe: Recipe) -> RecipeReadShort:
+        recipe = RecipeReadShort.model_validate(favorite_recipe, from_attributes=True)
         if favorite_recipe.image_path:
             recipe.image_url = await self.recipe_image_repository.get_image_url(favorite_recipe.image_path)
 
@@ -44,11 +50,10 @@ class FavoriteRecipeService:
         )
 
         favorite_recipes = [await self._to_recipe_with_like_schema(favorite.recipe) for favorite in favorites]
-        favorite_recipes = [await self._to_recipe_with_like_schema(favorite.recipe) for favorite in favorites]
 
         return count, favorite_recipes
 
-    async def add_to_favorites(self, user: User, favorite_data: FavoriteRecipeCreate) -> FavoriteRecipeRead:
+    async def add_to_favorites(self, user: User, favorite_data: FavoriteRecipeCreate) -> RecipeReadShort:
         recipe_id = favorite_data.recipe_id
 
         recipe = await self.recipe_repository.get_by_id(recipe_id)
@@ -64,8 +69,8 @@ class FavoriteRecipeService:
             await self.disliked_recipe_repository.delete(user_id=user.id, recipe_id=recipe_id)
 
         await self.favorite_recipe_repository.create(user_id=user.id, recipe_id=recipe_id)
-        await self.recsys_repository.add_feedback(user.id, recipe_id, "like")
-        recipe = await self.recipe_repository.get_by_id(recipe_id)
+        await self.recsys_repository.add_feedback(user.id, recipe_id, FeedbackTypeEnum.LIKE)
+        recipe = cast("RecipeWithExtra", await self.recipe_repository.get_by_id(recipe_id))
         return await self._to_recipe_with_like_schema(recipe)
 
     async def remove_from_favorites(self, user: User, recipe_id: int) -> None:
@@ -79,7 +84,7 @@ class FavoriteRecipeService:
             raise RecipeNotInFavoritesError(msg)
 
         await self.favorite_recipe_repository.delete(user_id=user.id, recipe_id=recipe_id)
-        await self.recsys_repository.delete_feedback(user.id, recipe_id, "like")
+        await self.recsys_repository.delete_feedback(user.id, recipe_id, FeedbackTypeEnum.LIKE)
 
     async def is_favorite(self, user_id: int, recipe_id: int) -> bool:
         return await self.favorite_recipe_repository.exists(user_id=user_id, recipe_id=recipe_id)

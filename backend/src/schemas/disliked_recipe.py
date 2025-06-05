@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, PositiveInt
 
 from src.schemas.base import BaseSchema
 from src.schemas.recipe import RecipeReadShort
@@ -10,4 +10,4 @@ class DislikedRecipeRead(BaseSchema):
 
 
 class DislikedRecipeCreate(BaseModel):
-    recipe_id: int
+    recipe_id: PositiveInt
