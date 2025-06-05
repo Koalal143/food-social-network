@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { handleApiError } from '@/utils/errorHandler'
 import AdminService from '@/services/admin.service'
+import RecipesService from '@/services/recipes.service'
 import {
     Users,
     ChefHat,
@@ -51,6 +52,7 @@ export default function AdminDashboard() {
         fetchStatistics()
     }, [toast])
 
+    
     if (loading) {
         return (
             <AdminRoute>
@@ -151,7 +153,7 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Быстрые действия */}
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -185,6 +187,25 @@ export default function AdminDashboard() {
                                 <Link href="/admin/users">
                                     <Button className="w-full">
                                         Перейти к пользователям
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <BarChart3 className="w-5 h-5" />
+                                    Информация
+                                </CardTitle>
+                                <CardDescription>
+                                    Возможности и ограничения админ-панели
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href="/admin/info">
+                                    <Button className="w-full" variant="outline">
+                                        Подробнее
                                     </Button>
                                 </Link>
                             </CardContent>

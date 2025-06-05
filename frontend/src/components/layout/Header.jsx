@@ -110,6 +110,16 @@ export default function Header() {
                                                     Профиль
                                                 </Link>
                                             </DropdownMenuItem>
+                                            {user?.is_superuser && (
+                                                <DropdownMenuItem asChild>
+                                                    <Link href="/admin" className="flex items-center">
+                                                        <Shield className="mr-2 h-4 w-4" />
+                                                        Админ-панель
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            )}
+
+
                                             <DropdownMenuItem
                                                 className="text-red-600 focus:text-red-600"
                                                 onClick={handleLogout}
