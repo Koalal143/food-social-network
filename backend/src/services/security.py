@@ -1,13 +1,17 @@
-from passlib.context import CryptContext
+from argon2 import PasswordHasher
+from argon2.exceptions import VerificationError
 
 
 class SecurityService:
-    pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+    hasher = PasswordHasher()
 
     @classmethod
     def verify_password(cls, plain_password: str, hashed_password: str) -> bool:
-        return cls.pwd_context.verify(plain_password, hashed_password)
+        try:
+            return cls.hasher.verify(hashed_password, plain_password)
+        except VerificationError:
+            return False
 
     @classmethod
     def get_password_hash(cls, password: str) -> str:
-        return cls.pwd_context.hash(password)
+        return cls.hasher.hash(password)
