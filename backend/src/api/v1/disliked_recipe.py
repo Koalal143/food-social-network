@@ -16,22 +16,6 @@ from src.utils.examples_factory import json_example_factory
 router = APIRouter(route_class=DishkaRoute, prefix="/disliked-recipes", tags=["Disliked Recipes"])
 
 
-_disliked_recipe_example = {
-    "id": 1,
-    "user_id": 1,
-    "created_at": "2025-05-10T12:00:00Z",
-    "updated_at": "2025-05-10T12:00:00Z",
-    "recipe": {
-        "id": 2,
-        "title": "Паста Карбонара",
-        "short_description": "Классическая итальянская паста с беконом и сыром",
-        "image_url": "https://example.com/images/recipes/2/main.png",
-        "difficulty": "MEDIUM",
-        "cook_time_minutes": 30,
-    },
-}
-
-
 @router.get(
     "",
     summary="Get user's disliked recipes",
@@ -53,15 +37,10 @@ async def get_disliked_recipes(
 
 @router.post(
     "",
-    status_code=status.HTTP_200_OK,
     summary="Add recipe to dislikes",
     description="Adds a recipe to user's dislikes. If the recipe is already in favorites, "
     "it will be automatically removed from there. Authentication required.",
     responses={
-        status.HTTP_200_OK: {
-            "description": "Recipe added to dislikes successfully",
-            "content": json_example_factory(_disliked_recipe_example),
-        },
         status.HTTP_400_BAD_REQUEST: {
             "description": "Recipe already disliked",
             "content": json_example_factory(
