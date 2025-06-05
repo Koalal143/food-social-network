@@ -30,6 +30,7 @@ class DislikedRecipeRepository(DislikedRecipeRepositoryProtocol):
                     Recipe.image_path,
                     Recipe.difficulty,
                     Recipe.cook_time_minutes,
+                    Recipe.slug,
                 )
             )
             .order_by(DislikedRecipe.created_at.desc())
