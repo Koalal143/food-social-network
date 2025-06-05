@@ -164,8 +164,9 @@ export default class AuthService {
                 throw new AuthError(ERROR_MESSAGES.not_authenticated);
             }
 
-            const response = await fetch(`${BASE_API}/v1/auth/refresh?refresh_token=${refreshToken}`, {
+            const response = await fetch(`${BASE_API}/v1/auth/refresh`, {
                 method: 'POST',
+                body: JSON.stringify({'refresh_token': refreshToken})
             });
 
             if (!response.ok) {
