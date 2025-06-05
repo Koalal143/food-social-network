@@ -21,7 +21,7 @@ class RecipeSearchRepository(RecipeSearchRepositoryProtocol):
         must_queries = []
         must_not_queries = []
         filter_queries = []
-
+        must_queries.append(Q("term", is_published=True))
         if params.query:
             must_queries.append(Q("multi_match", query=params.query, fields=["title", "short_description"]))
 
