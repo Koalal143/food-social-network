@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useRouter } from 'next/navigation'
-import { LogOut, User, PlusCircle, Search, Menu, X } from 'lucide-react'
+import { LogOut, User, PlusCircle, Search, Menu, X, Shield } from 'lucide-react'
 import Container from './Container'
 import SearchInput from '../ui/search/SearchInput'
 import { useState } from 'react'
