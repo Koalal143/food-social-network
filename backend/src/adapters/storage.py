@@ -1,11 +1,16 @@
-from collections.abc import AsyncIterator
+from __future__ import annotations
+
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from aiobotocore.session import get_session
 
 from src.core.config import settings
-from src.typings.external.aiobotocore_s3.client import S3Client
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from types_aiobotocore_s3 import S3Client
 
 
 class S3StorageClientManager:

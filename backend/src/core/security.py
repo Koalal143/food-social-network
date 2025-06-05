@@ -15,6 +15,7 @@ from src.exceptions import (
 )
 from src.models.anonymous_user import AnonymousUser
 from src.models.user import User
+from src.schemas.anonymous_user import AnonymousUserRead
 from src.services.anonymous_user import AnonymousUserService
 from src.services.token import TokenService
 
@@ -73,7 +74,7 @@ async def get_superuser(
 async def get_anonymous_user_or_none(
     request: Request,
     anonymous_user_service: FromDishka[AnonymousUserService],
-) -> AnonymousUser | None:
+) -> AnonymousUserRead | None:
     anonymous_id = request.cookies.get("anonymous_id")
     is_analytics_allowed = request.cookies.get("analytics_allowed") == "True"
     if not anonymous_id or not is_analytics_allowed:

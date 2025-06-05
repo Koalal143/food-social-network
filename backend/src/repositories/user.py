@@ -6,9 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.models.user import User
+from src.repositories.interfaces.user import UserRepositoryProtocol
 
 
-class UserRepository:
+class UserRepository(UserRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 

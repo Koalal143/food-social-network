@@ -13,7 +13,7 @@ import SearchFilters from '@/components/ui/search/SearchFilters';
 
 export default function SearchPage() {
   const router = useRouter();
-  const { searchHistory, addToHistory } = useSearchHistory();
+  const { searchHistory } = useSearchHistory();
   const { searchResults, searchLoading, searchError, searchQuery, performSearch, loadMore, hasMore, updateFilters } = useSearch();
 
   const searchParams = useSearchParams();
@@ -27,11 +27,10 @@ export default function SearchPage() {
   useEffect(() => {
     if (debouncedQuery) {
       performSearch(debouncedQuery);
-      addToHistory(debouncedQuery);
     } else {
       performSearch('');
     }
-  }, [debouncedQuery, addToHistory]);
+  }, [debouncedQuery]);
 
   return (
     <Container className="py-8">

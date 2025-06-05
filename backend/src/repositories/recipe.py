@@ -10,10 +10,11 @@ from src.models.recipe import Recipe
 from src.models.recipe_impression import RecipeImpression
 from src.models.user import User
 from src.models.user_profile import UserProfile
+from src.repositories.interfaces.recipe import RecipeRepositoryProtocol
 from src.typings.recipe_with_favorite import RecipeWithExtra
 
 
-class RecipeRepository:
+class RecipeRepository(RecipeRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -96,7 +97,7 @@ class RecipeRepository:
             return recipe
         return None
 
-    async def get_by_ids(self, recipe_ids: Sequence[int]) -> Sequence[Recipe] | None:
+    async def get_by_ids(self, recipe_ids: Sequence[int]) -> Sequence[Recipe]:
         stmt = self._get_with_author_short().where(Recipe.id.in_(recipe_ids))  # TODO: add impressions and favorites
         result = await self.session.scalars(stmt)
         return result.all()

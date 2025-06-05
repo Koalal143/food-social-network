@@ -1,8 +1,6 @@
 from collections.abc import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-
-from src.core.config import settings
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 
 class DatabaseManager:
@@ -16,14 +14,3 @@ class DatabaseManager:
 
     async def dispose(self) -> None:
         await self.engine.dispose()
-
-
-db_engine = create_async_engine(
-    settings.postgres.url,
-    echo=settings.postgres.echo,
-    pool_size=10,
-    max_overflow=20,
-)
-db_sessionmaker = async_sessionmaker(db_engine, expire_on_commit=False, autoflush=True)
-database_manager = DatabaseManager(db_engine, db_sessionmaker)
-database_session_function = database_manager.get_db_session

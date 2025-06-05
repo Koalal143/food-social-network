@@ -1,4 +1,3 @@
-from collections.abc import Sequence
 from typing import Annotated
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
@@ -40,7 +39,6 @@ async def create_banned_email_domain(
 
 @router.get(
     "/",
-    response_model=list[str],
     summary="Get emails domain list",
     responses={
         status.HTTP_200_OK: {
@@ -54,7 +52,7 @@ async def get_all_banned_email_domains(
     response: Response,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> Sequence[BannedEmailDomainRead]:
+) -> list[str]:
     count, banned_emails = await service.get_all_banned_emails(limit=limit, offset=offset)
     response.headers["X-Total-Count"] = str(count)
     return banned_emails

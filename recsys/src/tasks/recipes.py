@@ -24,16 +24,6 @@ async def add_recipe_task(
         tags=request.tags,
     )
 
-
-@router.subscriber("tasks.publish_recipe")
-@inject
-async def publish_recipe_task(
-    request: AddRecipeRequest,
-    service: RecommendationServiceDependency,
-) -> None:
-    await service.publish_recipe(request.recipe_id)
-
-
 @router.subscriber("tasks.update_recipe")
 @inject
 async def update_recipe_task(
@@ -41,6 +31,7 @@ async def update_recipe_task(
     service: RecommendationServiceDependency,
 ) -> None:
     await service.add_recipe_with_embedding(
+        author_id=request.author_id,
         recipe_id=request.recipe_id,
         title=request.title,
         tags=request.tags,

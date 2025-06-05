@@ -21,9 +21,10 @@ class SearchService:
         self.recipe_image_repository = recipe_image_repository
 
     async def _to_recipe_short_schema(self, recipe: Recipe) -> RecipeReadShort:
+        schema = RecipeReadShort.model_validate(recipe, from_attributes=True)
         if recipe.image_path:
-            recipe.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
-        return RecipeReadShort.model_validate(recipe, from_attributes=True)
+            schema.image_url = await self.recipe_image_repository.get_image_url(recipe.image_path)
+        return schema
 
     async def search(
         self,
@@ -97,16 +98,15 @@ class SearchService:
             UserIdentityNotProvidedError: If neither user_id nor anonymous_user_id is provided
 
         """
-        if not (user_id or anonymous_user_id):
-            msg = "Either user_id or anonymous_user_id must be provided"
-            raise UserIdentityNotProvidedError(msg)
-
         if user_id:
             search_queries = await self.recipe_search_repository.get_user_search_history(user_id, limit, offset)
-        else:
+        elif anonymous_user_id:
             search_queries = await self.recipe_search_repository.get_anonymous_search_history(
                 anonymous_user_id, limit, offset
             )
+        else:
+            msg = "Either user_id or anonymous_user_id must be provided"
+            raise UserIdentityNotProvidedError(msg)
 
         return [SearchQueryRead.model_validate(query, from_attributes=True) for query in search_queries]
 

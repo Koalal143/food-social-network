@@ -35,6 +35,7 @@ class DeleteRecipeRequest(BaseModel):
 class UpdateRecipeRequest(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    author_id: int = Field(gt=0)
     recipe_id: int = Field(gt=0, examples=[1, 42, 123])
     title: str = Field(
         min_length=1, max_length=500, examples=["Борщ русский классический", "Паста карбонара с беконом"]

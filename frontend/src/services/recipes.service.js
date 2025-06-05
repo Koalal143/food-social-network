@@ -167,7 +167,7 @@ export default class RecipesService {
             };
 
             const response = await fetch(`${BASE_API}/v1/recipes/${recipeId}/image/upload-url`, {
-                method: 'GET',
+                method: 'POST',
                 headers: headers
             });
 
@@ -217,14 +217,15 @@ export default class RecipesService {
                 'accept': 'application/json'
             };
 
-            const url = new URL(`${BASE_API}/v1/recipes/${recipeId}/instructions/upload-urls`);
-            steps.forEach(step => {
-                url.searchParams.append('steps', step);
-            });
+            // const url = new URL(`${BASE_API}/v1/recipes/${recipeId}/instructions/upload-urls`);
+            // steps.forEach(step => {
+            //     url.searchParams.append('steps', step);
+            // });
 
-            const response = await fetch(url.toString(), {
-                method: 'GET',
-                headers: headers
+            const response = await fetch(`${BASE_API}/v1/recipes/${recipeId}/instructions/upload-urls`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(steps)
             });
 
             if (!response.ok) {

@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Annotated
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
@@ -11,7 +12,6 @@ from src.exceptions import (
     UserNotFoundError,
 )
 from src.exceptions.image import ImageTooLargeError, WrongImageFormatError
-from src.models.user import User
 from src.schemas import RecipeReadShort, UserRead, UserUpdate
 from src.services import RecipeService, UserAvatarService, UserService
 from src.utils.examples_factory import json_example_factory, json_examples_factory
@@ -79,7 +79,6 @@ async def get_user(
     "/me",
     summary="Update current user",
     description="Updates the current user's information including profile. Only username and profile can be updated.",
-    response_model=UserRead,
     responses={
         status.HTTP_404_NOT_FOUND: {
             "content": json_example_factory(
@@ -113,7 +112,7 @@ async def update_current_user(
     update: UserUpdate,
     current_user: CurrentUserDependency,
     user_service: FromDishka[UserService],
-) -> User:
+) -> UserRead:
     try:
         return await user_service.update(
             current_user.id,
@@ -195,6 +194,7 @@ async def delete_user_avatar(
         "Returns a list of current user's recipes with pagination. The total count of recipes is returned in the "
         "X-Total-Count header."
     ),
+    response_model=list[RecipeReadShort],
 )
 async def get_current_user_recipes(
     current_user: CurrentUserDependency,
@@ -202,7 +202,7 @@ async def get_current_user_recipes(
     response: Response,
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
-) -> list[RecipeReadShort]:
+) -> Sequence[RecipeReadShort]:
     total, recipes = await recipe_service.get_all_by_author_id(
         author_id=current_user.id,
         skip=offset,

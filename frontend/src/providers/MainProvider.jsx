@@ -16,13 +16,13 @@ export default function MainProvider({ children }) {
                     <UserProvider>
                         <FavoritesProvider>
                             <DislikesProvider>
-                                <SearchProvider>
-                                    <SearchHistoryProvider>                        
+                                <SearchHistoryProvider>                        
+                                    <SearchProvider>
                                         <RecomendationsProvider>
                                             {children}
                                         </RecomendationsProvider>
-                                    </SearchHistoryProvider>
-                                </SearchProvider>
+                                    </SearchProvider>
+                                </SearchHistoryProvider>
                             </DislikesProvider>
                         </FavoritesProvider>
                     </UserProvider>

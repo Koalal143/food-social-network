@@ -29,12 +29,21 @@ dev = [
     "pre-commit>=4.2.0",
     "ruff>=0.1.13",
     "types-aiobotocore[essential]==2.21.1",
+    "types-aiofiles>=24.1.0.20250516",
     "uv-sort>=0.5.1",
 ]
 test = [
+    "aiofiles>=24.1.0",
+    "asgi-lifespan>=2.1.0",
+    "dirty-equals>=0.9.0",
+    "faker>=37.3.0",
+    "freezegun>=1.5.2",
     "httpx>=0.26.0",
     "pytest>=7.4.4",
     "pytest-asyncio>=0.23.3",
+    "pytest-cov>=6.1.1",
+    "pytest-dotenv>=0.5.2",
+    "python-jose>=3.4.0",
 ]
 
 [tool.ruff]
@@ -81,11 +90,32 @@ format.skip-magic-trailing-comma = false
 [tool.ruff.lint.per-file-ignores]
 "alembic/*" = ["INP001"]
 "tests/*" = ["ANN", "INP001"]
+"src/core/di/providers/*" = ["TC001"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--disable-warnings",
+]
+markers = [
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "slow: marks tests as slow running",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+env_files = [".test.env"]
 
 [tool.mypy]
 python_version = "3.12"
 plugins = ["pydantic.mypy"]
-exclude = ["typings/external", "typings/external/aiobotocore_s3/type_defs.pyi"]
+exclude = ["typings/external", "typings/external/aiobotocore_s3/type_defs.pyi", "tests/"]
 show_error_context = true
 show_absolute_path = true
 pretty = true

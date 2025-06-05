@@ -7,10 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.search.indexes import RecipeIndex
 from src.models.search_query import SearchQuery
+from src.repositories.interfaces.recipe_search import RecipeSearchRepositoryProtocol
 from src.schemas.recipe import RecipeSearchQuery
 
 
-class RecipeSearchRepository:
+class RecipeSearchRepository(RecipeSearchRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -20,7 +21,7 @@ class RecipeSearchRepository:
         must_queries = []
         must_not_queries = []
         filter_queries = []
-
+        must_queries.append(Q("term", is_published=True))
         if params.query:
             must_queries.append(Q("multi_match", query=params.query, fields=["title", "short_description"]))
 
@@ -45,19 +46,20 @@ class RecipeSearchRepository:
 
         query = Q("bool", must=must_queries, must_not=must_not_queries, filter=filter_queries)
 
-        search = search.query(query).extra(from_=params.offset, size=params.limit)
+        search = search.query(query).extra(from_=params.offset, size=params.limit, track_total_hits=True)
 
         if params.sort_by:
             search = search.sort(params.sort_by)
 
         result = await search.execute()
-        total = result.hits.total.value
+        total = result.hits.total.value  # type: ignore[attr-defined]
         recipe_ids = [hit.to_dict()["id"] for hit in result]
 
         return total, recipe_ids
 
     async def index_recipe(self, recipe_data: dict) -> None:
         schema = recipe_data.copy()
+        schema["_id"] = schema["id"]
         schema["tags"] = [tag["name"] for tag in schema.get("tags", [])]
         schema["ingredients"] = [ingredient["name"] for ingredient in schema.get("ingredients", [])]
         recipe_index = RecipeIndex(**schema)
@@ -69,7 +71,7 @@ class RecipeSearchRepository:
 
     async def save_search_query(
         self, query_text: str, user_id: int | None, anonymous_user_id: int | None
-    ) -> SearchQuery:
+    ) -> SearchQuery | None:
         if not (user_id or anonymous_user_id):
             msg = "One of user_id or anonymous_user_id must be provided"
             raise ValueError(msg)

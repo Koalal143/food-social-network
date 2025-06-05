@@ -10,9 +10,10 @@ from src.enums.recipe_get_source import RecipeGetSourceEnum
 from src.models.recipe import Recipe
 from src.models.recipe_impression import RecipeImpression
 from src.models.user import User
+from src.repositories.interfaces.recipe_impression import RecipeImpressionRepositoryProtocol
 
 
-class RecipeImpressionRepository:
+class RecipeImpressionRepository(RecipeImpressionRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -78,7 +79,9 @@ class RecipeImpressionRepository:
         )
         return await self.session.scalar(stmt) or 0
 
-    async def create(self, user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None) -> RecipeImpression:
+    async def create(
+        self, user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None
+    ) -> RecipeImpression | None:
         stmt = (
             insert(RecipeImpression)
             .values(user_id=user_id, recipe_id=recipe_id, source=source)
@@ -93,7 +96,7 @@ class RecipeImpressionRepository:
 
     async def create_for_anonymous(
         self, anonymous_user_id: int, recipe_id: int, source: RecipeGetSourceEnum | None = None
-    ) -> RecipeImpression:
+    ) -> RecipeImpression | None:
         stmt = (
             insert(RecipeImpression)
             .values(anonymous_user_id=anonymous_user_id, recipe_id=recipe_id, source=source)
