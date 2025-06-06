@@ -4,6 +4,7 @@ from src.repositories.interfaces import (
     RecipeImageRepositoryProtocol,
     RecipeRepositoryProtocol,
     RecipeSearchRepositoryProtocol,
+    SearchQueryRepositoryProtocol,
 )
 from src.schemas.recipe import RecipeReadShort, RecipeSearchQuery
 from src.schemas.search_query import SearchQueryRead
@@ -13,10 +14,12 @@ class SearchService:
     def __init__(
         self,
         recipe_search_repository: RecipeSearchRepositoryProtocol,
+        search_query_repository: SearchQueryRepositoryProtocol,
         recipe_repository: RecipeRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
     ) -> None:
         self.recipe_search_repository = recipe_search_repository
+        self.search_query_repository = search_query_repository
         self.recipe_repository = recipe_repository
         self.recipe_image_repository = recipe_image_repository
 
@@ -72,7 +75,7 @@ class SearchService:
             msg = "Either user_id or anonymous_user_id must be provided"
             raise UserIdentityNotProvidedError(msg)
 
-        search_query = await self.recipe_search_repository.save_search_query(
+        search_query = await self.search_query_repository.save_search_query(
             query_text=query_text,
             user_id=user_id,
             anonymous_user_id=anonymous_user_id,
@@ -99,9 +102,9 @@ class SearchService:
 
         """
         if user_id:
-            search_queries = await self.recipe_search_repository.get_user_search_history(user_id, limit, offset)
+            search_queries = await self.search_query_repository.get_user_search_history(user_id, limit, offset)
         elif anonymous_user_id:
-            search_queries = await self.recipe_search_repository.get_anonymous_search_history(
+            search_queries = await self.search_query_repository.get_anonymous_search_history(
                 anonymous_user_id, limit, offset
             )
         else:
@@ -119,4 +122,4 @@ class SearchService:
             user_id: ID of authenticated user
 
         """
-        await self.recipe_search_repository.merge_search_queries(anonymous_user_id=anonymous_user_id, user_id=user_id)
+        await self.search_query_repository.merge_search_queries(anonymous_user_id=anonymous_user_id, user_id=user_id)

@@ -1,4 +1,5 @@
 from dishka import Provider, Scope, provide
+from elasticsearch import AsyncElasticsearch
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,6 +25,7 @@ from src.repositories.interfaces import (
     RecipeTagRepositoryProtocol,
     RecsysRepositoryProtocol,
     RefreshTokenRepositoryProtocol,
+    SearchQueryRepositoryProtocol,
     UserAvatarRepositoryProtocol,
     UserProfileRepositoryProtocol,
     UserRepositoryProtocol,
@@ -36,6 +38,7 @@ from src.repositories.recipe_instruction import RecipeInstructionRepository
 from src.repositories.recipe_search import RecipeSearchRepository
 from src.repositories.recipe_tag import RecipeTagRepository
 from src.repositories.recsys_client import RecsysRepository
+from src.repositories.search_query import SearchQueryRepository
 from src.repositories.token import RefreshTokenRepository
 from src.repositories.user import UserRepository
 from src.repositories.user_avatar import UserAvatarRepository
@@ -97,8 +100,12 @@ class RepositoryProvider(Provider):
         return RecipeImageRepository(s3_storage)
 
     @provide
-    def get_recipe_search_repository(self, session: AsyncSession) -> RecipeSearchRepositoryProtocol:
-        return RecipeSearchRepository(session)
+    def get_recipe_search_repository(self, es_client: AsyncElasticsearch) -> RecipeSearchRepositoryProtocol:
+        return RecipeSearchRepository(es_client)
+
+    @provide
+    def get_search_query_repository(self, session: AsyncSession) -> SearchQueryRepositoryProtocol:
+        return SearchQueryRepository(session)
 
     @provide
     def get_recipe_impression_repository(self, session: AsyncSession) -> RecipeImpressionRepositoryProtocol:
