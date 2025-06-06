@@ -25,12 +25,6 @@ export default function MobileMenu() {
                     <span className={"text-xs"}>Рекомендации</span>
                 </Button>
             </Link>
-            <Link href="/recipe-ai" passHref>
-                <Button variant="icon" size="icon" className={`flex flex-col items-center ${isActive('/recipe-ai') ? 'text-primary' : 'text-muted-foreground'}`}>
-                    <Bot className={`h-6 w-6 ${isActive('/recipe-ai') ? 'text-primary' : 'text-muted-foreground'}`} />
-                    <span className={"text-xs"}>Шеф</span>
-                </Button>
-            </Link>
             <Link href="/profile" passHref>
                 <Button variant="icon" size="icon" className={`flex flex-col items-center ${isActive('/profile') ? 'text-primary' : 'text-muted-foreground'}`}>
                     <User className={`h-6 w-6 ${isActive('/profile') ? 'text-primary' : 'text-muted-foreground'}`} />
