@@ -41,7 +41,7 @@ export default class SearchHistoryService {
 
         const response = await fetch(`${BASE_API}/v1/recipes/search/history`, {
             method: 'POST',
-            body: JSON.stringify(search),
+            body: JSON.stringify({'query': search}),
             headers: headers
         })
 
