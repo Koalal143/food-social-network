@@ -101,7 +101,7 @@ export default function RecipePage({ params }) {
     return (
         <Container>
             <article className="py-8">
-                <div className="max-w-5xl mx-auto bg-white dark:bg-secondary/100 rounded-3xl shadow-xl overflow-hidden">
+                <div className="max-w-3xl mx-auto bg-white dark:bg-secondary/100 rounded-3xl shadow-xl overflow-hidden">
                     {/* Image with action buttons */}
                     <div className="relative aspect-[16/9] w-full">
                         <Image
