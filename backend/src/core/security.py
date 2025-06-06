@@ -13,7 +13,6 @@ from src.exceptions import (
     InvalidTokenError,
     JWTSignatureExpiredError,
 )
-from src.models.anonymous_user import AnonymousUser
 from src.models.user import User
 from src.schemas.anonymous_user import AnonymousUserRead
 from src.services.anonymous_user import AnonymousUserService
@@ -88,4 +87,4 @@ async def get_anonymous_user_or_none(
 CurrentUserDependency = Annotated[User, Depends(get_current_user)]
 CurrentUserOrNoneDependency = Annotated[User | None, Depends(get_current_user_or_none)]
 SuperUserDependency = Annotated[User, Depends(get_superuser)]
-AnonymousUserOrNoneDependency = Annotated[AnonymousUser | None, Depends(get_anonymous_user_or_none)]
+AnonymousUserOrNoneDependency = Annotated[AnonymousUserRead | None, Depends(get_anonymous_user_or_none)]
