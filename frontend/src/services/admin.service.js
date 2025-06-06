@@ -16,7 +16,7 @@ class AdminService {
             const recipesResponse = await RecipesService.getPaginatedRecipes(0, 1);
 
             // Получаем информацию о текущем пользователе для проверки прав
-            const currentUser = await this.getCurrentUser();
+            const currentUser = await AuthService.getCurrentUser();
 
             // Базовая статистика на основе доступных данных
             return {
@@ -26,39 +26,6 @@ class AdminService {
                 recent_activity: [],
                 current_user: currentUser
             };
-        } catch (error) {
-            if (error instanceof TypeError && error.message === 'Failed to fetch') {
-                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
-            }
-            throw error;
-        }
-    }
-
-    /**
-     * Получить информацию о текущем пользователе
-     */
-    static async getCurrentUser() {
-        try {
-            await tokenManager.ensureValidToken();
-
-            const accessToken = AuthService.getAccessToken();
-            if (!accessToken) {
-                throw new AuthError(ERROR_MESSAGES.not_authenticated);
-            }
-
-            const response = await fetch(`${BASE_API}/v1/users/me`, {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || 'Ошибка при получении данных пользователя');
-            }
-
-            return await response.json();
         } catch (error) {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);

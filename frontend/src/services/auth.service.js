@@ -35,7 +35,7 @@ export default class AuthService {
             const response = await fetch(url, { ...options, headers });
             
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 
                 if (response.status === 401) {
                     if (errorData.error_key === 'token_expired') {
@@ -86,22 +86,13 @@ export default class AuthService {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 
-                if (String(response.status).startsWith('4')) {
-                    if (errorData.error_key === 'user_email_already_exists') {
-                        throw new ValidationError(ERROR_MESSAGES.user_email_already_exists);
-                    }
-                    if (errorData.error_key === 'user_nickname_already_exists') {
-                        throw new ValidationError(ERROR_MESSAGES.user_nickname_already_exists);
-                    }
-                    if (errorData.error_key === 'suspicious_email') {
-                        throw new ValidationError(ERROR_MESSAGES.suspicious_email);
-                    }
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new ValidationError(ERROR_MESSAGES[errorData.error_key]);
+                } else {
                     throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
                 }
-                
-                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
             }
 
             return await response.json();
@@ -130,20 +121,13 @@ export default class AuthService {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 
-                if (response.status === 401) {
-                    if (errorData.error_key === 'inactive_user') {
-                        throw new AuthError(ERROR_MESSAGES.inactive_user);
-                    }
-                    throw new AuthError(ERROR_MESSAGES.incorrect_email_username_or_password);
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new Error(ERROR_MESSAGES[errorData.error_key]);
+                } else {
+                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
                 }
-                
-                if (response.status === 400) {
-                    throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
-                }
-                
-                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
             }
 
             const data = await response.json();
@@ -170,11 +154,13 @@ export default class AuthService {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                if (response.status === 401) {
-                    throw new AuthError(ERROR_MESSAGES.invalid_refresh_token);
+                const errorData = await response.json().catch(() => ({}));
+                
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new AuthError(ERROR_MESSAGES[errorData.error_key]);
+                } else {
+                    throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
                 }
-                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
             }
 
             const data = await response.json();
@@ -229,7 +215,7 @@ export default class AuthService {
 
     static async deleteAvatar() {
         try {
-            const response = await this.makeAuthenticatedRequest(`${BASE_API}/v1/users/me/avatar`, {
+            await this.makeAuthenticatedRequest(`${BASE_API}/v1/users/me/avatar`, {
                 method: 'DELETE'
             });
             return true;
@@ -266,11 +252,11 @@ export default class AuthService {
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 
-                if (response.status === 503) {
-                    throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new Error(ERROR_MESSAGES[errorData.error_key]);
+                } else {
+                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
                 }
-                
-                throw new Error(errorData.detail || 'Ошибка при загрузке рецептов');
             }
 
             const data = await response.json();
@@ -284,7 +270,6 @@ export default class AuthService {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
-            
             throw error;
         }
     }
