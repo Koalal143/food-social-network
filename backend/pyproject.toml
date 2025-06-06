@@ -101,7 +101,6 @@ addopts = [
     "-v",
     "--tb=short",
     "--strict-markers",
-    "--disable-warnings",
 ]
 markers = [
     "integration: marks tests as integration tests",
