@@ -8,6 +8,9 @@ export default {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                'main': ['var(--font-main)', 'sans-serif'],
+            },
             colors: {
                 background: 'hsl(var(--background))',
                 foreground: 'hsl(var(--foreground))',
