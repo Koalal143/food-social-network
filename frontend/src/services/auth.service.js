@@ -241,6 +241,7 @@ export default class AuthService {
     static logout() {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem('cookie_consent_accepted');
 
         // Также удаляем токены из cookies
         CookieManager.clearAuthTokens();

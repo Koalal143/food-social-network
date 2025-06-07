@@ -10,6 +10,7 @@ import { ArrowLeft } from 'lucide-react';
 import InfiniteRecipesList from '@/components/shared/InfiniteRecipeList';
 import { useSearch } from '@/context/SearchContext';
 import SearchFilters from '@/components/ui/search/SearchFilters';
+import { SearchLoadingSkeleton } from '@/components/ui/skeletons';
 
 export default function SearchPage() {
   const router = useRouter();
@@ -84,9 +85,7 @@ export default function SearchPage() {
         )}
 
         {searchLoading && searchResults.length === 0 ? (
-          <div className="flex justify-center py-8">
-            <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-          </div>
+          <SearchLoadingSkeleton />
         ) : searchError ? (
           <div className="text-center py-12 text-red-500">
             <p className="text-xl">Ошибка при выполнении поиска:</p>

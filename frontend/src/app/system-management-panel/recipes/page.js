@@ -19,7 +19,7 @@ import {
     User
 } from 'lucide-react'
 import Link from 'next/link'
-import Loader from '@/components/ui/Loader'
+import { RecipeCardSkeletonGrid } from '@/components/ui/skeletons'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -181,8 +181,8 @@ export default function AdminRecipesPage() {
                         </CardHeader>
                         <CardContent>
                             {loading ? (
-                                <div className="flex justify-center py-8">
-                                    <Loader />
+                                <div className="py-8">
+                                    <RecipeCardSkeletonGrid count={6} />
                                 </div>
                             ) : recipes.length === 0 ? (
                                 <div className="text-center py-8 text-muted-foreground">

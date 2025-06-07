@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import Container from "@/components/layout/Container";
 import { useRecipes } from "@/context/RecipeContext";
-import Loader from "@/components/ui/Loader";
+import { AuthorProfileSkeleton } from "@/components/ui/skeletons";
 import { useUser } from "@/context/UserContext";
 import CopyLinkButton from "@/components/ui/CopyLinkButton"
 import NotFound from "@/app/not-found";
@@ -113,7 +113,11 @@ export default function ProfileIdPage({ params }) {
     }, [fetchInitialData]);
 
     if (globalLoading) {
-        return <Loader />;
+        return (
+            <Container className="py-8">
+                <AuthorProfileSkeleton />
+            </Container>
+        );
     }
 
     if (error) {

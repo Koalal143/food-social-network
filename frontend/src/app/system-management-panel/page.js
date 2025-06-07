@@ -21,7 +21,7 @@ import {
     Shield
 } from 'lucide-react'
 import Link from 'next/link'
-import Loader from '@/components/ui/Loader'
+import { AdminDashboardSkeleton } from '@/components/ui/skeletons'
 
 export default function AdminDashboard() {
     const { user } = useAuth()
@@ -56,9 +56,9 @@ export default function AdminDashboard() {
     if (loading) {
         return (
             <AdminRoute>
-                <div className="flex items-center justify-center min-h-screen">
-                    <Loader />
-                </div>
+                <Container>
+                    <AdminDashboardSkeleton />
+                </Container>
             </AdminRoute>
         )
     }

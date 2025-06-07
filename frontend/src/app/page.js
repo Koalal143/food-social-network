@@ -1,8 +1,9 @@
 "use client";
 import { useRecipes } from "@/context/RecipeContext";
 import Container from "@/components/layout/Container";
-import Loader from "@/components/ui/Loader";
 import InfiniteRecipesList from "@/components/shared/InfiniteRecipeList";
+import { RecipeCardSkeletonGrid } from "@/components/ui/skeletons/RecipeCardSkeleton";
+import HeaderSkeleton from "@/components/ui/skeletons/HeaderSkeleton";
 
 export default function App() {
     const { recipes, loading, hasMore, fetchRecipes } = useRecipes();
@@ -14,7 +15,16 @@ export default function App() {
     };
 
     if (loading && recipes.length === 0) {
-        return <Loader />;
+        return (
+            <Container className="py-6">
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <HeaderSkeleton level={2} width="w-48" />
+                    </div>
+                    <RecipeCardSkeletonGrid count={6} />
+                </div>
+            </Container>
+        );
     }
 
     return (

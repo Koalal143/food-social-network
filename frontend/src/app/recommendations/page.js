@@ -5,17 +5,17 @@ import RecipeSwipeCard from "@/components/shared/RecipeSwipeCard";
 import { useRouter } from 'next/navigation';
 import { useRecomendations } from '@/context/RecomendationsContext';
 import { useDislikes } from '@/context/DislikesContext';
-import Loader from "@/components/ui/Loader";
 import { useFavorites } from "@/context/FavoritesContext";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bookmark, ThumbsDown, Eye, Info, ChevronRight, RefreshCw, X, FastForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+// import { RecommendationsSkeleton } from '@/components/ui/skeletons'; // Теперь используется в ProtectedRoute
 
 export default function RecommendationsPage() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { recipes, loading, fetchRecipes } = useRecomendations();
+  const { recipes, loadingMore, fetchRecipes } = useRecomendations();
   const { addFavorite } = useFavorites();
   const { addToDisliked } = useDislikes();
   const [showTutorial, setShowTutorial] = useState(false);
@@ -73,13 +73,14 @@ export default function RecommendationsPage() {
     }
   }, [currentIndex]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center">
-        <Loader />
-      </div>
-    );
-  }
+  // Скелетон теперь показывается в ProtectedRoute
+  // if (loading && recipes.length === 0) {
+  //   return (
+  //     <Container className="py-8">
+  //       <RecommendationsSkeleton />
+  //     </Container>
+  //   );
+  // }
 
   const tutorialContent = [
     {
@@ -121,7 +122,7 @@ export default function RecommendationsPage() {
   ];
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute skeleton="recommendations">
       <Container className="h-full flex flex-col">
         <div className="flex-grow">
           <AnimatePresence
@@ -202,8 +203,27 @@ export default function RecommendationsPage() {
           </motion.div>
         )}
 
+        {/* Индикатор загрузки дополнительных рецептов */}
+        {loadingMore && (
+          <motion.div
+            className="my-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="flex justify-center">
+              <div className="bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm rounded-full px-4 py-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                  Загружаем новые рецепты...
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Кнопка инструкции внизу страницы */}
-        <motion.div 
+        <motion.div
           className="my-6"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

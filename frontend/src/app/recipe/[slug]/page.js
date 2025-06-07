@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
 import Container from "@/components/layout/Container";
 import { useRecipes } from "@/context/RecipeContext";
-import Loader from "@/components/ui/Loader";
+import { RecipeDetailSkeleton } from "@/components/ui/skeletons";
 import Image from "next/image";
 import AuthorCard from "@/components/ui/recipe-page/AuthorCard";
 import { Bookmark, Clock, Heart, Share2, Trash2 } from "lucide-react";
@@ -87,15 +87,27 @@ export default function RecipePage({ params }) {
     };
 
     if (loading) {
-        return <Loader />
+        return (
+            <Container>
+                <div className="py-8">
+                    <RecipeDetailSkeleton />
+                </div>
+            </Container>
+        )
     }
-  
+
     if (error) {
         return <NotFound />
     }
 
     if (!recipe) {
-        return <Loader />
+        return (
+            <Container>
+                <div className="py-8">
+                    <RecipeDetailSkeleton />
+                </div>
+            </Container>
+        )
     }
 
     return (

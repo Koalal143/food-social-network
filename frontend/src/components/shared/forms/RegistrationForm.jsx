@@ -1,6 +1,7 @@
 "use client"
 
 import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/useEnhancedToast";
 import { handleApiError } from "@/utils/errorHandler";
 import { registrationSchema } from "@/lib/schemas/auth.schema";
 import {
@@ -16,6 +17,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
+import ValidatedInput, { ValidationRules } from "../../ui/ValidatedInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -28,6 +30,7 @@ export default function RegistrationForm() {
     const { register } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
+    const enhancedToast = useEnhancedToast();
 
     const form = useForm({
         resolver: zodResolver(registrationSchema),
@@ -43,18 +46,17 @@ export default function RegistrationForm() {
     setIsLoading(true);
     try {
         await register(data.username, data.email, data.password);
-        toast({
-        title: "Успешная регистрация",
-        description: "Добро пожаловать в наше сообщество!",
-        });
+        enhancedToast.success(
+            "Успешная регистрация",
+            "Добро пожаловать в наше сообщество!"
+        );
         router.push("/");
     } catch (error) {
         const { message, type } = handleApiError(error);
-        toast({
-        variant: type,
-        title: "Ошибка",
-        description: message,
-        });
+        enhancedToast.error(
+            "Ошибка регистрации",
+            message
+        );
     } finally {
         setIsLoading(false);
     }
@@ -70,9 +72,15 @@ export default function RegistrationForm() {
                 <FormItem>
                   <FormLabel>Юзернейм</FormLabel>
                   <FormControl>
-                    <Input
+                    <ValidatedInput
                       placeholder="Введите юзернейм"
-                      {...field}
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      validationRules={[
+                        ValidationRules.required(),
+                        ValidationRules.minLength(3, "Минимум 3 символа"),
+                        ValidationRules.maxLength(20, "Максимум 20 символов")
+                      ]}
                     />
                   </FormControl>
                   <FormMessage />
@@ -86,10 +94,15 @@ export default function RegistrationForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input
+                    <ValidatedInput
                       type="email"
                       placeholder="Введите email"
-                      {...field}
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      validationRules={[
+                        ValidationRules.required(),
+                        ValidationRules.email()
+                      ]}
                     />
                   </FormControl>
                   <FormMessage />

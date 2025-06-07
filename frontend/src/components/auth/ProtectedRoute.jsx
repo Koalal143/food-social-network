@@ -3,9 +3,10 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
-import Loader from '../ui/Loader'
+import { RecipeCardSkeletonGrid, RecommendationsSkeleton, ProfileSkeleton } from '../ui/skeletons'
+import Container from '../layout/Container'
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children, skeleton = 'default' }) {
     const { user, loading } = useAuth()
     const router = useRouter()
 
@@ -16,10 +17,30 @@ export default function ProtectedRoute({ children }) {
     }, [user, loading, router])
 
     if (loading) {
+        // Показываем соответствующий скелетон в зависимости от страницы
+        if (skeleton === 'recommendations') {
+            return (
+                <Container className="py-8">
+                    <RecommendationsSkeleton />
+                </Container>
+            )
+        }
+
+        if (skeleton === 'profile') {
+            return (
+                <Container className="py-8">
+                    <ProfileSkeleton />
+                </Container>
+            )
+        }
+
+        // Дефолтный скелетон для других страниц
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <Loader />
-            </div>
+            <Container className="py-6">
+                <div className="space-y-6">
+                    <RecipeCardSkeletonGrid count={6} />
+                </div>
+            </Container>
         )
     }
 
@@ -28,4 +49,4 @@ export default function ProtectedRoute({ children }) {
     }
 
     return children
-} 
+}

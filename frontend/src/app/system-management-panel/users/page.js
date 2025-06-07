@@ -21,7 +21,7 @@ import {
     Calendar
 } from 'lucide-react'
 import Link from 'next/link'
-import Loader from '@/components/ui/Loader'
+import { UserCardSkeleton } from '@/components/ui/skeletons'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -203,8 +203,10 @@ export default function AdminUsersPage() {
                         </CardHeader>
                         <CardContent>
                             {loading ? (
-                                <div className="flex justify-center py-8">
-                                    <Loader />
+                                <div className="space-y-4 py-8">
+                                    {Array.from({ length: 6 }, (_, i) => (
+                                        <UserCardSkeleton key={i} />
+                                    ))}
                                 </div>
                             ) : users.length === 0 ? (
                                 <div className="text-center py-8 text-muted-foreground">

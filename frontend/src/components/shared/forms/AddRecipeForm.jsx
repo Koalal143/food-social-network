@@ -31,6 +31,7 @@ import { useRecipeTags } from '@/hooks/useRecipeTags';
 import RecipeTagsInput from './RecipeTagsInput';
 import { handleApiError } from '@/utils/errorHandler';
 import PhotoUploadInfo from '@/components/ui/PhotoUploadInfo';
+import FileUploadProgress from '@/components/ui/FileUploadProgress';
 
 const AddRecipeForm = () => {
     const { addRecipe } = useRecipes();
@@ -299,16 +300,21 @@ const AddRecipeForm = () => {
                             rules={{ required: 'Фото обязательно' }}
                             render={({ field }) => (
                                 <div className="space-y-2">
-                                    <Input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files[0];
+                                    <FileUploadProgress
+                                        onFileSelect={async (file) => {
                                             field.onChange(file);
                                             handleMainPhotoChange(file);
                                         }}
-                                        placeholder="Загрузите фото блюда"
-                                    />
+                                        accept="image/*"
+                                        maxSize={5 * 1024 * 1024}
+                                    >
+                                        <Input
+                                            type="file"
+                                            accept="image/*"
+                                            placeholder="Загрузите фото блюда"
+                                            className="cursor-pointer"
+                                        />
+                                    </FileUploadProgress>
                                     <PhotoUploadInfo
                                         recommendedSize="1200×800px (3:2)"
                                         maxFileSize="5MB"
