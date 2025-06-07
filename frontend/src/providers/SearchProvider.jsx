@@ -19,19 +19,21 @@ export const SearchProvider = ({ children }) => {
     
     // Новое состояние для фильтров
     const [filters, setFilters] = useState({
-        includeIngredients: [],
-        excludeIngredients: [],
+        include_ingredients: [],
+        exclude_ingredients: [],
         tags: [],
-        cookTimeFrom: null,
-        cookTimeTo: null,
-        sortBy: ''
+        cook_time_from: null,
+        cook_time_to: null,
+        sort_by: ''
     });
 
     const { addToHistory } = useSearchHistory();
 
-    // Основной поиск (сброс offset)
-    const performSearch = useCallback(async (query) => {
-        // Предотвращаем повторные вызовы с тем же запросом
+    // Основной поиск (сброс offset) - принимает фильтры как параметр
+    const performSearchWithFilters = useCallback(async (query, searchFilters = null) => {
+        const filtersToUse = searchFilters || filters;
+
+        // Предотвращаем повторные вызовы с тем же запросом и фильтрами
         if (loadingRef.current && lastQueryRef.current === query) {
             return;
         }
@@ -57,7 +59,7 @@ export const SearchProvider = ({ children }) => {
         const trimmedQuery = query.trim();
 
         try {
-            const result = await SearchService.searchRecipes(trimmedQuery, filters, 0, limit);
+            const result = await SearchService.searchRecipes(trimmedQuery, filtersToUse, 0, limit);
             setSearchResults(result.data);
             setSearchTotalCount(result.totalCount);
             setSearchQuery(trimmedQuery);
@@ -81,16 +83,22 @@ export const SearchProvider = ({ children }) => {
             setSearchLoading(false);
             loadingRef.current = false;
         }
-    }, [filters, addToHistory]);
+    }, [filters, addToHistory, limit]);
+
+    // Обертка для обратной совместимости
+    const performSearch = useCallback(async (query) => {
+        return performSearchWithFilters(query, null);
+    }, [performSearchWithFilters]);
 
     // Функция для обновления фильтров
     const updateFilters = useCallback((newFilters) => {
         setFilters(newFilters);
         // Перезапускаем поиск с новыми фильтрами только если есть запрос
         if (searchQuery && searchQuery.trim()) {
-            performSearch(searchQuery);
+            // Используем новые фильтры напрямую, не ждем обновления состояния
+            performSearchWithFilters(searchQuery, newFilters);
         }
-    }, [searchQuery, performSearch]);
+    }, [searchQuery, performSearchWithFilters]);
 
     // Догрузка следующей страницы с защитой от повторов и debounce
     const loadMore = useCallback(() => {
@@ -162,6 +170,7 @@ export const SearchProvider = ({ children }) => {
             searchError,
             searchQuery,
             searchTotalCount,
+            filters,
             performSearch,
             updateFilters,
             clearSearchResults,
