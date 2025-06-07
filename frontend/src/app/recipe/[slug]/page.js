@@ -2,12 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
+import { useDislikes } from "@/context/DislikesContext";
 import Container from "@/components/layout/Container";
 import { useRecipes } from "@/context/RecipeContext";
 import { RecipeDetailSkeleton } from "@/components/ui/skeletons";
 import Image from "next/image";
 import AuthorCard from "@/components/ui/recipe-page/AuthorCard";
-import { Bookmark, Clock, Heart, Share2, Trash2 } from "lucide-react";
+import AnimatedActionButtons from "@/components/ui/recipe-page/AnimatedActionButtons";
+import { Share2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CopyLinkButton from "@/components/ui/CopyLinkButton";
 import RecipeInfoCards from "@/components/ui/recipe-page/RecipeInfoCards";
@@ -22,10 +24,12 @@ import DeleteRecipeDialog from "@/components/shared/recipeActions/DeleteRecipeDi
 
 export default function RecipePage({ params }) {
     const { getRecipeBySlug, error, loading } = useRecipes();
-    const { addFavorite, removeFavorite, favorites } = useFavorites();
+    const { addFavorite, removeFavorite } = useFavorites();
+    const { addToDisliked, removeFromDisliked } = useDislikes();
     const [recipe, setRecipe] = useState(null);
     const { toast } = useToast()
     const [isSaved, setIsSaved] = useState(false);
+    const [isDisliked, setIsDisliked] = useState(false);
     const { isAuth, user } = useAuth();
     const [isImageLoading, setIsImageLoading] = useState(true);
     
@@ -39,7 +43,8 @@ export default function RecipePage({ params }) {
                 const recipeData = await getRecipeBySlug(slug, source);
                 if (recipeData) {
                     setRecipe(recipeData);
-                    setIsSaved(favorites.includes(recipeData.id));
+                    setIsSaved(recipeData.is_on_favorites || false);
+                    setIsDisliked(recipeData.is_on_dislikes || false);
                 }
             } catch (error) {
                 const { message, type } = handleApiError(error);
@@ -51,14 +56,14 @@ export default function RecipePage({ params }) {
             }
         };
         fetchData();
-    }, [slug, favorites]);
+    }, [slug]);
 
     const canDeleteRecipe = () => {
         if (!user || !recipe) return false;
         return user.id === recipe.author.id || user.is_superuser;
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!isAuth) {
             toast({
                 variant: "default",
@@ -68,22 +73,58 @@ export default function RecipePage({ params }) {
             return;
         }
 
-        if (isSaved) {
-            removeFavorite(recipe.id);
+        try {
+            if (isSaved) {
+                removeFavorite(recipe.id);
+                setIsSaved(false);
+            } else {
+                if (isDisliked) {
+                    await removeFromDisliked(recipe.id);
+                    setIsDisliked(false);
+                }
+                addFavorite(recipe.id);
+                setIsSaved(true);
+            }
+        } catch (error) {
+            const { message, type } = handleApiError(error);
             toast({
-                variant: "default",
-                title: "Рецепт удален",
-                description: "Рецепт был удален из ваших сохраненных",
-            });
-        } else {
-            addFavorite(recipe.id);
-            toast({
-                variant: "default",
-                title: "Рецепт сохранен",
-                description: "Теперь вы можете найти его в разделе 'Избранное'",
+                variant: type,
+                title: "Ошибка",
+                description: message,
             });
         }
-        setIsSaved(!isSaved);
+    };
+
+    const handleDislike = async () => {
+        if (!isAuth) {
+            toast({
+                variant: "default",
+                title: "Требуется авторизация",
+                description: "Чтобы оценивать рецепты, пожалуйста, войдите в систему",
+            });
+            return;
+        }
+
+        try {
+            if (isDisliked) {
+                await removeFromDisliked(recipe.id);
+                setIsDisliked(false);
+            } else {
+                if (isSaved) {
+                    removeFavorite(recipe.id);
+                    setIsSaved(false);
+                }
+                await addToDisliked(recipe.id);
+                setIsDisliked(true);
+            }
+        } catch (error) {
+            const { message, type } = handleApiError(error);
+            toast({
+                variant: type,
+                title: "Ошибка",
+                description: message,
+            });
+        }
     };
 
     if (loading) {
@@ -129,16 +170,7 @@ export default function RecipePage({ params }) {
                             <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
                         )}
                         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
-                        <div className="absolute top-4 right-4 flex gap-2">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="bg-white/90 dark:bg-background/90 backdrop-blur rounded-full hover:bg-white dark:hover:bg-background shadow-md hover:scale-105 transition-transform"
-                                onClick={handleSave}
-                                aria-label={isSaved ? "Удалить из избранного" : "Добавить в избранное"}
-                            >
-                                <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-primary stroke-primary' : ''} ${!isAuth && 'text-gray-500'}`} />
-                            </Button>
+                        <div className="absolute top-3 right-3 flex gap-1.5">
                             <CopyLinkButton
                                 link={`${window.location.origin}/recipe/${recipe.slug}?source=shared`}
                                 tooltipText="Скопировать ссылку на рецепт"
@@ -146,9 +178,9 @@ export default function RecipePage({ params }) {
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="bg-white/90 dark:bg-background/90 backdrop-blur rounded-full hover:bg-white dark:hover:bg-background shadow-md hover:scale-105 transition-transform"
+                                        className="h-8 w-8 bg-white/90 dark:bg-background/90 backdrop-blur rounded-full hover:bg-white dark:hover:bg-background shadow-md hover:scale-105 transition-transform"
                                     >
-                                        <Share2 className="w-5 h-5" />
+                                        <Share2 className="w-3.5 h-3.5" />
                                     </Button>
                                 }
                             />
@@ -159,9 +191,9 @@ export default function RecipePage({ params }) {
                                         <Button
                                             variant="destructive"
                                             size="icon"
-                                            className="bg-destructive/90 backdrop-blur rounded-full hover:bg-destructive shadow-md hover:scale-105 transition-transform"
+                                            className="h-8 w-8 bg-destructive/90 backdrop-blur rounded-full hover:bg-destructive shadow-md hover:scale-105 transition-transform"
                                         >
-                                            <Trash2 className="w-5 h-5" />
+                                            <Trash2 className="w-3.5 h-3.5" />
                                         </Button>
                                     }
                                 />
@@ -170,14 +202,23 @@ export default function RecipePage({ params }) {
                     </div>
 
                     {/* Recipe Content */}
-                    <div className="p-8 space-y-8">
+                    <div className="p-4 space-y-4">
                         {/* Заголовок и описание */}
-                        <div className="space-y-3">
-                            <h1 className="text-4xl font-bold tracking-tight overflow-wrap break-word word-break break-all">{recipe.title}</h1>
-                            <p className="text-lg text-muted-foreground overflow-wrap break-word word-break break-all">
+                        <div className="space-y-2">
+                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight overflow-wrap break-word word-break break-all">{recipe.title}</h1>
+                            <p className="text-sm md:text-base text-muted-foreground overflow-wrap break-word word-break break-all">
                                 {recipe.short_description}
                             </p>
                         </div>
+
+                        {/* Кнопки действий */}
+                        <AnimatedActionButtons
+                            isSaved={isSaved}
+                            isDisliked={isDisliked}
+                            onSave={handleSave}
+                            onDislike={handleDislike}
+                            disabled={!isAuth}
+                        />
 
                         {/* Author card */}
                         <AuthorCard author={recipe.author} />

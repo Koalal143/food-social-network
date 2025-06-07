@@ -6,25 +6,21 @@
  */
 export default function AuthorCardSkeleton() {
     return (
-        <div className="bg-gradient-to-r from-card to-card/80 border-0 shadow-sm rounded-xl overflow-hidden animate-pulse">
-            <div className="p-4">
-                <div className="flex items-center gap-4">
-                    <div className="relative">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 p-0.5">
-                            <div className="w-full h-full rounded-full bg-gray-200" />
-                        </div>
+        <div className="p-3 bg-background rounded-lg shadow-sm border animate-pulse">
+            <div className="flex items-center gap-3">
+                <div className="relative flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-gray-200" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    {/* "Автор рецепта" label */}
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                        <div className="w-3 h-3 bg-gray-200 rounded" />
+                        <div className="h-3 bg-gray-200 rounded w-20" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                        {/* "Автор рецепта" label */}
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="w-4 h-4 bg-gray-200 rounded" />
-                            <div className="h-4 bg-gray-200 rounded w-24" />
-                        </div>
-                        {/* Username */}
-                        <div className="h-5 bg-gray-200 rounded w-20 mb-1" />
-                        {/* About text */}
-                        <div className="h-4 bg-gray-200 rounded w-32" />
-                    </div>
+                    {/* Username */}
+                    <div className="h-4 bg-gray-200 rounded w-24 mb-0.5" />
+                    {/* About text */}
+                    <div className="h-3 bg-gray-200 rounded w-32" />
                 </div>
             </div>
         </div>

@@ -1,0 +1,217 @@
+/* Анимации для кнопок действий */
+
+/* Анимация заполнения для кнопки избранного */
+@keyframes fillBookmark {
+  0% {
+    transform: scale(1);
+    fill-opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    fill-opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    fill-opacity: 1;
+  }
+}
+
+/* Анимация встряхивания для дизлайка */
+@keyframes shakeThumb {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-10deg); }
+  20% { transform: rotate(10deg); }
+  30% { transform: rotate(-10deg); }
+  40% { transform: rotate(10deg); }
+  50% { transform: rotate(-5deg); }
+  60% { transform: rotate(5deg); }
+  70% { transform: rotate(-2deg); }
+  80% { transform: rotate(2deg); }
+  90% { transform: rotate(-1deg); }
+}
+
+/* Анимация пульсации */
+@keyframes gentlePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+/* Анимация появления частиц */
+@keyframes particleFloat {
+  0% {
+    transform: translate(0, 0) scale(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(var(--particle-x), var(--particle-y)) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(calc(var(--particle-x) * 2), calc(var(--particle-y) * 2)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Анимация волны для кнопки */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Анимация сердцебиения для активного состояния */
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.1);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+/* Классы для применения анимаций */
+.animate-fill-bookmark {
+  animation: fillBookmark 0.3s ease-out;
+}
+
+.animate-shake-thumb {
+  animation: shakeThumb 0.5s ease-in-out;
+}
+
+.animate-gentle-pulse {
+  animation: gentlePulse 2s ease-in-out infinite;
+}
+
+.animate-particle-float {
+  animation: particleFloat 0.8s ease-out forwards;
+}
+
+.animate-ripple {
+  animation: ripple 0.6s ease-out;
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+/* Дополнительные утилитарные классы */
+.hover\:rotate-12:hover {
+  transform: rotate(12deg);
+}
+
+.transition-transform-colors {
+  transition: transform 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+/* Hover эффекты */
+.button-hover-lift {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.button-hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.button-hover-lift:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Эффект свечения для активных кнопок */
+.glow-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.glow-effect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.glow-effect:hover::before {
+  left: 100%;
+}
+
+/* Адаптивность и доступность */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fill-bookmark,
+  .animate-shake-thumb,
+  .animate-gentle-pulse,
+  .animate-particle-float,
+  .animate-ripple,
+  .animate-heartbeat {
+    animation: none;
+  }
+  
+  .button-hover-lift {
+    transition: none;
+  }
+  
+  .button-hover-lift:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Мобильная оптимизация */
+@media (max-width: 768px) {
+  .animate-particle-float {
+    animation-duration: 0.6s;
+  }
+  
+  .animate-shake-thumb {
+    animation-duration: 0.3s;
+  }
+  
+  .animate-fill-bookmark {
+    animation-duration: 0.2s;
+  }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+  .button-hover-lift:hover {
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+  }
+  
+  .glow-effect::before {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+  }
+}
