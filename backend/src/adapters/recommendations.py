@@ -63,7 +63,7 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
         try:
             response_msg = await self.broker.request(
                 message=request.model_dump(),
-                subject="recsys.get_recommendations",
+                subject="recsys_rpc.get_recommendations",
                 timeout=fail_after,
             )
 
@@ -101,7 +101,8 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
         try:
             await self.broker.publish(
                 message=message.model_dump(),
-                subject="tasks.add_recipe",
+                subject="recsys_events.add_recipe",
+                stream="recsys_events_stream",
             )
         except Exception:
             msg = f"Error publishing add_recipe task for recipe {recipe_id}"
@@ -121,7 +122,8 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
         try:
             await self.broker.publish(
                 message={"recipe_id": recipe_id},
-                subject="tasks.delete_recipe",
+                subject="recsys_events.delete_recipe",
+                stream="recsys_events_stream",
             )
         except Exception:
             msg = f"Error publishing delete_recipe task for recipe {recipe_id}"
@@ -150,7 +152,8 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
         try:
             await self.broker.publish(
                 message=message.model_dump(),
-                subject="tasks.update_recipe",
+                subject="recsys_events.update_recipe",
+                stream="recsys_events_stream",
             )
         except Exception:
             msg = f"Error publishing update_recipe task for recipe {recipe_id}"
@@ -178,7 +181,8 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
         try:
             await self.broker.publish(
                 message=message.model_dump(),
-                subject="tasks.add_feedback",
+                subject="recsys_events.add_feedback",
+                stream="recsys_events_stream",
             )
         except Exception:
             msg = f"Error publishing add_feedback task: user {user_id}, recipe {recipe_id}"
@@ -206,7 +210,8 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
         try:
             await self.broker.publish(
                 message=message.model_dump(),
-                subject="tasks.delete_feedback",
+                subject="recsys_events.delete_feedback",
+                stream="recsys_events_stream",
             )
         except Exception:
             msg = f"Error publishing delete_feedback task: user {user_id}, recipe {recipe_id}"
@@ -234,7 +239,8 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
         try:
             await self.broker.publish(
                 message=message.model_dump(),
-                subject="tasks.add_impression",
+                subject="recsys_events.add_impression",
+                stream="recsys_events_stream",
             )
         except Exception:
             msg = f"Error publishing add_impression task: user {user_id}, recipe {recipe_id}"
@@ -254,7 +260,8 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
         try:
             await self.broker.publish(
                 message=[impression.model_dump() for impression in impressions],
-                subject="tasks.add_impressions_bulk",
+                subject="recsys_events.add_impressions_bulk",
+                stream="recsys_events_stream",
             )
         except Exception:
             msg = "Error publishing add_impressions_bulk task"

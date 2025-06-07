@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 router = NatsRouter()
 
 
-@router.subscriber("recsys.get_recommendations")
+@router.subscriber("recsys_rpc.get_recommendations")
 @inject
 async def get_user_recommendations_rpc(
     message: GetRecommendationsRequest,
