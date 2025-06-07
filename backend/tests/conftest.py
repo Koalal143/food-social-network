@@ -31,7 +31,7 @@ async def cleanup_elasticsearch_indices(test_dishka_container):
                 try:
                     if await es_client.indices.exists(index=index_pattern):
                         await es_client.delete_by_query(
-                            index=index_pattern, body={"query": {"match_all": {}}}, refresh=True
+                            index=index_pattern, body={"query": {"match_all": {}}}, refresh=True, conflicts="proceed"
                         )
                 except Exception:
                     logger.exception("Failed to clean Elasticsearch index %s", index_pattern)
