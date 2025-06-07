@@ -35,7 +35,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8000
 
 CMD alembic upgrade head && if [ "$API__MODE" = "test" ]; then \
-    python -m pytest -s -v --cov=src; \
+    python -m pytest -s -vv --cov=src; \
 else \
     uvicorn src.main:app --host 0.0.0.0 --port 8000; \
 fi
