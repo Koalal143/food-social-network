@@ -94,9 +94,13 @@ export default function EditableProfileInfo({
                             placeholder="Расскажите о себе..."
                         />
                     ) : (
-                        <p className="text-sm text-muted-foreground">
-                            {user.profile?.about || 'Не указано'}
-                        </p>
+                        <div className="text-base text-foreground/80 leading-relaxed">
+                            {user.profile?.about ? (
+                                <p className="whitespace-pre-wrap">{user.profile.about}</p>
+                            ) : (
+                                <p className="text-muted-foreground italic">Не указано</p>
+                            )}
+                        </div>
                     )}
                 </div>
 

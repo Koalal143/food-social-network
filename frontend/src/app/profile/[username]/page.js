@@ -146,7 +146,6 @@ export default function ProfileIdPage({ params }) {
                 <AuthorProfileCard
                     user={user}
                     totalRecipes={totalCount}
-                    username={username}
                 />
 
                 {/* Рецепты */}
