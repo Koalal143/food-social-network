@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback } from 'react';
 import Container from '@/components/layout/Container';
 import { useSearchHistory } from '@/context/SearchHistoryContext';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -16,9 +16,7 @@ import EmptyState, { EmptyStateVariants } from '@/components/ui/EmptyState';
 export default function SearchPage() {
   const router = useRouter();
   const { searchHistory } = useSearchHistory();
-  const { searchResults, searchLoading, searchError, searchQuery, performSearch, loadMore, hasMore, updateFilters, clearSearchResults } = useSearch();
-
-  const [filters, setLocalFilters] = useState({});
+  const { searchResults, searchLoading, searchError, searchQuery, performSearch, loadMore, hasMore, updateFilters, clearSearchResults, filters } = useSearch();
 
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get('q');
@@ -29,7 +27,6 @@ export default function SearchPage() {
   };
 
   const updateFiltersCallback = useCallback((newFilters) => {
-    setLocalFilters(newFilters);
     updateFilters(newFilters);
   }, [updateFilters]);
 
