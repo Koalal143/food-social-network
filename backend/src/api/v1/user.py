@@ -5,6 +5,7 @@ from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from fastapi import APIRouter, File, Path, Query, Response, UploadFile, status
 
 from src.core.security import CurrentUserDependency, CurrentUserOrNoneDependency
+from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions import (
     AppHTTPException,
     UserEmailAlreadyExistsError,
@@ -110,19 +111,26 @@ async def get_user(
 )
 async def update_current_user(
     update: UserUpdate,
+    uow: FromDishka[SQLAlchemyUnitOfWork],
     current_user: CurrentUserDependency,
     user_service: FromDishka[UserService],
 ) -> UserRead:
-    try:
-        return await user_service.update(
-            current_user.id,
-            username=update.username,
-            profile=update.profile,
-        )
-    except UserNotFoundError as e:
-        raise AppHTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key) from None
-    except (UserNicknameAlreadyExistsError, UserEmailAlreadyExistsError) as e:
-        raise AppHTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e), error_key=e.error_key) from None
+    async with uow:
+        try:
+            user = await user_service.update(
+                current_user.id,
+                username=update.username,
+                profile=update.profile,
+            )
+        except UserNotFoundError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
+            ) from None
+        except (UserNicknameAlreadyExistsError, UserEmailAlreadyExistsError) as e:
+            raise AppHTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e), error_key=e.error_key) from None
+        else:
+            await uow.commit()
+            return user
 
 
 @router.patch(
@@ -158,20 +166,23 @@ async def update_current_user(
 async def update_user_avatar(
     image: Annotated[UploadFile, File()],
     current_user: CurrentUserDependency,
+    uow: FromDishka[SQLAlchemyUnitOfWork],
     user_avatar_service: FromDishka[UserAvatarService],
 ) -> dict[str, str]:
-    try:
-        avatar_url = await user_avatar_service.update_avatar(current_user.id, image)
-    except WrongImageFormatError as e:
-        raise AppHTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=str(e), error_key=e.error_key
-        ) from None
-    except ImageTooLargeError as e:
-        raise AppHTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=str(e), error_key=e.error_key
-        ) from None
-    else:
-        return {"avatar_url": avatar_url}
+    async with uow:
+        try:
+            avatar_url = await user_avatar_service.update_avatar(current_user.id, image)
+        except WrongImageFormatError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=str(e), error_key=e.error_key
+            ) from None
+        except ImageTooLargeError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=str(e), error_key=e.error_key
+            ) from None
+        else:
+            await uow.commit()
+            return {"avatar_url": avatar_url}
 
 
 @router.delete(
