@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import Container from '@/components/layout/Container';
 import { useSearchHistory } from '@/context/SearchHistoryContext';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -14,7 +14,9 @@ import SearchFilters from '@/components/ui/search/SearchFilters';
 export default function SearchPage() {
   const router = useRouter();
   const { searchHistory } = useSearchHistory();
-  const { searchResults, searchLoading, searchError, searchQuery, performSearch, loadMore, hasMore, updateFilters } = useSearch();
+  const { searchResults, searchLoading, searchError, searchQuery, performSearch, loadMore, hasMore, updateFilters, setFilters } = useSearch();
+
+  const [filters, setLocalFilters] = useState({});
 
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get('q');
@@ -23,6 +25,11 @@ export default function SearchPage() {
   const handleBack = () => {
     router.push('/');
   };
+
+  const updateFiltersCallback = useCallback((newFilters) => {
+    setLocalFilters(newFilters);
+    updateFilters(newFilters);
+  }, [setLocalFilters, updateFilters]);
 
   useEffect(() => {
     if (debouncedQuery) {
@@ -44,7 +51,7 @@ export default function SearchPage() {
           На главную
         </Button>
 
-        <SearchFilters filters={{}} onChange={updateFilters} />
+        <SearchFilters filters={filters} onChange={updateFiltersCallback} />
 
         {!urlQuery && searchHistory.length > 0 && (
           <div className="space-y-4">

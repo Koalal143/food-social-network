@@ -1,10 +1,9 @@
+import { ERROR_MESSAGES } from "@/constants/errors";
+import { NetworkError } from "@/utils/errors";
+
 export default class S3Service {
     static async uploadImage(presignedPostData, file) {
-        console.log(presignedPostData, file);
-        
         const formData = new FormData();
-        
-        formData.append('acl', 'private');
         
         Object.entries(presignedPostData.fields).forEach(([key, value]) => {
             formData.append(key, value);
@@ -19,11 +18,19 @@ export default class S3Service {
             });
 
             if (!response.ok) {
-                // Обработка ошибок бэка
+                const errorData = await response.json().catch(() => ({}));
+
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new Error(ERROR_MESSAGES[errorData.error_key]);
+                } else {
+                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                }
             }
         } catch (error) {
-            console.error('Upload failed:', error);
-            throw new Error('Image upload failed');
+            if (error instanceof TypeError && error.message === 'Failed to fetch') {
+                throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+            }
+            throw new Error(ERROR_MESSAGES.file_upload_failed);
         }
     }
 }
