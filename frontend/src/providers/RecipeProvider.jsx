@@ -4,8 +4,10 @@ import { useEffect, useState } from "react"
 import RecipesService from "@/services/recipes.service"
 import { RecipeContext } from "@/context/RecipeContext"
 import S3Service from "@/services/s3.service"
+import { useAuth } from "@/context/AuthContext"
 
 export default function RecipeProvider({ children }) {
+    const { loading: authLoading } = useAuth()
     const [recipes, setRecipes] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -46,8 +48,11 @@ export default function RecipeProvider({ children }) {
     }
 
     useEffect(() => {
-        fetchRecipes(true)
-    }, [])
+        // Ждём завершения инициализации аутентификации перед загрузкой рецептов
+        if (!authLoading) {
+            fetchRecipes(true)
+        }
+    }, [authLoading])
 
     const getRecipeBySlug = async (slug, source='feed') => {
         try {
