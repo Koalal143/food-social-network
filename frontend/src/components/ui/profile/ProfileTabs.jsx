@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../tabs"
 import InfiniteRecipesList from "@/components/shared/InfiniteRecipeList"
-import { ChefHat, Heart } from "lucide-react"
+import { ChefHat, Bookmark } from "lucide-react"
 import EmptyState, { EmptyStateVariants } from "@/components/ui/EmptyState"
 
 export default function ProfileTabs({ 
@@ -23,7 +23,7 @@ export default function ProfileTabs({
                     Мои рецепты
                 </TabsTrigger>
                 <TabsTrigger value="favorites">
-                    <Heart className="w-4 h-4 mr-2" />
+                    <Bookmark className="w-4 h-4 mr-2" />
                     Избранное
                 </TabsTrigger>
             </TabsList>
@@ -59,7 +59,7 @@ export default function ProfileTabs({
                     />
                 ) : (
                     <EmptyState
-                        icon={Heart}
+                        icon={Bookmark}
                         {...EmptyStateVariants.noFavorites}
                         actionText="Найти рецепты"
                         actionHref="/"
