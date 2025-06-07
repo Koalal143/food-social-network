@@ -1,37 +1,75 @@
 "use client"
 
-import { Home, Star, User, Bot } from "lucide-react";
+import { Home, Star, User, Bot, PanelLeftClose, PanelLeft } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
+import { useSidebar } from '@/context/SidebarContext';
 
 export default function DesktopSidebar() {
     const pathname = usePathname();
+    const { isCollapsed, toggleSidebar } = useSidebar();
 
     const isActive = (path) => pathname === path;
 
     return (
-        <aside className="hidden md:block fixed pt-[60px] left-0 h-[100vh] w-64 bg-background border-r">
-            <nav className="space-y-2 pl-6">
+        <aside className={`hidden md:block fixed pt-[60px] left-0 h-[100vh] bg-background border-r transition-all duration-300 ease-in-out ${
+            isCollapsed ? 'w-16' : 'w-56'
+        }`}>
+            <div className="flex flex-col h-full">
+                <nav className={`space-y-4 ${isCollapsed ? 'px-2' : 'px-4'} flex-1 pt-2 pb-4`}>
                 <Link href="/" passHref>
-                    <Button variant="ghost" className={`pt-2 w-full justify-start ${isActive('/') ? 'bg-accent' : ''}`}>
-                        <Home className="mr-2 h-4 w-4" />
-                        Главная
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`w-full h-11 ${isCollapsed ? 'justify-center px-0' : 'justify-start px-3'} ${isActive('/') ? 'bg-accent' : ''} hover:bg-accent/80 rounded-lg`}
+                        title={isCollapsed ? 'Главная' : ''}
+                    >
+                        <Home className={`h-4 w-4 ${isCollapsed ? '' : 'mr-3'}`} />
+                        {!isCollapsed && <span className="text-sm font-medium">Главная</span>}
                     </Button>
                 </Link>
                 <Link href="/recommendations" passHref>
-                    <Button variant="ghost" className={`w-full justify-start ${isActive('/recommendations') ? 'bg-accent' : ''}`}>
-                        <Star className="mr-2 h-4 w-4" />
-                        Рекомендации
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`w-full h-11 ${isCollapsed ? 'justify-center px-0' : 'justify-start px-3'} ${isActive('/recommendations') ? 'bg-accent' : ''} hover:bg-accent/80 rounded-lg`}
+                        title={isCollapsed ? 'Рекомендации' : ''}
+                    >
+                        <Star className={`h-4 w-4 ${isCollapsed ? '' : 'mr-3'}`} />
+                        {!isCollapsed && <span className="text-sm font-medium">Рекомендации</span>}
                     </Button>
                 </Link>
                 <Link href="/profile" passHref>
-                    <Button variant="ghost" className={`w-full justify-start ${isActive('/profile') ? 'bg-accent' : ''}`}>
-                        <User className="mr-2 h-4 w-4" />
-                        Профиль
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`w-full h-11 ${isCollapsed ? 'justify-center px-0' : 'justify-start px-3'} ${isActive('/profile') ? 'bg-accent' : ''} hover:bg-accent/80 rounded-lg`}
+                        title={isCollapsed ? 'Профиль' : ''}
+                    >
+                        <User className={`h-4 w-4 ${isCollapsed ? '' : 'mr-3'}`} />
+                        {!isCollapsed && <span className="text-sm font-medium">Профиль</span>}
                     </Button>
                 </Link>
-            </nav>
+                </nav>
+
+                {/* Кнопка переключения в правом нижнем углу */}
+                <div className={`${isCollapsed ? 'px-2' : 'px-4'} pb-6 pt-4 flex ${isCollapsed ? 'justify-center' : 'justify-end'} border-t border-border/50`}>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-accent/80 rounded-md"
+                        onClick={toggleSidebar}
+                        title={isCollapsed ? "Развернуть сайдбар" : "Свернуть сайдбар"}
+                    >
+                        {isCollapsed ? (
+                            <PanelLeft className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                            <PanelLeftClose className="h-4 w-4 text-muted-foreground" />
+                        )}
+                    </Button>
+                </div>
+            </div>
         </aside>
     );
 }

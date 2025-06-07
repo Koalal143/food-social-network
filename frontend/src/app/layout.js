@@ -7,6 +7,7 @@ import MobileMenu from "@/components/layout/MobileMenu";
 import { Toaster } from "@/components/ui/toaster";
 import CookieConsent from "@/components/ui/CookieConsent";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
+import MainContent from "@/components/layout/MainContent";
 
 const montserrat = Montserrat({
     variable: "--font-main",
@@ -29,9 +30,9 @@ export default function RootLayout({ children }) {
                         <Header />
                         <div className="flex flex-1">
                             <DesktopSidebar />
-                            <main className="flex-1 md:pl-64 pt-12  h-full pb-16 md:pb-0">
+                            <MainContent>
                                 {children}
-                            </main>
+                            </MainContent>
                         </div>
                         <MobileMenu />
                         <CookieConsent />
