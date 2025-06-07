@@ -14,7 +14,7 @@ import SearchFilters from '@/components/ui/search/SearchFilters';
 export default function SearchPage() {
   const router = useRouter();
   const { searchHistory } = useSearchHistory();
-  const { searchResults, searchLoading, searchError, searchQuery, performSearch, loadMore, hasMore, updateFilters, setFilters } = useSearch();
+  const { searchResults, searchLoading, searchError, searchQuery, performSearch, loadMore, hasMore, updateFilters, clearSearchResults } = useSearch();
 
   const [filters, setLocalFilters] = useState({});
 
@@ -29,15 +29,16 @@ export default function SearchPage() {
   const updateFiltersCallback = useCallback((newFilters) => {
     setLocalFilters(newFilters);
     updateFilters(newFilters);
-  }, [setLocalFilters, updateFilters]);
+  }, [updateFilters]);
 
   useEffect(() => {
-    if (debouncedQuery) {
-      performSearch(debouncedQuery);
-    } else {
-      performSearch('');
+    if (debouncedQuery && debouncedQuery.trim()) {
+      performSearch(debouncedQuery.trim());
+    } else if (debouncedQuery === '') {
+      // Очищаем результаты когда запрос пустой (например, при переходе на /search без параметров)
+      clearSearchResults();
     }
-  }, [debouncedQuery]);
+  }, [debouncedQuery]); // Убираем performSearch из зависимостей чтобы избежать бесконечных циклов
 
   return (
     <Container className="py-8">
@@ -53,19 +54,31 @@ export default function SearchPage() {
 
         <SearchFilters filters={filters} onChange={updateFiltersCallback} />
 
-        {!urlQuery && searchHistory.length > 0 && (
+        {!urlQuery && searchHistory && searchHistory.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Недавние запросы</h3>
             <div className="flex flex-wrap gap-2">
-              {searchHistory.map((item) => (
-                <Button
-                  key={item.id}
-                  variant="outline"
-                  onClick={() => router.push(`/search?q=${encodeURIComponent(item.query)}`)}
-                >
-                  {item.query}
-                </Button>
-              ))}
+              {searchHistory.map((item, index) => {
+                // Поддерживаем как объекты с query, так и строки
+                const query = typeof item === 'string' ? item : item.query;
+                const key = typeof item === 'string' ? `${query}-${index}` : item.id || `${query}-${index}`;
+
+                // Не показываем пустые запросы
+                if (!query || !query.trim()) {
+                  return null;
+                }
+
+                return (
+                  <Button
+                    key={key}
+                    variant="outline"
+                    onClick={() => router.push(`/search?q=${encodeURIComponent(query)}`)}
+                    className="text-sm"
+                  >
+                    {query}
+                  </Button>
+                );
+              }).filter(Boolean)}
             </div>
           </div>
         )}
