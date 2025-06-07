@@ -11,9 +11,7 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 class TestSearchHistory:
     async def test_get_search_history_authenticated_user_success(
-        self,
-        api_client: AsyncClient,
-        auth_headers: dict[str, str]
+        self, api_client: AsyncClient, auth_headers: dict[str, str]
     ):
         search_queries = ["pasta", "chicken", "vegetarian"]
 
@@ -29,9 +27,7 @@ class TestSearchHistory:
         assert len(history) >= len(search_queries)
 
     async def test_get_search_history_with_pagination_success(
-        self,
-        api_client: AsyncClient,
-        auth_headers: dict[str, str]
+        self, api_client: AsyncClient, auth_headers: dict[str, str]
     ):
         search_queries = [f"query_{i}" for i in range(5)]
 
@@ -42,8 +38,7 @@ class TestSearchHistory:
         limit = 2
         offset = 1
         response = await api_client.get(
-            f"/v1/recipes/search/history?limit={limit}&offset={offset}",
-            headers=auth_headers
+            f"/v1/recipes/search/history?limit={limit}&offset={offset}", headers=auth_headers
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -93,32 +88,21 @@ class TestSearchHistory:
         ],
     )
     async def test_get_search_history_validation_errors(
-        self,
-        api_client: AsyncClient,
-        auth_headers: dict[str, str],
-        limit: int,
-        offset: int
+        self, api_client: AsyncClient, auth_headers: dict[str, str], limit: int, offset: int
     ):
         response = await api_client.get(
-            f"/v1/recipes/search/history?limit={limit}&offset={offset}",
-            headers=auth_headers
+            f"/v1/recipes/search/history?limit={limit}&offset={offset}", headers=auth_headers
         )
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         assert response.json()["error_key"] == "validation_error"
 
     async def test_save_search_query_authenticated_user_success(
-        self,
-        api_client: AsyncClient,
-        auth_headers: dict[str, str]
+        self, api_client: AsyncClient, auth_headers: dict[str, str]
     ):
         query_data = {"query": fake.word()}
 
-        response = await api_client.post(
-            "/v1/recipes/search/history",
-            json=query_data,
-            headers=auth_headers
-        )
+        response = await api_client.post("/v1/recipes/search/history", json=query_data, headers=auth_headers)
 
         assert response.status_code == status.HTTP_201_CREATED
         saved_query = response.json()
@@ -159,58 +143,31 @@ class TestSearchHistory:
         ],
     )
     async def test_save_search_query_validation_errors(
-        self,
-        api_client: AsyncClient,
-        auth_headers: dict[str, str],
-        query_text: str
+        self, api_client: AsyncClient, auth_headers: dict[str, str], query_text: str
     ):
         query_data = {"query": query_text}
 
-        response = await api_client.post(
-            "/v1/recipes/search/history",
-            json=query_data,
-            headers=auth_headers
-        )
+        response = await api_client.post("/v1/recipes/search/history", json=query_data, headers=auth_headers)
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
         assert response.json()["error_key"] == "validation_error"
 
-    async def test_save_search_query_duplicate_handling(
-        self,
-        api_client: AsyncClient,
-        auth_headers: dict[str, str]
-    ):
+    async def test_save_search_query_duplicate_handling(self, api_client: AsyncClient, auth_headers: dict[str, str]):
         query_data = {"query": "duplicate_test_query"}
 
-        first_response = await api_client.post(
-            "/v1/recipes/search/history",
-            json=query_data,
-            headers=auth_headers
-        )
+        first_response = await api_client.post("/v1/recipes/search/history", json=query_data, headers=auth_headers)
         assert first_response.status_code == status.HTTP_201_CREATED
 
-        second_response = await api_client.post(
-            "/v1/recipes/search/history",
-            json=query_data,
-            headers=auth_headers
-        )
+        second_response = await api_client.post("/v1/recipes/search/history", json=query_data, headers=auth_headers)
 
         assert second_response.status_code == status.HTTP_201_CREATED
 
-    async def test_search_history_ordering(
-        self,
-        api_client: AsyncClient,
-        auth_headers: dict[str, str]
-    ):
+    async def test_search_history_ordering(self, api_client: AsyncClient, auth_headers: dict[str, str]):
         search_queries = ["first_query", "second_query", "third_query"]
 
         for query in search_queries:
             query_data = {"query": query}
-            response = await api_client.post(
-                "/v1/recipes/search/history",
-                json=query_data,
-                headers=auth_headers
-            )
+            response = await api_client.post("/v1/recipes/search/history", json=query_data, headers=auth_headers)
             assert response.status_code == status.HTTP_201_CREATED
 
         response = await api_client.get("/v1/recipes/search/history", headers=auth_headers)
@@ -220,17 +177,9 @@ class TestSearchHistory:
         assert len(history) >= len(search_queries)
         assert history[0]["query"] == search_queries[-1]
 
-    async def test_search_history_isolation_between_users(
-        self,
-        api_client: AsyncClient,
-        auth_headers: dict[str, str]
-    ):
+    async def test_search_history_isolation_between_users(self, api_client: AsyncClient, auth_headers: dict[str, str]):
         query_data_1 = {"query": "user1_unique_query"}
-        response_1 = await api_client.post(
-            "/v1/recipes/search/history",
-            json=query_data_1,
-            headers=auth_headers
-        )
+        response_1 = await api_client.post("/v1/recipes/search/history", json=query_data_1, headers=auth_headers)
         assert response_1.status_code == status.HTTP_201_CREATED
 
         user_data_2 = {"username": fake.user_name(), "email": fake.email(), "password": "TestPass123!"}
@@ -244,11 +193,7 @@ class TestSearchHistory:
         auth_headers_2 = {"Authorization": f"Bearer {auth_token_2}"}
 
         query_data_2 = {"query": "user2_unique_query"}
-        response_2 = await api_client.post(
-            "/v1/recipes/search/history",
-            json=query_data_2,
-            headers=auth_headers_2
-        )
+        response_2 = await api_client.post("/v1/recipes/search/history", json=query_data_2, headers=auth_headers_2)
         assert response_2.status_code == status.HTTP_201_CREATED
 
         history_1_response = await api_client.get("/v1/recipes/search/history", headers=auth_headers)
