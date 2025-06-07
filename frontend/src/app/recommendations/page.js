@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Container from "@/components/layout/Container";
 import RecipeSwipeCard from "@/components/shared/RecipeSwipeCard";
 import { useRouter } from 'next/navigation';
@@ -13,13 +13,20 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function RecommendationsPage() {
   const router = useRouter();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const { recipes, loadingMore, fetchRecipes } = useRecomendations();
+  const {
+    loadingMore,
+    isPreloading,
+    moveToNextRecipe,
+    getCurrentRecipe
+  } = useRecomendations();
   const { addFavorite } = useFavorites();
   const { addToDisliked } = useDislikes();
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [direction, setDirection] = useState(null);
+
+  // Получаем текущий рецепт
+  const currentRecipe = getCurrentRecipe();
 
   const nextTutorialStep = () => {
     if (tutorialStep < 3) {
@@ -35,42 +42,36 @@ export default function RecommendationsPage() {
     setTutorialStep(0);
   };
 
-  const handleDislike = () => {
-    if (recipes[currentIndex]) {
-      addToDisliked(recipes[currentIndex].id)
+  const handleDislike = async () => {
+    if (currentRecipe) {
+      addToDisliked(currentRecipe.id)
     }
     setDirection('left');
-    if (currentIndex < recipes.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+
+    // Переходим к следующему рецепту с помощью новой логики
+    await moveToNextRecipe();
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     setDirection('up');
-    if (currentIndex < recipes.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+
+    // Переходим к следующему рецепту с помощью новой логики
+    await moveToNextRecipe();
   };
 
-  const handleLike = () => {
-    if (recipes[currentIndex]) {
-      addFavorite(recipes[currentIndex].id);
+  const handleLike = async () => {
+    if (currentRecipe) {
+      addFavorite(currentRecipe.id);
     }
     setDirection('right');
-    if (currentIndex < recipes.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+
+    // Переходим к следующему рецепту с помощью новой логики
+    await moveToNextRecipe();
   };
 
   const handleViewRecipe = (recipe) => {
     router.push(`/recipe/${recipe.slug}?source=recs-detail`);
   };
-
-  useEffect(() => {
-    if (currentIndex >= recipes.length - 1 && recipes.length > 0) {
-      fetchRecipes(true);
-    }
-  }, [currentIndex]);
 
   const tutorialContent = [
     {
@@ -119,10 +120,10 @@ export default function RecommendationsPage() {
             mode="wait"
             onExitComplete={() => setDirection(null)}
           >
-            {recipes.length > 0 && currentIndex < recipes.length ? (
+            {currentRecipe ? (
               <RecipeSwipeCard
-                key={currentIndex}
-                recipe={recipes[currentIndex]}
+                key={`recipe-${currentRecipe.id}`}
+                recipe={currentRecipe}
                 direction={direction}
                 onSkip={handleSkip}
                 onDislike={handleDislike}
@@ -165,7 +166,7 @@ export default function RecommendationsPage() {
         </div>
 
         {/* Кнопки лайк, дизлайк, скип */}
-        {recipes.length > 0 && currentIndex < recipes.length && (
+        {currentRecipe && (
           <motion.div className="my-4">
             <div className="flex justify-center gap-4 md:gap-6">
               <button
@@ -189,25 +190,6 @@ export default function RecommendationsPage() {
               >
                 <Bookmark className="text-black w-6 h-6 md:w-7 md:h-7 group-hover:scale-110 transition-transform" />
               </button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Индикатор загрузки дополнительных рецептов */}
-        {loadingMore && (
-          <motion.div
-            className="my-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="flex justify-center">
-              <div className="bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm rounded-full px-4 py-2">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-                  Загружаем новые рецепты...
-                </div>
-              </div>
             </div>
           </motion.div>
         )}
