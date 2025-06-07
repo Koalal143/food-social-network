@@ -165,7 +165,7 @@ export default function AdminDashboard() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <Link href="/admin/recipes">
+                                <Link href="/system-management-panel/recipes">
                                     <Button className="w-full">
                                         Перейти к рецептам
                                     </Button>
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <Link href="/admin/users">
+                                <Link href="/system-management-panel/users">
                                     <Button className="w-full">
                                         Перейти к пользователям
                                     </Button>
@@ -196,16 +196,16 @@ export default function AdminDashboard() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <BarChart3 className="w-5 h-5" />
-                                    Информация
+                                    Тестирование
                                 </CardTitle>
                                 <CardDescription>
-                                    Возможности и ограничения админ-панели
+                                    Тестовые функции и диагностика
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <Link href="/admin/info">
+                                <Link href="/system-management-panel/test">
                                     <Button className="w-full" variant="outline">
-                                        Подробнее
+                                        Тестирование
                                     </Button>
                                 </Link>
                             </CardContent>
