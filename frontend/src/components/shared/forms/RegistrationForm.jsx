@@ -16,17 +16,18 @@ import {
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
-import ValidatedInput, { ValidationRules } from "../../ui/ValidatedInput";
+import ValidatedInput from "../../ui/ValidatedInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { AuthValidationRules, createConfirmPasswordRules } from "@/lib/validation/formValidation";
 
 export default function RegistrationForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(false); // Отслеживаем попытку отправки формы
     const { register } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
@@ -43,6 +44,7 @@ export default function RegistrationForm() {
     });
     
     const onSubmit = async (data) => {
+    setIsSubmitted(true); // Отмечаем, что форма была отправлена
     setIsLoading(true);
     try {
         await register(data.username, data.email, data.password);
@@ -72,11 +74,9 @@ export default function RegistrationForm() {
                       placeholder="Введите юзернейм"
                       value={field.value}
                       onChange={(e) => field.onChange(e.target.value)}
-                      validationRules={[
-                        ValidationRules.required(),
-                        ValidationRules.minLength(3, "Минимум 3 символа"),
-                        ValidationRules.maxLength(20, "Максимум 20 символов")
-                      ]}
+                      onBlur={field.onBlur}
+                      showErrors={isSubmitted}
+                      validationRules={AuthValidationRules.username}
                     />
                   </FormControl>
                   <FormMessage />
@@ -95,10 +95,9 @@ export default function RegistrationForm() {
                       placeholder="Введите email"
                       value={field.value}
                       onChange={(e) => field.onChange(e.target.value)}
-                      validationRules={[
-                        ValidationRules.required(),
-                        ValidationRules.email()
-                      ]}
+                      onBlur={field.onBlur}
+                      showErrors={isSubmitted}
+                      validationRules={AuthValidationRules.email}
                     />
                   </FormControl>
                   <FormMessage />
@@ -112,25 +111,29 @@ export default function RegistrationForm() {
                 <FormItem>
                   <FormLabel>Пароль</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Введите пароль"
-                        className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors pr-10"
-                        {...field}
-                      />
-                      <button
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
+                    <ValidatedInput
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Введите пароль"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      showErrors={isSubmitted}
+                      validationRules={AuthValidationRules.password}
+                      className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors"
+                      rightElement={
+                        <button
+                          type="button"
+                          className="text-gray-500 hover:text-gray-700 transition-colors"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      }
+                    />
                   </FormControl>
                   <FormDescription>
                     Минимум 8 символов, включая заглавные и строчные буквы, цифры и специальные символы
@@ -146,25 +149,29 @@ export default function RegistrationForm() {
                 <FormItem>
                   <FormLabel>Подтверждение пароля</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Повторите пароль"
-                        className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors pr-10"
-                        {...field}
-                      />
-                      <button
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
+                    <ValidatedInput
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Повторите пароль"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      showErrors={isSubmitted}
+                      validationRules={createConfirmPasswordRules(form.watch("password"))}
+                      className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors"
+                      rightElement={
+                        <button
+                          type="button"
+                          className="text-gray-500 hover:text-gray-700 transition-colors"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      }
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

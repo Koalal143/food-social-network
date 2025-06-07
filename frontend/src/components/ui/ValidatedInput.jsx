@@ -13,11 +13,14 @@ import { cn } from '@/lib/utils';
 export default function ValidatedInput({
     value,
     onChange,
+    onBlur,
     onValidation,
     validationRules = [],
     debounceMs = 300,
     className,
     showValidationIcon = true,
+    showErrors = false, // Принудительно показывать ошибки (например, при отправке формы)
+    rightElement, // Дополнительный элемент справа (например, кнопка показа пароля)
     ...props
 }) {
     const [validationState, setValidationState] = useState({
@@ -28,6 +31,7 @@ export default function ValidatedInput({
     });
 
     const [debouncedValue, setDebouncedValue] = useState(value);
+    const [touched, setTouched] = useState(false); // Отслеживаем, взаимодействовал ли пользователь с полем
 
     // Debounce value changes
     useEffect(() => {
@@ -37,6 +41,14 @@ export default function ValidatedInput({
 
         return () => clearTimeout(timer);
     }, [value, debounceMs]);
+
+    // Обработчик потери фокуса
+    const handleBlur = (e) => {
+        setTouched(true);
+        if (onBlur) {
+            onBlur(e);
+        }
+    };
 
     // Validate when debounced value changes
     useEffect(() => {
@@ -72,7 +84,7 @@ export default function ValidatedInput({
             };
 
             setValidationState(newState);
-            
+
             if (onValidation) {
                 onValidation(newState);
             }
@@ -99,13 +111,19 @@ export default function ValidatedInput({
         return null;
     };
 
+    // Определяем, нужно ли показывать ошибки
+    const shouldShowErrors = touched || showErrors;
+
     const getInputClassName = () => {
         let baseClass = className || 'bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors';
 
-        if (validationState.isValid === true) {
-            baseClass += ' border-green-500 focus:border-green-500 focus:ring-green-500';
-        } else if (validationState.isValid === false) {
-            baseClass += ' border-red-500 focus:border-red-500 focus:ring-red-500';
+        // Показываем цветную рамку только если пользователь взаимодействовал с полем или форма была отправлена
+        if (shouldShowErrors) {
+            if (validationState.isValid === true) {
+                baseClass += ' border-green-500 focus:border-green-500 focus:ring-green-500';
+            } else if (validationState.isValid === false) {
+                baseClass += ' border-red-500 focus:border-red-500 focus:ring-red-500';
+            }
         }
 
         return baseClass;
@@ -118,10 +136,20 @@ export default function ValidatedInput({
                     {...props}
                     value={value}
                     onChange={onChange}
-                    className={cn(getInputClassName(), showValidationIcon && debouncedValue && 'pr-10')}
+                    onBlur={handleBlur}
+                    className={cn(
+                        getInputClassName(),
+                        (showValidationIcon && debouncedValue) || rightElement ? 'pr-10' : ''
+                    )}
                 />
-                
-                {showValidationIcon && debouncedValue && (
+
+                {rightElement && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        {rightElement}
+                    </div>
+                )}
+
+                {!rightElement && showValidationIcon && debouncedValue && (
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         {getValidationIcon()}
                     </div>
@@ -129,7 +157,7 @@ export default function ValidatedInput({
             </div>
 
             <AnimatePresence>
-                {validationState.errors.length > 0 && (
+                {shouldShowErrors && validationState.errors.length > 0 && (
                     <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -150,7 +178,7 @@ export default function ValidatedInput({
                     </motion.div>
                 )}
 
-                {validationState.warnings.length > 0 && validationState.errors.length === 0 && (
+                {shouldShowErrors && validationState.warnings.length > 0 && validationState.errors.length === 0 && (
                     <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
