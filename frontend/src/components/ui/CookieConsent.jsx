@@ -7,6 +7,7 @@ import ConsentService from "@/services/consent.service";
 import { useToast } from "@/hooks/use-toast";
 import { ERROR_MESSAGES } from "@/constants/errors";
 import { useAuth } from "@/context/AuthContext";
+import { useCookieConsent } from "@/hooks/useCookieConsent";
 
 const LOCALSTORAGE_KEY = "cookie_consent_accepted";
 
@@ -15,29 +16,33 @@ export default function CookieConsent() {
   const [loading, setLoading] = useState(false);
   const { isAuth } = useAuth();
   const { toast } = useToast();
+  const { hasConsent, isLoading: consentLoading, setConsent } = useCookieConsent();
 
   useEffect(() => {
+    // Не показываем диалог пока идет загрузка состояния согласия
+    if (consentLoading) return;
+
     if (!isAuth) {
-      const consent = localStorage.getItem(LOCALSTORAGE_KEY);
-      if (!consent) setOpen(true);
+      // Показываем диалог только если нет согласия
+      if (!hasConsent) {
+        setOpen(true);
+      }
     } else {
       setOpen(false);
-      localStorage.setItem(LOCALSTORAGE_KEY, "1");
+      // Для авторизованных пользователей автоматически устанавливаем согласие
+      if (!hasConsent) {
+        setConsent(true);
+      }
     }
-  }, [isAuth]);
+  }, [isAuth, hasConsent, consentLoading, setConsent]);
 
   const handleConsent = async (isAllowed) => {
     setLoading(true);
     try {
         await ConsentService.sendConsent(isAllowed);
-        localStorage.setItem(LOCALSTORAGE_KEY, isAllowed ? "1" : "0");
+        // Используем хук для сохранения согласия
+        setConsent(isAllowed);
         setOpen(false);
-        toast({
-            title: "Спасибо!",
-            description: isAllowed
-            ? "Вы разрешили использование cookies."
-            : "Вы отказались от использования cookies.",
-        });
     } catch (e) {
         toast({
             title: "Ошибка",

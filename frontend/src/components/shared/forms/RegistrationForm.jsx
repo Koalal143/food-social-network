@@ -46,10 +46,6 @@ export default function RegistrationForm() {
     setIsLoading(true);
     try {
         await register(data.username, data.email, data.password);
-        enhancedToast.success(
-            "Успешная регистрация",
-            "Добро пожаловать в наше сообщество!"
-        );
         router.push("/");
     } catch (error) {
         const { message, type } = handleApiError(error);

@@ -65,11 +65,6 @@ export default function RecipePage({ params }) {
 
     const handleSave = async () => {
         if (!isAuth) {
-            toast({
-                variant: "default",
-                title: "Требуется авторизация",
-                description: "Чтобы сохранять рецепты, пожалуйста, войдите в систему",
-            });
             return;
         }
 
@@ -97,11 +92,6 @@ export default function RecipePage({ params }) {
 
     const handleDislike = async () => {
         if (!isAuth) {
-            toast({
-                variant: "default",
-                title: "Требуется авторизация",
-                description: "Чтобы оценивать рецепты, пожалуйста, войдите в систему",
-            });
             return;
         }
 

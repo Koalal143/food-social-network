@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Bookmark, ThumbsDown } from "lucide-react"
-import ParticleCanvas from "./ParticleCanvas"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 // Компонент для партикл-эффектов
 const ParticleEffect = ({ isActive, type, onComplete }) => {
@@ -104,42 +104,59 @@ const AnimatedFavoriteButton = ({ isSaved, onClick, disabled }) => {
     }, 300)
   }
 
+  const buttonContent = (
+    <Button
+      variant={isSaved ? "default" : "outline"}
+      size="sm"
+      className={`
+        gap-1.5 h-8 px-3 text-xs button-hover-lift glow-effect
+        relative overflow-hidden transition-all duration-200
+        ${isSaved ? 'bg-primary hover:bg-primary/90' : 'hover:border-primary/50 hover:bg-primary/5'}
+        ${isAnimating ? 'scale-95' : ''}
+      `}
+      onClick={handleClick}
+      disabled={disabled}
+    >
+      <Bookmark
+        className={`
+          w-3.5 h-3.5 transition-all duration-300
+          ${isSaved ? 'fill-current animate-fill-bookmark' : ''}
+          ${isAnimating && !isSaved ? 'animate-heartbeat' : ''}
+          ${!isSaved ? 'hover:scale-110' : ''}
+        `}
+      />
+      <span className="relative z-10 font-medium">
+        {isSaved ? "В избранном" : "В избранное"}
+      </span>
+
+      {/* Эффект волны при клике */}
+      {showRipple && (
+        <div className="absolute inset-0 bg-primary/30 rounded animate-ripple" />
+      )}
+
+      {/* Эффект свечения для активного состояния */}
+      {isSaved && (
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
+      )}
+    </Button>
+  )
+
   return (
     <div className="relative">
-      <Button
-        variant={isSaved ? "default" : "outline"}
-        size="sm"
-        className={`
-          gap-1.5 h-8 px-3 text-xs button-hover-lift glow-effect
-          relative overflow-hidden transition-all duration-200
-          ${isSaved ? 'bg-primary hover:bg-primary/90' : 'hover:border-primary/50 hover:bg-primary/5'}
-          ${isAnimating ? 'scale-95' : ''}
-        `}
-        onClick={handleClick}
-        disabled={disabled}
-      >
-        <Bookmark
-          className={`
-            w-3.5 h-3.5 transition-all duration-300
-            ${isSaved ? 'fill-current animate-fill-bookmark' : ''}
-            ${isAnimating && !isSaved ? 'animate-heartbeat' : ''}
-            ${!isSaved ? 'hover:scale-110' : ''}
-          `}
-        />
-        <span className="relative z-10 font-medium">
-          {isSaved ? "В избранном" : "В избранное"}
-        </span>
-
-        {/* Эффект волны при клике */}
-        {showRipple && (
-          <div className="absolute inset-0 bg-primary/30 rounded animate-ripple" />
-        )}
-
-        {/* Эффект свечения для активного состояния */}
-        {isSaved && (
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
-        )}
-      </Button>
+      {disabled ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {buttonContent}
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Войдите в систему, чтобы сохранять рецепты</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        buttonContent
+      )}
 
       <ParticleEffect
         isActive={showParticles}
@@ -174,42 +191,59 @@ const AnimatedDislikeButton = ({ isDisliked, onClick, disabled }) => {
     }, 300)
   }
 
+  const buttonContent = (
+    <Button
+      variant={isDisliked ? "destructive" : "outline"}
+      size="sm"
+      className={`
+        gap-1.5 h-8 px-3 text-xs button-hover-lift glow-effect
+        relative overflow-hidden transition-all duration-200
+        ${isDisliked ? 'bg-destructive hover:bg-destructive/90' : 'hover:border-destructive/50 hover:bg-destructive/5'}
+        ${isAnimating ? 'scale-95' : ''}
+      `}
+      onClick={handleClick}
+      disabled={disabled}
+    >
+      <ThumbsDown
+        className={`
+          w-3.5 h-3.5 transition-all duration-300
+          ${isDisliked ? 'fill-current' : ''}
+          ${isAnimating ? 'animate-shake-thumb' : ''}
+          ${!isDisliked ? 'hover:scale-110 hover:rotate-12' : ''}
+        `}
+      />
+      <span className="relative z-10 font-medium">
+        {isDisliked ? "Не нравится" : "Не нравится"}
+      </span>
+
+      {/* Эффект волны при клике */}
+      {showRipple && (
+        <div className="absolute inset-0 bg-destructive/30 rounded animate-ripple" />
+      )}
+
+      {/* Эффект для активного состояния */}
+      {isDisliked && (
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50" />
+      )}
+    </Button>
+  )
+
   return (
     <div className="relative">
-      <Button
-        variant={isDisliked ? "destructive" : "outline"}
-        size="sm"
-        className={`
-          gap-1.5 h-8 px-3 text-xs button-hover-lift glow-effect
-          relative overflow-hidden transition-all duration-200
-          ${isDisliked ? 'bg-destructive hover:bg-destructive/90' : 'hover:border-destructive/50 hover:bg-destructive/5'}
-          ${isAnimating ? 'scale-95' : ''}
-        `}
-        onClick={handleClick}
-        disabled={disabled}
-      >
-        <ThumbsDown
-          className={`
-            w-3.5 h-3.5 transition-all duration-300
-            ${isDisliked ? 'fill-current' : ''}
-            ${isAnimating ? 'animate-shake-thumb' : ''}
-            ${!isDisliked ? 'hover:scale-110 hover:rotate-12' : ''}
-          `}
-        />
-        <span className="relative z-10 font-medium">
-          {isDisliked ? "Не нравится" : "Не нравится"}
-        </span>
-
-        {/* Эффект волны при клике */}
-        {showRipple && (
-          <div className="absolute inset-0 bg-destructive/30 rounded animate-ripple" />
-        )}
-
-        {/* Эффект для активного состояния */}
-        {isDisliked && (
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50" />
-        )}
-      </Button>
+      {disabled ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {buttonContent}
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Войдите в систему, чтобы оценивать рецепты</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        buttonContent
+      )}
 
       <ParticleEffect
         isActive={showParticles}

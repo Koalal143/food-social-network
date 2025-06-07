@@ -40,10 +40,6 @@ export default function LoginForm() {
         setIsLoading(true);
         try {
           await login(data.identifier, data.password);
-          toast({
-            title: "Успешный вход",
-            description: "Добро пожаловать!",
-          });
           router.push("/");
         } catch (error) {
           const { message, type } = handleApiError(error);
