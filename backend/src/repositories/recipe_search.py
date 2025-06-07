@@ -22,9 +22,6 @@ class RecipeSearchRepository(RecipeSearchRepositoryProtocol):
         filter_queries = []
         must_queries.append(Q("term", is_published=True))
         if params.query:
-            # Debug text analysis
-            await self._debug_text_analysis(params.query)
-
             text_query = Q("multi_match", query=params.query, fields=["title", "short_description"])
             must_queries.append(text_query)
             logger.info(
