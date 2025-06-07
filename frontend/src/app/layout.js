@@ -20,9 +20,9 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="ru">
-            <head style={{fontFamily: montserrat}}/>
-            <body className="min-h-screen bg-gradient-to-b from-background to-chart-4/10">
+        <html lang="ru" className={montserrat.variable}>
+            <head />
+            <body className="min-h-screen bg-gradient-to-b from-background to-chart-4/10 font-main">
                 <MainProvider>
                     <Header />
                     <div className="flex flex-1">
