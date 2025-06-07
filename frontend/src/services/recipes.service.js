@@ -25,7 +25,8 @@ export default class RecipesService {
             }
 
             const response = await fetch(url.toString(), {
-                headers: headers
+                headers: headers,
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -77,7 +78,8 @@ export default class RecipesService {
             }
 
             const response = await fetch(url, {
-                headers: headers
+                headers: headers,
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -121,7 +123,8 @@ export default class RecipesService {
             const response = await fetch(`${BASE_API}/v1/recipes`, {
                 method: 'POST',
                 headers: headers,
-                body: JSON.stringify(recipe)
+                body: JSON.stringify(recipe),
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -168,7 +171,8 @@ export default class RecipesService {
 
             const response = await fetch(`${BASE_API}/v1/recipes/${recipeId}/image/upload-url`, {
                 method: 'POST',
-                headers: headers
+                headers: headers,
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -224,7 +228,8 @@ export default class RecipesService {
             const response = await fetch(`${BASE_API}/v1/recipes/${recipeId}/instructions/upload-urls`, {
                 method: 'POST',
                 headers: headers,
-                body: JSON.stringify(steps)
+                body: JSON.stringify(steps),
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -277,7 +282,8 @@ export default class RecipesService {
             const response = await fetch(`${BASE_API}/v1/recipes/${recipeData.id}`, {
                 method: 'PATCH',
                 headers: headers,
-                body: JSON.stringify(recipeData)
+                body: JSON.stringify(recipeData),
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -318,7 +324,9 @@ export default class RecipesService {
             url.searchParams.append('offset', offset.toString());
             url.searchParams.append('limit', limit.toString());
 
-            const response = await fetch(url.toString());
+            const response = await fetch(url.toString(), {
+                credentials: 'include'
+            });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -363,7 +371,8 @@ export default class RecipesService {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
-                }
+                },
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -409,7 +418,8 @@ export default class RecipesService {
 
             const response = await fetch(`${BASE_API}/v1/recipes/${recipeId}`, {
                 method: 'DELETE',
-                headers: headers
+                headers: headers,
+                credentials: 'include'
             });
 
             if (!response.ok) {

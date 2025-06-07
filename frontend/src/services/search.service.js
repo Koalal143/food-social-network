@@ -21,7 +21,9 @@ export default class SearchService {
                 }
             }
 
-            const response = await fetch(url.toString());
+            const response = await fetch(url.toString(), {
+                credentials: 'include'
+            });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));

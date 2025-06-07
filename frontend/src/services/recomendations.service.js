@@ -18,7 +18,8 @@ export default class RecomendationsService {
             };
 
             const response = await fetch(`${BASE_API}/v1/recommendations?limit=${limit}`, {
-                headers: headers
+                headers: headers,
+                credentials: 'include'
             });
             
             if (!response.ok) {
