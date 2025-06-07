@@ -1,14 +1,14 @@
 import { BASE_API } from "@/constants/backend-urls"
 import { tokenManager } from "@/utils/tokenManager"
 import AuthService from "./auth.service";
+import { CookieManager } from "@/utils/cookies";
 
 const LOCALSTORAGE_KEY = "cookie_consent_accepted";
 
 export default class SearchHistoryService {
-    // Проверка согласия на куки
+    // Проверка согласия на куки с синхронизацией
     static hasConsentForCookies() {
-        const consent = localStorage.getItem(LOCALSTORAGE_KEY);
-        return consent === '1';
+        return CookieManager.hasConsentForCookies();
     }
     static async getLastFiveSearches() {
         // Проверяем согласие на куки перед запросом

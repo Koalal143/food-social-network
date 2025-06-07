@@ -7,19 +7,51 @@ import { CookieManager } from '@/utils/cookies';
 
 export default class AuthService {
     static getAccessToken() {
-        return localStorage.getItem('access_token');
+        // Теперь используем cookies как основной источник
+        let token = CookieManager.getAccessToken();
+
+        // Если токена нет в cookies, пытаемся найти в localStorage (для миграции)
+        // Проверяем наличие localStorage для SSR безопасности
+        if (!token && typeof localStorage !== 'undefined') {
+            token = localStorage.getItem('access_token');
+            // Если нашли в localStorage, мигрируем в cookies
+            if (token) {
+                const refreshToken = localStorage.getItem('refresh_token');
+                if (refreshToken) {
+                    this.setTokens(token, refreshToken);
+                }
+            }
+        }
+
+        return token;
     }
 
     static getRefreshToken() {
-        return localStorage.getItem('refresh_token');
+        // Теперь используем cookies как основной источник
+        let token = CookieManager.getRefreshToken();
+
+        // Если токена нет в cookies, пытаемся найти в localStorage (для миграции)
+        // Проверяем наличие localStorage для SSR безопасности
+        if (!token && typeof localStorage !== 'undefined') {
+            token = localStorage.getItem('refresh_token');
+            // Если нашли в localStorage, мигрируем в cookies
+            if (token) {
+                const accessToken = localStorage.getItem('access_token');
+                if (accessToken) {
+                    this.setTokens(accessToken, token);
+                }
+            }
+        }
+
+        return token;
     }
 
     static setTokens(accessToken, refreshToken) {
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', refreshToken);
-
-        // Также сохраняем токены в cookies для работы middleware
+        // Теперь cookies - основное хранилище
         CookieManager.setAuthTokens(accessToken, refreshToken);
+
+        // Очищаем старые токены из localStorage
+        CookieManager.clearAuthTokensFromLocalStorage();
     }
 
     static async makeAuthenticatedRequest(url, options = {}) {
@@ -239,12 +271,11 @@ export default class AuthService {
     }
 
     static logout() {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('cookie_consent_accepted');
+        // Очищаем токены аутентификации из localStorage (если остались)
+        CookieManager.clearAuthTokensFromLocalStorage();
 
-        // Также удаляем токены из cookies
-        CookieManager.clearAuthTokens();
+        // Полная очистка всех cookies (согласно требованиям)
+        CookieManager.clearAllCookies();
     }
 
     static async getPaginatedRecipes(offset = 0, limit = 10) {

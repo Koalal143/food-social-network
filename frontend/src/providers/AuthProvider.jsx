@@ -6,6 +6,7 @@ import AuthService from '@/services/auth.service'
 import UsersService from '@/services/users.service'
 import { ERROR_MESSAGES } from '@/constants/errors'
 import { NetworkError, AuthError, ValidationError } from '@/utils/errors'
+import { CookieManager } from '@/utils/cookies'
 
 export default function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
@@ -42,6 +43,9 @@ export default function AuthProvider({ children }) {
         const initializeAuth = async () => {
             try {
                 setLoading(true)
+
+                // Выполняем миграцию токенов из localStorage в cookies при инициализации
+                CookieManager.migrateTokensFromLocalStorage()
 
                 const userData = await AuthService.getCurrentUser()
                 setUser(userData)
