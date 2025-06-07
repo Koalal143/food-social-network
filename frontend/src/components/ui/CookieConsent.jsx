@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ConsentService from "@/services/consent.service";
@@ -65,7 +66,12 @@ export default function CookieConsent() {
                 <CardTitle className="text-center text-base font-semibold mb-1">Cookies</CardTitle>
             </div>
             <CardContent className="p-0 text-center text-xs text-muted-foreground mb-2 w-full">
-                Сайт применяет cookie для анализа посещений. Подтвердите согласие на их использование.
+                <p className="mb-2">
+                    Сайт применяет cookie для анализа посещений. Подтвердите согласие на их использование.
+                </p>
+                <Link href="/cookies" className="text-blue-600 hover:text-blue-800 underline">
+                    Управление куки-файлами
+                </Link>
             </CardContent>
             <CardFooter className="flex gap-2 justify-center p-0 w-full">
                 <Button

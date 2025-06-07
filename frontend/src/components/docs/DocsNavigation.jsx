@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { FileText, Settings, Shield } from "lucide-react";
+import { FileText, Settings, Shield, Cookie } from "lucide-react";
 
 /**
  * Компонент навигации по документам
@@ -21,10 +21,16 @@ const DocsNavigation = () => {
             description: "Обработка персональных данных и cookie"
         },
         {
-            href: "/docs/recommendations-policy", 
+            href: "/docs/recommendations-policy",
             label: "Политика рекомендательных систем",
             icon: Settings,
             description: "Принципы работы алгоритмов рекомендаций"
+        },
+        {
+            href: "/docs/cookies",
+            label: "Управление куки-файлами",
+            icon: Cookie,
+            description: "Настройки и удаление cookie"
         }
     ];
 

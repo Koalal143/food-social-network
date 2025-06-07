@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useRouter } from 'next/navigation'
-import { LogOut, User, PlusCircle, Search, Menu, X, Shield } from 'lucide-react'
+import { LogOut, User, PlusCircle, Search, Menu, X, Shield, Cookie } from 'lucide-react'
 import Container from './Container'
 import SearchInput from '../ui/search/SearchInput'
 import { useState } from 'react'
@@ -119,6 +119,12 @@ export default function Header() {
                                                 </DropdownMenuItem>
                                             )}
 
+                                            <DropdownMenuItem asChild>
+                                                <Link href="/docs/cookies" className="flex items-center">
+                                                    <Cookie className="mr-2 h-4 w-4" />
+                                                    Управление куки
+                                                </Link>
+                                            </DropdownMenuItem>
 
                                             <DropdownMenuItem
                                                 className="text-red-600 focus:text-red-600"
