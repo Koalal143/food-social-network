@@ -182,18 +182,18 @@
 ### Recsys Microservice (NATS RPC)
 
 #### Рекомендации
-- `recsys.get_recommendations` - получение персонализированных рекомендаций
+- `recsys_rpc.get_recommendations` - получение персонализированных рекомендаций
 
 #### Управление рецептами
-- `tasks.add_recipe` - добавление рецепта в систему рекомендаций
-- `tasks.update_recipe` - обновление данных рецепта
-- `tasks.delete_recipe` - удаление рецепта
-- `tasks.publish_recipe` - публикация рецепта
+- `recsys_events.add_recipe` - добавление рецепта в систему рекомендаций
+- `recsys_events.update_recipe` - обновление данных рецепта
+- `recsys_events.delete_recipe` - удаление рецепта
+- `recsys_events.publish_recipe` - публикация рецепта
 
 #### Обратная связь
-- `tasks.add_feedback` - добавление лайка/дизлайка
-- `tasks.add_impression` - отметка просмотра рецепта
-- `tasks.add_impressions_bulk` - массовое добавление просмотров
+- `recsys_events.add_feedback` - добавление лайка/дизлайка
+- `recsys_events.add_impression` - отметка просмотра рецепта
+- `recsys_events.add_impressions_bulk` - массовое добавление просмотров
 
 
 ---
