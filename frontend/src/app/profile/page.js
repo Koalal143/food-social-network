@@ -135,10 +135,14 @@ export default function ProfilePage() {
                 setUserRecipes(prev => {
                     const existingIds = new Set(prev.map(r => r.id))
                     const uniqueNewRecipes = newRecipes.filter(r => !existingIds.has(r.id))
-                    return [...prev, ...uniqueNewRecipes]
+                    const newRecipesList = [...prev, ...uniqueNewRecipes]
+
+                    // Обновляем hasMore на основе нового количества рецептов
+                    setRecipesHasMore(newRecipesList.length < (result.totalCount || 0) && newRecipes.length > 0)
+
+                    return newRecipesList
                 })
                 setOffset(prev => prev + newRecipes.length)
-                setRecipesHasMore(userRecipes.length + newRecipes.length < (result.totalCount || 0))
             } catch (error) {
                 const { message } = handleApiError(error)
                 setError(message)

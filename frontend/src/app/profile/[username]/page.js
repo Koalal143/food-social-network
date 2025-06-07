@@ -82,13 +82,15 @@ export default function ProfileIdPage({ params }) {
                 setRecipes(prev => {
                     const existingIds = new Set(prev.map(r => r.id));
                     const uniqueNewRecipes = newRecipes.filter(r => !existingIds.has(r.id));
-                    
-                    return [...prev, ...uniqueNewRecipes];
+                    const newRecipesList = [...prev, ...uniqueNewRecipes];
+
+                    // Обновляем hasMore на основе нового количества рецептов
+                    setHasMore(newRecipesList.length < (result.totalCount || 0) && newRecipes.length > 0);
+
+                    return newRecipesList;
                 });
-                
+
                 setOffset(prev => prev + newRecipes.length);
-                
-                setHasMore(recipes.length + newRecipes.length < (result.totalCount || 0));
                 
             } catch (err) {
                 console.error("Error loading more recipes:", err);
