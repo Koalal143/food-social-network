@@ -1,14 +1,16 @@
 import Container from "@/components/layout/Container";
+import DocsNavigation from "@/components/docs/DocsNavigation";
 
 export default function PolicyPage() {
   return (
     <Container className="py-10 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+      <DocsNavigation />
       <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 text-center">
           Политика в отношении обработки персональных данных
         </h1>
         
-        <div className="prose prose-sm sm:prose max-w-none text-gray-700">
+        <div className="prose prose-sm sm:prose lg:prose-lg max-w-none text-gray-700">
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">1. Общие положения</h2>
             <p className="mb-4">
@@ -43,14 +45,14 @@ export default function PolicyPage() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">3. Основные права и обязанности Оператора</h2>
             <h3 className="font-medium mb-2 text-gray-800">3.1. Оператор имеет право:</h3>
-            <ul className="list-disc pl-6 space-y-2 mb-4">
+            <ul className="list-disc pl-4 sm:pl-6 space-y-2 mb-4">
               <li>получать от субъекта персональных данных достоверные информацию и/или документы, содержащие персональные данные;</li>
               <li>в случае отзыва субъектом персональных данных согласия на обработку персональных данных, а также, направления обращения с требованием о прекращении обработки персональных данных, Оператор вправе продолжить обработку персональных данных без согласия субъекта персональных данных при наличии оснований, указанных в Законе о персональных данных;</li>
               <li>самостоятельно определять состав и перечень мер, необходимых и достаточных для обеспечения выполнения обязанностей, предусмотренных Законом о персональных данных и принятыми в соответствии с ним нормативными правовыми актами, если иное не предусмотрено Законом о персональных данных или другими федеральными законами.</li>
             </ul>
             
             <h3 className="font-medium mb-2 text-gray-800">3.2. Оператор обязан:</h3>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc pl-4 sm:pl-6 space-y-2">
               <li>предоставлять субъекту персональных данных по его просьбе информацию, касающуюся обработки его персональных данных;</li>
               <li>организовывать обработку персональных данных в порядке, установленном действующим законодательством РФ;</li>
               <li>отвечать на обращения и запросы субъектов персональных данных и их законных представителей в соответствии с требованиями Закона о персональных данных;</li>
@@ -65,7 +67,7 @@ export default function PolicyPage() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">4. Основные права и обязанности субъектов персональных данных</h2>
             <h3 className="font-medium mb-2 text-gray-800">4.1. Субъекты персональных данных имеют право:</h3>
-            <ul className="list-disc pl-6 space-y-2 mb-4">
+            <ul className="list-disc pl-4 sm:pl-6 space-y-2 mb-4">
               <li>получать информацию, касающуюся обработки его персональных данных, за исключением случаев, предусмотренных федеральными законами;</li>
               <li>требовать от оператора уточнения его персональных данных, их блокирования или уничтожения в случае, если персональные данные являются неполными, устаревшими, неточными, незаконно полученными или не являются необходимыми для заявленной цели обработки;</li>
               <li>выдвигать условие предварительного согласия при обработке персональных данных в целях продвижения на рынке товаров, работ и услуг;</li>
@@ -73,9 +75,9 @@ export default function PolicyPage() {
               <li>обжаловать в уполномоченный орган по защите прав субъектов персональных данных или в судебном порядке неправомерные действия или бездействие Оператора при обработке его персональных данных;</li>
               <li>на осуществление иных прав, предусмотренных законодательством РФ.</li>
             </ul>
-            
+
             <h3 className="font-medium mb-2 text-gray-800">4.2. Субъекты персональных данных обязаны:</h3>
-            <ul className="list-disc pl-6 space-y-2 mb-4">
+            <ul className="list-disc pl-4 sm:pl-6 space-y-2 mb-4">
               <li>предоставлять Оператору достоверные данные о себе;</li>
               <li>сообщать Оператору об уточнении (обновлении, изменении) своих персональных данных.</li>
             </ul>
@@ -85,7 +87,7 @@ export default function PolicyPage() {
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">5. Принципы обработки персональных данных</h2>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc pl-4 sm:pl-6 space-y-2">
               <li>Обработка персональных данных осуществляется на законной и справедливой основе.</li>
               <li>Обработка персональных данных ограничивается достижением конкретных, заранее определенных и законных целей.</li>
               <li>Не допускается обработка персональных данных, несовместимая с целями сбора персональных данных.</li>
@@ -100,29 +102,29 @@ export default function PolicyPage() {
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">6. Цели обработки персональных данных</h2>
             <div className="overflow-x-auto">
-              <table className="min-w-full border border-gray-200">
+              <table className="min-w-full border border-gray-300 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 border-b">Цель обработки</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 border-b">Персональные данные</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 border-b">Правовые основания</th>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 border-b">Виды обработки</th>
+                    <th className="px-2 sm:px-4 py-2 text-left font-semibold text-gray-700 border-b">Цель обработки</th>
+                    <th className="px-2 sm:px-4 py-2 text-left font-semibold text-gray-700 border-b">Персональные данные</th>
+                    <th className="px-2 sm:px-4 py-2 text-left font-semibold text-gray-700 border-b">Правовые основания</th>
+                    <th className="px-2 sm:px-4 py-2 text-left font-semibold text-gray-700 border-b">Виды обработки</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="px-4 py-2 border-b">предоставление доступа Пользователю к сервисам, информации и/или материалам, содержащимся на веб-сайте</td>
-                    <td className="px-4 py-2 border-b">
-                      <ul className="list-disc pl-4">
+                    <td className="px-2 sm:px-4 py-2 border-b">предоставление доступа Пользователю к сервисам, информации и/или материалам, содержащимся на веб-сайте</td>
+                    <td className="px-2 sm:px-4 py-2 border-b">
+                      <ul className="list-disc pl-4 space-y-1">
                         <li>электронный адрес</li>
                         <li>фотографии</li>
                         <li>имя</li>
                         <li>интересы в рецептах</li>
                       </ul>
                     </td>
-                    <td className="px-4 py-2 border-b">Федеральный закон «Об информации, информационных технологиях и о защите информации» от 27.07.2006 N 149-ФЗ</td>
-                    <td className="px-4 py-2 border-b">
-                      <ul className="list-disc pl-4">
+                    <td className="px-2 sm:px-4 py-2 border-b">Федеральный закон «Об информации, информационных технологиях и о защите информации» от 27.07.2006 N 149-ФЗ</td>
+                    <td className="px-2 sm:px-4 py-2 border-b">
+                      <ul className="list-disc pl-4 space-y-1">
                         <li>Сбор, запись, систематизация, накопление, хранение, уничтожение и обезличивание персональных данных</li>
                         <li>Отправка информационных писем на адрес электронной почты</li>
                       </ul>
@@ -135,7 +137,7 @@ export default function PolicyPage() {
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">7. Условия обработки персональных данных</h2>
-            <ul className="list-decimal pl-6 space-y-2">
+            <ul className="list-decimal pl-4 sm:pl-6 space-y-2">
               <li>Обработка персональных данных осуществляется с согласия субъекта персональных данных на обработку его персональных данных.</li>
               <li>Обработка персональных данных необходима для достижения целей, предусмотренных международным договором Российской Федерации или законом.</li>
               <li>Обработка персональных данных необходима для осуществления правосудия, исполнения судебного акта, акта другого органа или должностного лица.</li>
@@ -179,16 +181,91 @@ export default function PolicyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">11. Конфиденциальность персональных данных</h2>
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">11. Использование файлов cookie и аналогичных технологий</h2>
+            <div className="space-y-4">
+              <p><strong>11.1.</strong> Веб-сайт использует файлы cookie и аналогичные технологии для улучшения пользовательского опыта и обеспечения функциональности сервиса.</p>
+
+              <p><strong>11.2.</strong> <u>Cookie</u> — это небольшие текстовые файлы, которые сохраняются на устройстве пользователя при посещении веб-сайта.</p>
+
+              <p><strong>11.3.</strong> Мы используем следующие типы cookie:</p>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-2">
+                <li><strong>Необходимые cookie</strong> — обеспечивают базовую функциональность сайта, включая аутентификацию пользователей и безопасность сессий. Эти cookie не могут быть отключены.</li>
+                <li><strong>Функциональные cookie</strong> — запоминают ваши предпочтения и настройки для улучшения пользовательского опыта.</li>
+                <li><strong>Аналитические cookie</strong> — помогают нам понимать, как пользователи взаимодействуют с сайтом, для улучшения его работы. Используются только с вашего согласия.</li>
+                <li><strong>Cookie рекомендательной системы</strong> — сохраняют информацию о ваших предпочтениях в рецептах для персонализации рекомендаций.</li>
+              </ul>
+
+              <p><strong>11.4.</strong> Конкретные cookie, используемые на сайте:</p>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border border-gray-300 text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-2 sm:px-4 py-2 border-b font-semibold text-left">Название</th>
+                      <th className="px-2 sm:px-4 py-2 border-b font-semibold text-left">Тип</th>
+                      <th className="px-2 sm:px-4 py-2 border-b font-semibold text-left">Назначение</th>
+                      <th className="px-2 sm:px-4 py-2 border-b font-semibold text-left">Срок хранения</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="px-2 sm:px-4 py-2 border-b font-mono text-xs sm:text-sm">access_token</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">Необходимые</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">Аутентификация пользователя</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">30 минут</td>
+                    </tr>
+                    <tr>
+                      <td className="px-2 sm:px-4 py-2 border-b font-mono text-xs sm:text-sm">refresh_token</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">Необходимые</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">Обновление токена доступа</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">7 дней</td>
+                    </tr>
+                    <tr>
+                      <td className="px-2 sm:px-4 py-2 border-b font-mono text-xs sm:text-sm">anonymous_user_id</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">Функциональные</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">Идентификация анонимных пользователей для рекомендаций</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">1 год</td>
+                    </tr>
+                    <tr>
+                      <td className="px-2 sm:px-4 py-2 border-b font-mono text-xs sm:text-sm">user_preferences</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">Функциональные</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">Сохранение пользовательских настроек</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">1 год</td>
+                    </tr>
+                    <tr>
+                      <td className="px-2 sm:px-4 py-2 border-b font-mono text-xs sm:text-sm">analytics_consent</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">Аналитические</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">Согласие на использование аналитики</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">1 год</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <p><strong>11.5.</strong> Управление cookie:</p>
+              <ul className="list-disc pl-4 sm:pl-6 space-y-2">
+                <li>Вы можете управлять настройками cookie через специальное окно согласия на сайте.</li>
+                <li>Большинство браузеров позволяют управлять cookie через настройки браузера.</li>
+                <li>Отключение необходимых cookie может привести к ограничению функциональности сайта.</li>
+                <li>Вы можете в любое время изменить свои предпочтения относительно аналитических cookie.</li>
+              </ul>
+
+              <p><strong>11.6.</strong> Сторонние cookie:</p>
+              <p>Мы не используем сторонние cookie для рекламы или отслеживания. Все cookie устанавливаются непосредственно нашим сайтом.</p>
+            </div>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">12. Конфиденциальность персональных данных</h2>
             <p>Оператор и иные лица, получившие доступ к персональным данным, обязаны не раскрывать третьим лицам и не распространять персональные данные без согласия субъекта персональных данных, если иное не предусмотрено федеральным законом.</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">12. Заключительные положения</h2>
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">13. Заключительные положения</h2>
             <div className="space-y-3">
-              <p><strong>12.1.</strong> Пользователь может получить любые разъяснения по интересующим вопросам, касающимся обработки его персональных данных, обратившись к Оператору с помощью электронной почты <a href="mailto:onton5447@gmail.com" className="text-blue-600 hover:underline">onton5447@gmail.com</a>.</p>
-              <p><strong>12.2.</strong> В данном документе будут отражены любые изменения политики обработки персональных данных Оператором. Политика действует бессрочно до замены ее новой версией.</p>
-              <p><strong>12.3.</strong> Актуальная версия Политики в свободном доступе расположена в сети Интернет по адресу <a href="https://vkuswipe.ru/docs/policy" className="text-blue-600 hover:underline">https://vkuswipe.ru/docs/policy</a>.</p>
+              <p><strong>13.1.</strong> Пользователь может получить любые разъяснения по интересующим вопросам, касающимся обработки его персональных данных, обратившись к Оператору с помощью электронной почты <a href="mailto:onton5447@gmail.com" className="text-blue-600 hover:underline">onton5447@gmail.com</a>.</p>
+              <p><strong>13.2.</strong> В данном документе будут отражены любые изменения политики обработки персональных данных Оператором. Политика действует бессрочно до замены ее новой версией.</p>
+              <p><strong>13.3.</strong> Актуальная версия Политики в свободном доступе расположена в сети Интернет по адресу <a href="https://vkuswipe.ru/docs/policy" className="text-blue-600 hover:underline">https://vkuswipe.ru/docs/policy</a>.</p>
+              <p><strong>13.4.</strong> Дополнительную информацию о работе рекомендательных систем можно найти в <a href="/docs/recommendations-policy" className="text-blue-600 hover:underline">Политике рекомендательных систем</a>.</p>
             </div>
           </section>
         </div>
