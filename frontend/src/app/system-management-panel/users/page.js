@@ -11,12 +11,14 @@ import { useToast } from '@/hooks/use-toast'
 import { handleApiError } from '@/utils/errorHandler'
 import {
     Search,
-    ChefHat,
-    Eye,
-    Trash2,
+    Users,
     ArrowLeft,
     MoreHorizontal,
-    User
+    UserCheck,
+    UserX,
+    Shield,
+    Mail,
+    Calendar
 } from 'lucide-react'
 import Link from 'next/link'
 import Loader from '@/components/ui/Loader'
@@ -38,34 +40,42 @@ import {
 } from "@/components/ui/alert-dialog"
 import AdminService from '@/services/admin.service'
 
-export default function AdminRecipesPage() {
+export default function AdminUsersPage() {
     const { toast } = useToast()
-    const [recipes, setRecipes] = useState([])
+    const [users, setUsers] = useState([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [totalCount, setTotalCount] = useState(0)
     const [currentPage, setCurrentPage] = useState(0)
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-    const [recipeToDelete, setRecipeToDelete] = useState(null)
-    const [deleting, setDeleting] = useState(false)
+    const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+    const [userToToggle, setUserToToggle] = useState(null)
+    const [toggling, setToggling] = useState(false)
 
     const ITEMS_PER_PAGE = 20
 
-    const fetchRecipes = useCallback(async (page = 0, search = '') => {
+    const fetchUsers = useCallback(async (page = 0, search = '') => {
         try {
             setLoading(true)
             const offset = page * ITEMS_PER_PAGE
 
-            // Используем AdminService который работает с существующими endpoints
-            const response = await AdminService.getAllRecipes(offset, ITEMS_PER_PAGE, search)
+            const response = await AdminService.getAllUsers(offset, ITEMS_PER_PAGE, search)
 
-            setRecipes(response.data || [])
+            if (response.message) {
+                // Показываем сообщение о том, что нужен специальный endpoint
+                toast({
+                    variant: "default",
+                    title: "Информация",
+                    description: response.message,
+                })
+            }
+
+            setUsers(response.data || [])
             setTotalCount(response.totalCount || 0)
         } catch (error) {
             const { message, type } = handleApiError(error)
             toast({
                 variant: type,
-                title: "Ошибка загрузки рецептов",
+                title: "Ошибка загрузки пользователей",
                 description: message,
             })
         } finally {
@@ -74,47 +84,59 @@ export default function AdminRecipesPage() {
     }, [toast])
 
     useEffect(() => {
-        fetchRecipes(currentPage, searchQuery)
-    }, [fetchRecipes, currentPage, searchQuery])
+        fetchUsers(currentPage, searchQuery)
+    }, [fetchUsers, currentPage, searchQuery])
 
     const handleSearch = (e) => {
         e.preventDefault()
         setCurrentPage(0)
-        fetchRecipes(0, searchQuery)
+        fetchUsers(0, searchQuery)
     }
 
-    const handleDeleteClick = (recipe) => {
-        setRecipeToDelete(recipe)
-        setDeleteDialogOpen(true)
+    const handleToggleStatus = (user) => {
+        setUserToToggle(user)
+        setStatusDialogOpen(true)
     }
 
-    const handleDeleteConfirm = async () => {
-        if (!recipeToDelete) return
+    const handleToggleConfirm = async () => {
+        if (!userToToggle) return
 
         try {
-            setDeleting(true)
-            // Используем AdminService который работает с существующим endpoint
-            await AdminService.deleteRecipe(recipeToDelete.id)
+            setToggling(true)
 
+            await AdminService.toggleUserStatus(userToToggle.id, !userToToggle.is_active)
+
+            const action = userToToggle.is_active ? "заблокирован" : "разблокирован"
             toast({
-                title: "Рецепт удален",
-                description: `Рецепт "${recipeToDelete.title}" был успешно удален.`,
+                title: "Статус изменен",
+                description: `Пользователь ${userToToggle.username} был ${action}.`,
             })
 
-            // Обновляем список рецептов
-            await fetchRecipes(currentPage, searchQuery)
+            // Обновляем список пользователей
+            await fetchUsers(currentPage, searchQuery)
         } catch (error) {
             const { message, type } = handleApiError(error)
             toast({
                 variant: type,
-                title: "Ошибка удаления",
+                title: "Ошибка изменения статуса",
                 description: message,
             })
         } finally {
-            setDeleting(false)
-            setDeleteDialogOpen(false)
-            setRecipeToDelete(null)
+            setToggling(false)
+            setStatusDialogOpen(false)
+            setUserToToggle(null)
         }
+    }
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Никогда'
+        return new Date(dateString).toLocaleDateString('ru-RU', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })
     }
 
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
@@ -126,7 +148,7 @@ export default function AdminRecipesPage() {
                     {/* Заголовок и навигация */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <Link href="/admin">
+                            <Link href="/system-management-panel">
                                 <Button variant="ghost" size="sm">
                                     <ArrowLeft className="w-4 h-4 mr-2" />
                                     Назад к панели
@@ -134,28 +156,28 @@ export default function AdminRecipesPage() {
                             </Link>
                             <div>
                                 <h1 className="text-3xl font-bold tracking-tight">
-                                    Управление рецептами
+                                    Управление пользователями
                                 </h1>
                                 <p className="text-muted-foreground">
-                                    Всего рецептов: {totalCount}
+                                    Всего пользователей: {totalCount}
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Поиск и фильтры */}
+                    {/* Поиск */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Search className="w-5 h-5" />
-                                Поиск и фильтры
+                                Поиск пользователей
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSearch} className="flex gap-4">
                                 <div className="flex-1">
                                     <Input
-                                        placeholder="Поиск по названию рецепта..."
+                                        placeholder="Поиск по имени пользователя или email..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
@@ -168,12 +190,12 @@ export default function AdminRecipesPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Список рецептов */}
+                    {/* Список пользователей */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <ChefHat className="w-5 h-5" />
-                                Рецепты
+                                <Users className="w-5 h-5" />
+                                Пользователи
                             </CardTitle>
                             <CardDescription>
                                 Страница {currentPage + 1} из {totalPages || 1}
@@ -184,73 +206,91 @@ export default function AdminRecipesPage() {
                                 <div className="flex justify-center py-8">
                                     <Loader />
                                 </div>
-                            ) : recipes.length === 0 ? (
+                            ) : users.length === 0 ? (
                                 <div className="text-center py-8 text-muted-foreground">
-                                    <ChefHat className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                                    <p>Рецепты не найдены</p>
+                                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                    <p>Пользователи не найдены</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    {recipes.map((recipe) => (
+                                    {users.map((user) => (
                                         <div
-                                            key={recipe.id}
+                                            key={user.id}
                                             className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                                         >
                                             <div className="flex items-center gap-4 flex-1">
-                                                <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
-                                                    {recipe.image_url ? (
+                                                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center overflow-hidden">
+                                                    {user.profile?.avatar_url ? (
                                                         <img
-                                                            src={recipe.image_url}
-                                                            alt={recipe.title}
+                                                            src={user.profile.avatar_url}
+                                                            alt={user.username}
                                                             className="w-full h-full object-cover"
                                                         />
                                                     ) : (
-                                                        <ChefHat className="w-6 h-6 text-muted-foreground" />
+                                                        <Users className="w-6 h-6 text-muted-foreground" />
                                                     )}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <h3 className="font-semibold">{recipe.title}</h3>
-                                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                        <User className="w-4 h-4" />
-                                                        {recipe.author?.username || 'Неизвестный автор'}
-                                                        <span>•</span>
-                                                        <span>ID: {recipe.id}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <Badge variant={recipe.is_published ? "default" : "secondary"}>
-                                                            {recipe.is_published ? "Опубликован" : "Черновик"}
-                                                        </Badge>
-                                                        {recipe.cooking_time && (
-                                                            <Badge variant="outline">
-                                                                {recipe.cooking_time} мин
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="font-semibold">{user.username}</h3>
+                                                        {user.is_superuser && (
+                                                            <Badge variant="destructive" className="text-xs">
+                                                                <Shield className="w-3 h-3 mr-1" />
+                                                                Админ
                                                             </Badge>
                                                         )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                        <Mail className="w-4 h-4" />
+                                                        {user.email}
+                                                        <span>•</span>
+                                                        <span>ID: {user.id}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                                                        <div className="flex items-center gap-1">
+                                                            <Calendar className="w-4 h-4" />
+                                                            Последний вход: {formatDate(user.last_login)}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                        <Badge variant={user.is_active ? "default" : "secondary"}>
+                                                            {user.is_active ? "Активен" : "Заблокирован"}
+                                                        </Badge>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Link href={`/recipe/${recipe.slug}`}>
+                                                <Link href={`/profile/${user.username}`}>
                                                     <Button variant="outline" size="sm">
-                                                        <Eye className="w-4 h-4 mr-2" />
-                                                        Просмотр
+                                                        Профиль
                                                     </Button>
                                                 </Link>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="sm">
-                                                            <MoreHorizontal className="w-4 h-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem
-                                                            onClick={() => handleDeleteClick(recipe)}
-                                                            className="text-destructive"
-                                                        >
-                                                            <Trash2 className="w-4 h-4 mr-2" />
-                                                            Удалить
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                {!user.is_superuser && (
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="sm">
+                                                                <MoreHorizontal className="w-4 h-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleToggleStatus(user)}
+                                                            >
+                                                                {user.is_active ? (
+                                                                    <>
+                                                                        <UserX className="w-4 h-4 mr-2" />
+                                                                        Заблокировать
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <UserCheck className="w-4 h-4 mr-2" />
+                                                                        Разблокировать
+                                                                    </>
+                                                                )}
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -284,24 +324,25 @@ export default function AdminRecipesPage() {
                 </div>
             </Container>
 
-            {/* Диалог подтверждения удаления */}
-            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            {/* Диалог подтверждения изменения статуса */}
+            <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Удалить рецепт?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            {userToToggle?.is_active ? "Заблокировать" : "Разблокировать"} пользователя?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                            Вы уверены, что хотите удалить рецепт "{recipeToDelete?.title}"?
-                            Это действие нельзя отменить.
+                            Вы уверены, что хотите {userToToggle?.is_active ? "заблокировать" : "разблокировать"}
+                            пользователя "{userToToggle?.username}"?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Отмена</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={handleDeleteConfirm}
-                            disabled={deleting}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={handleToggleConfirm}
+                            disabled={toggling}
                         >
-                            {deleting ? "Удаление..." : "Удалить"}
+                            {toggling ? "Изменение..." : "Подтвердить"}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

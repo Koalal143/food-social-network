@@ -72,7 +72,7 @@ export default function AdminTestPage() {
                 <div className="py-8 space-y-6">
                     {/* Заголовок и навигация */}
                     <div className="flex items-center gap-4">
-                        <Link href="/admin">
+                        <Link href="/system-management-panel">
                             <Button variant="ghost" size="sm">
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Назад к панели
