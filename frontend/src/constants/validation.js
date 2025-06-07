@@ -12,11 +12,10 @@ export const BANNED_USERNAMES = [
     "me",
 ];
 
-// Создаем регулярку для проверки запрещенных имен как подстрок
-export const BANNED_USERNAME_REGEX = new RegExp(
-    BANNED_USERNAMES.map(name => `(${name})`).join('|'),
-    'i'
-);
+// Функция для проверки точного совпадения с запрещенными именами
+export const isBannedUsername = (username) => {
+    return BANNED_USERNAMES.includes(username.toLowerCase());
+};
 
 export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 30;

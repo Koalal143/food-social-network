@@ -2,7 +2,7 @@ import { BASE_API } from "../constants/backend-urls";
 import { tokenManager } from "@/utils/tokenManager";
 import { ERROR_MESSAGES } from "@/constants/errors";
 import { ValidationError, NetworkError, AuthError } from "@/utils/errors";
-import { BANNED_USERNAME_REGEX } from '@/constants/validation';
+import { isBannedUsername } from '@/constants/validation';
 import { CookieManager } from '@/utils/cookies';
 
 export default class AuthService {
@@ -81,7 +81,7 @@ export default class AuthService {
 
     static async register(username, email, password) {
         try {
-            if (BANNED_USERNAME_REGEX.test(username.toLowerCase())) {
+            if (isBannedUsername(username)) {
                 throw new ValidationError(ERROR_MESSAGES.username_banned);
             }
 
