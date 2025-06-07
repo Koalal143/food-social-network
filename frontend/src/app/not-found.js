@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Home, Search, ChefHat, ArrowLeft } from 'lucide-react';
+import { Home, Search, ChefHat, ArrowLeft, Cookie } from 'lucide-react';
 
 export default function NotFound() {
   return (
@@ -68,6 +68,12 @@ export default function NotFound() {
               <Button asChild variant="ghost" size="sm" className="hover:scale-105 transition-transform duration-200">
                 <Link href="/recipe/add">
                   Добавить рецепт
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="hover:scale-105 transition-transform duration-200">
+                <Link href="/docs/cookies" className="flex items-center">
+                  <Cookie className="w-3 h-3 mr-1" />
+                  Управление куки
                 </Link>
               </Button>
             </div>
