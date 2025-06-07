@@ -65,26 +65,7 @@ export default function RecipeCard({ recipe, source='feed', editable }) {
                             </div>
                         )}
                         
-                        {/* Time & Difficulty Badge */}
-                        <div className="absolute bottom-0 left-0 right-0 z-10">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 bg-white/95 backdrop-blur-sm rounded-tr-xl px-3 py-1.5 shadow-sm">
-                                    <Clock className="w-3.5 h-3.5 text-gray-600" />
-                                    <span className="text-xs font-medium text-gray-700 whitespace-nowrap">
-                                        {minutesToHuman(recipe.cook_time_minutes)}
-                                    </span>
-                                </div>
-                                
-                                <div className={`px-3 py-1.5 rounded-tl-xl text-xs font-medium whitespace-nowrap ${getDifficultyColor(recipe.difficulty)}`}>
-                                    <div className="flex items-center gap-1">
-                                        <ChefHat className="w-3 h-3" />
-                                        <span>
-                                            {DIFFICULTY[recipe.difficulty]}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
                         
                         {/* Save Button */}
                         <div className="absolute top-3 left-3 z-15">
@@ -113,16 +94,35 @@ export default function RecipeCard({ recipe, source='feed', editable }) {
                             </TooltipProvider>
                         </div>
                     </div>
-                    
+
                     {/* Content */}
-                    <div className="p-4 sm:p-5 flex-1 flex flex-col gap-2.5 overflow-hidden">
+                    <div className="px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 flex-1 flex flex-col gap-2 overflow-hidden">
                         <h3 className="truncate font-semibold text-lg sm:text-xl leading-tight text-gray-900 group-hover:text-primary transition-colors duration-200">
                             {recipe.title}
                         </h3>
-  
+
                         <p className="truncate text-gray-600 text-sm sm:text-base leading-relaxed">
                             {recipe.short_description}
                         </p>
+                    </div>
+
+                    {/* Recipe Info Section - Time & Difficulty */}
+                    <div className="px-4 pb-4 pt-0 sm:px-5 sm:pb-5">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-gray-500" />
+                                <span className="text-xs font-medium text-gray-700">
+                                    {minutesToHuman(recipe.cook_time_minutes)}
+                                </span>
+                            </div>
+
+                            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getDifficultyColor(recipe.difficulty)}`}>
+                                <ChefHat className="w-3.5 h-3.5" />
+                                <span>
+                                    {DIFFICULTY[recipe.difficulty]}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </Link>
