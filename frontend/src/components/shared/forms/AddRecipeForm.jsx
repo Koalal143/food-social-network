@@ -51,6 +51,23 @@ const AddRecipeForm = () => {
         canAddMoreTags,
         maxTagsCount,
     } = useRecipeTags();
+    const { addRecipe } = useRecipes();
+    const router = useRouter();
+    const { toast } = useToast();
+
+    // Хук для управления тегами
+    const {
+        tags,
+        tagInput,
+        tagError,
+        addTag,
+        removeTag,
+        setTagInput,
+        handleTagInputKeyPress,
+        validateAllTags,
+        canAddMoreTags,
+        maxTagsCount,
+    } = useRecipeTags();
 
     // Состояния для превью фотографий
     const [mainPhotoPreview, setMainPhotoPreview] = useState(null);
@@ -58,9 +75,14 @@ const AddRecipeForm = () => {
 
     // Правила валидации
     const validationRules = getRecipeValidationRules();
+    // Правила валидации
+    const validationRules = getRecipeValidationRules();
 
     const { control, handleSubmit, register, setValue, formState: { errors } } = useForm({
         defaultValues: {
+            ingredients: [{ name: '', quantity: '' }],
+            instructions: [{ step_number: 1, description: '', photo: null }],
+            difficulty: '',
             ingredients: [{ name: '', quantity: '' }],
             instructions: [{ step_number: 1, description: '', photo: null }],
             difficulty: '',
@@ -91,6 +113,7 @@ const AddRecipeForm = () => {
     }, [instructionFields, setValue]);
     
     const handleAddInstruction = () => {
+        if (instructionFields.length < RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT) {
         if (instructionFields.length < RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT) {
             const nextStepNumber = instructionFields.length + 1;
             appendInstruction({ step_number: nextStepNumber, description: '', photo: null });
@@ -144,13 +167,22 @@ const AddRecipeForm = () => {
         // Валидация тегов
         if (!validateAllTags()) {
             return;
+        // Валидация тегов
+        if (!validateAllTags()) {
+            return;
         }
+
+        // Валидация ингредиентов
+        const ingredientsValidation = validateIngredients(data.ingredients);
+        if (ingredientsValidation !== true) {
 
         // Валидация ингредиентов
         const ingredientsValidation = validateIngredients(data.ingredients);
         if (ingredientsValidation !== true) {
             toast({
                 variant: 'destructive',
+                title: 'Ошибка валидации',
+                description: ingredientsValidation,
                 title: 'Ошибка валидации',
                 description: ingredientsValidation,
             });
@@ -160,13 +192,20 @@ const AddRecipeForm = () => {
         // Валидация инструкций
         const instructionsValidation = validateInstructions(data.instructions);
         if (instructionsValidation !== true) {
+
+        // Валидация инструкций
+        const instructionsValidation = validateInstructions(data.instructions);
+        if (instructionsValidation !== true) {
             toast({
                 variant: 'destructive',
+                title: 'Ошибка валидации',
+                description: instructionsValidation,
                 title: 'Ошибка валидации',
                 description: instructionsValidation,
             });
             return;
         }
+
 
         try {
             addRecipe({ ...data, tags });
@@ -174,6 +213,7 @@ const AddRecipeForm = () => {
                 title: "Рецепт успешно добавлен",
                 description: "Ваш рецепт был сохранен.",
             });
+            router.push('/');
             router.push('/');
         } catch (error) {
             const { message, type } = handleApiError(error);
@@ -196,8 +236,11 @@ const AddRecipeForm = () => {
                         <Label>Название рецепта</Label>
                         <Input
                             {...register('title', validationRules.title)}
+                            {...register('title', validationRules.title)}
                             type="text"
                             placeholder="Введите название рецепта"
+                            maxLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MAX_LENGTH}
+                            minLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MIN_LENGTH}
                             maxLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MAX_LENGTH}
                             minLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MIN_LENGTH}
                         />
@@ -208,8 +251,11 @@ const AddRecipeForm = () => {
                         <Label>Описание</Label>
                         <Textarea
                             {...register('short_description', validationRules.short_description)}
+                            {...register('short_description', validationRules.short_description)}
                             rows={2}
                             placeholder="Краткое описание рецепта"
+                            minLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MIN_LENGTH}
+                            maxLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MAX_LENGTH}
                             minLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MIN_LENGTH}
                             maxLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MAX_LENGTH}
                         />
@@ -217,8 +263,22 @@ const AddRecipeForm = () => {
                     </div>
 
                     {/* Теги */}
+                    {/* Теги */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
+                            <Label>Теги</Label>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button type="button" className="text-muted-foreground hover:text-primary">
+                                            <Info className="w-4 h-4" />
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Подбирайте теги тщательнее, они влияют на продвижение вашего рецепта</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                             <Label>Теги</Label>
                             <TooltipProvider>
                                 <Tooltip>
@@ -244,10 +304,30 @@ const AddRecipeForm = () => {
                             canAddMoreTags={canAddMoreTags}
                             maxTagsCount={maxTagsCount}
                         />
+                        <RecipeTagsInput
+                            tags={tags}
+                            tagInput={tagInput}
+                            tagError={tagError}
+                            onTagInputChange={setTagInput}
+                            onAddTag={addTag}
+                            onRemoveTag={removeTag}
+                            onTagInputKeyPress={handleTagInputKeyPress}
+                            canAddMoreTags={canAddMoreTags}
+                            maxTagsCount={maxTagsCount}
+                        />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
+                            <Label>Время приготовления (в минутах)</Label>
+                            <Input
+                                {...register('cook_time_minutes', validationRules.cook_time_minutes)}
+                                type="number"
+                                placeholder="Например: 60"
+                                max={RECIPE_VALIDATION_CONSTANTS.COOK_TIME_MAX}
+                                min={1}
+                            />
+                            {errors.cook_time_minutes && <p className="text-destructive text-sm">{errors.cook_time_minutes.message}</p>}
                             <Label>Время приготовления (в минутах)</Label>
                             <Input
                                 {...register('cook_time_minutes', validationRules.cook_time_minutes)}
@@ -360,9 +440,11 @@ const AddRecipeForm = () => {
                         size="sm"
                         onClick={() => {
                             if (ingredientFields.length < RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT) {
+                            if (ingredientFields.length < RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT) {
                             appendIngredient({ name: '', quantity: '' });
                             }
                         }}
+                        disabled={ingredientFields.length >= RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT}
                         disabled={ingredientFields.length >= RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT}
                     >
                         <Plus className="w-4 h-4 mr-2" />
@@ -375,15 +457,20 @@ const AddRecipeForm = () => {
                         <div key={field.id} className="flex items-center gap-2">
                         <Input
                             {...register(`ingredients.${index}.name`, validationRules.ingredientName)}
+                            {...register(`ingredients.${index}.name`, validationRules.ingredientName)}
                             type="text"
                             placeholder="Название (например, Мука)"
+                            minLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MIN_LENGTH}
+                            maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MAX_LENGTH}
                             minLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MIN_LENGTH}
                             maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MAX_LENGTH}
                         />
                         <Input
                             {...register(`ingredients.${index}.quantity`, validationRules.ingredientQuantity)}
+                            {...register(`ingredients.${index}.quantity`, validationRules.ingredientQuantity)}
                             type="text"
                             placeholder="Количество (например, 200 г)"
+                            maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_QUANTITY_MAX_LENGTH}
                             maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_QUANTITY_MAX_LENGTH}
                         />
                         {ingredientFields.length > 1 && (
@@ -421,6 +508,28 @@ const AddRecipeForm = () => {
                     <p className="text-sm text-muted-foreground">
                         {ingredientFields.length} из {RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT} ингредиентов
                     </p>
+                    {/* Показать ошибки валидации для ингредиентов */}
+                    {Object.keys(errors).some(key => key.startsWith('ingredients.')) && (
+                        <div className="space-y-1">
+                            {ingredientFields.map((_, index) => (
+                                <div key={index}>
+                                    {errors.ingredients?.[index]?.name && (
+                                        <p className="text-destructive text-sm">
+                                            Ингредиент {index + 1}: {errors.ingredients[index].name.message}
+                                        </p>
+                                    )}
+                                    {errors.ingredients?.[index]?.quantity && (
+                                        <p className="text-destructive text-sm">
+                                            Ингредиент {index + 1}: {errors.ingredients[index].quantity.message}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                        {ingredientFields.length} из {RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT} ингредиентов
+                    </p>
                 </CardContent>
             </Card>
 
@@ -433,6 +542,7 @@ const AddRecipeForm = () => {
                         variant="outline"
                         size="sm"
                         onClick={handleAddInstruction}
+                        disabled={instructionFields.length >= RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT}
                         disabled={instructionFields.length >= RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT}
                     >
                     <Plus className="w-4 h-4 mr-2" />
@@ -449,8 +559,10 @@ const AddRecipeForm = () => {
                         <div className="flex-1 space-y-2">
                             <Textarea
                                 {...register(`instructions.${index}.description`, validationRules.instructionDescription)}
+                                {...register(`instructions.${index}.description`, validationRules.instructionDescription)}
                                 placeholder={`Шаг ${field.step_number}`}
                                 rows={2}
+                                maxLength={RECIPE_VALIDATION_CONSTANTS.INSTRUCTION_DESCRIPTION_MAX_LENGTH}
                                 maxLength={RECIPE_VALIDATION_CONSTANTS.INSTRUCTION_DESCRIPTION_MAX_LENGTH}
                             />
                             <div className="space-y-2">
@@ -545,6 +657,23 @@ const AddRecipeForm = () => {
                     <p className="text-sm text-muted-foreground">
                         {instructionFields.length} из {RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT} шагов
                     </p>
+                    {/* Показать ошибки валидации для инструкций */}
+                    {Object.keys(errors).some(key => key.startsWith('instructions.')) && (
+                        <div className="space-y-1">
+                            {instructionFields.map((_, index) => (
+                                <div key={index}>
+                                    {errors.instructions?.[index]?.description && (
+                                        <p className="text-destructive text-sm">
+                                            Шаг {index + 1}: {errors.instructions[index].description.message}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                        {instructionFields.length} из {RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT} шагов
+                    </p>
                 </CardContent>
             </Card>
 
@@ -553,6 +682,7 @@ const AddRecipeForm = () => {
             </Button>
 
             <div className='text-center'>
+                Нажимая на кнопку, вы даете согласие на <a className="text-blue-600 hover:underline" href='/docs/policy'>обработку персональных данных</a> и <a className="text-blue-600 hover:underline" href='/docs/recommendations-policy'>использование рекомендательных систем</a>.
                 Нажимая на кнопку, вы даете согласие на <a className="text-blue-600 hover:underline" href='/docs/policy'>обработку персональных данных</a> и <a className="text-blue-600 hover:underline" href='/docs/recommendations-policy'>использование рекомендательных систем</a>.
             </div>
         </form>

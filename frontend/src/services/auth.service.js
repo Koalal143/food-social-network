@@ -4,6 +4,7 @@ import { ERROR_MESSAGES } from "@/constants/errors";
 import { ValidationError, NetworkError, AuthError } from "@/utils/errors";
 import { BANNED_USERNAME_REGEX } from '@/constants/validation';
 import { CookieManager } from '@/utils/cookies';
+import { CookieManager } from '@/utils/cookies';
 
 export default class AuthService {
     static getAccessToken() {
@@ -17,6 +18,9 @@ export default class AuthService {
     static setTokens(accessToken, refreshToken) {
         localStorage.setItem('access_token', accessToken);
         localStorage.setItem('refresh_token', refreshToken);
+
+        // Также сохраняем токены в cookies для работы middleware
+        CookieManager.setAuthTokens(accessToken, refreshToken);
 
         // Также сохраняем токены в cookies для работы middleware
         CookieManager.setAuthTokens(accessToken, refreshToken);
@@ -42,7 +46,14 @@ export default class AuthService {
                 credentials: 'include'
             });
 
+            const response = await fetch(url, {
+                ...options,
+                headers,
+                credentials: 'include'
+            });
+
             if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
                 const errorData = await response.json().catch(() => ({}));
                 
                 if (response.status === 401) {
@@ -92,9 +103,15 @@ export default class AuthService {
                 },
                 body: JSON.stringify({ username, email, password }),
                 credentials: 'include'
+                credentials: 'include'
             });
 
             if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new ValidationError(ERROR_MESSAGES[errorData.error_key]);
+                } else {
                 const errorData = await response.json().catch(() => ({}));
                 
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
@@ -128,9 +145,16 @@ export default class AuthService {
                 },
                 body: JSON.stringify(loginData),
                 credentials: 'include'
+                credentials: 'include'
             });
 
             if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new Error(ERROR_MESSAGES[errorData.error_key]);
+                } else {
+                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
                 const errorData = await response.json().catch(() => ({}));
                 
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
@@ -165,9 +189,21 @@ export default class AuthService {
                 },
                 body: JSON.stringify({'refresh_token': refreshToken}),
                 credentials: 'include'
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({'refresh_token': refreshToken}),
+                credentials: 'include'
             });
 
             if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new AuthError(ERROR_MESSAGES[errorData.error_key]);
+                } else {
+                    throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
+                }
                 const errorData = await response.json().catch(() => ({}));
                 
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
@@ -230,6 +266,7 @@ export default class AuthService {
     static async deleteAvatar() {
         try {
             await this.makeAuthenticatedRequest(`${BASE_API}/v1/users/me/avatar`, {
+            await this.makeAuthenticatedRequest(`${BASE_API}/v1/users/me/avatar`, {
                 method: 'DELETE'
             });
             return true;
@@ -270,6 +307,11 @@ export default class AuthService {
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new Error(ERROR_MESSAGES[errorData.error_key]);
+                } else {
+                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                }
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
                     throw new Error(ERROR_MESSAGES[errorData.error_key]);
                 } else {
