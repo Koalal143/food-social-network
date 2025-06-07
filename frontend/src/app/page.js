@@ -4,6 +4,8 @@ import Container from "@/components/layout/Container";
 import InfiniteRecipesList from "@/components/shared/InfiniteRecipeList";
 import { RecipeCardSkeletonGrid } from "@/components/ui/skeletons/RecipeCardSkeleton";
 import HeaderSkeleton from "@/components/ui/skeletons/HeaderSkeleton";
+import EmptyState, { EmptyStateVariants } from "@/components/ui/EmptyState";
+import { ChefHat } from "lucide-react";
 
 export default function App() {
     const { recipes, loading, hasMore, fetchRecipes } = useRecipes();
@@ -34,10 +36,13 @@ export default function App() {
             </div>
 
             {recipes.length === 0 ? (
-                <div className="empty-feed-placeholder flex flex-col items-center justify-center py-12 text-center">
-                    <h3 className="text-xl font-medium text-gray-500 mb-2">Тут пока пусто</h3>
-                    <p className="text-gray-400">Попробуйте позже или добавьте рецепт первым!</p>
-                </div>
+                <EmptyState
+                    icon={ChefHat}
+                    {...EmptyStateVariants.noRecipes}
+                    actionText="Добавить рецепт"
+                    actionHref="/add-recipe"
+                    variant="default"
+                />
             ) : (
                 <InfiniteRecipesList
                     recipes={recipes}

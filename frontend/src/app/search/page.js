@@ -6,11 +6,12 @@ import { useSearchHistory } from '@/context/SearchHistoryContext';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Search, AlertCircle } from 'lucide-react';
 import InfiniteRecipesList from '@/components/shared/InfiniteRecipeList';
 import { useSearch } from '@/context/SearchContext';
 import SearchFilters from '@/components/ui/search/SearchFilters';
 import { SearchLoadingSkeleton } from '@/components/ui/skeletons';
+import EmptyState, { EmptyStateVariants } from '@/components/ui/EmptyState';
 
 export default function SearchPage() {
   const router = useRouter();
@@ -87,10 +88,14 @@ export default function SearchPage() {
         {searchLoading && searchResults.length === 0 ? (
           <SearchLoadingSkeleton />
         ) : searchError ? (
-          <div className="text-center py-12 text-red-500">
-            <p className="text-xl">Ошибка при выполнении поиска:</p>
-            <p>{searchError}</p>
-          </div>
+          <EmptyState
+            icon={AlertCircle}
+            title="Что-то пошло не так"
+            description={`Ошибка при выполнении поиска: ${searchError}`}
+            theme="error"
+            actionText="Попробовать снова"
+            actionOnClick={() => window.location.reload()}
+          />
         ) : searchQuery && searchResults && searchResults.length > 0 ? (
           <InfiniteRecipesList
             recipes={searchResults}
@@ -100,17 +105,18 @@ export default function SearchPage() {
             source="search"
           />
         ) : searchQuery && searchResults ? (
-          <div className="text-center py-12">
-            <p className="text-xl text-muted-foreground">
-              По запросу "{searchQuery}" ничего не найдено
-            </p>
-          </div>
+          <EmptyState
+            icon={Search}
+            {...EmptyStateVariants.noSearchResults}
+            description={`По запросу "${searchQuery}" ничего не найдено. Попробуйте другие ключевые слова или проверьте правописание.`}
+          />
         ) : (
-          <div className="text-center py-12">
-            <p className="text-xl text-muted-foreground">
-              Введите запрос для поиска рецептов
-            </p>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="Найдите свой идеальный рецепт"
+            description="Введите название блюда в поисковую строку выше"
+            theme="search"
+          />
         )}
       </div>
     </Container>
