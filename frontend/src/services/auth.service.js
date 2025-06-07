@@ -3,6 +3,7 @@ import { tokenManager } from "@/utils/tokenManager";
 import { ERROR_MESSAGES } from "@/constants/errors";
 import { ValidationError, NetworkError, AuthError } from "@/utils/errors";
 import { BANNED_USERNAME_REGEX } from '@/constants/validation';
+import { CookieManager } from '@/utils/cookies';
 
 export default class AuthService {
     static getAccessToken() {
@@ -16,6 +17,9 @@ export default class AuthService {
     static setTokens(accessToken, refreshToken) {
         localStorage.setItem('access_token', accessToken);
         localStorage.setItem('refresh_token', refreshToken);
+
+        // Также сохраняем токены в cookies для работы middleware
+        CookieManager.setAuthTokens(accessToken, refreshToken);
     }
 
     static async makeAuthenticatedRequest(url, options = {}) {
@@ -227,6 +231,9 @@ export default class AuthService {
     static logout() {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+
+        // Также удаляем токены из cookies
+        CookieManager.clearAuthTokens();
     }
 
     static async getPaginatedRecipes(offset = 0, limit = 10) {
