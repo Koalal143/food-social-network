@@ -1,13 +1,14 @@
 from dishka.integrations.faststream import inject
 from faststream.nats import NatsRouter
 
+from src.core.stream import recommendations_stream
 from src.schemas.tasks import AddFeedbackRequest
 from src.services.recs_service import RecommendationServiceDependency
 
 router = NatsRouter()
 
 
-@router.subscriber("tasks.add_feedback")
+@router.subscriber("recsys_events.add_feedback", stream=recommendations_stream)
 @inject
 async def add_feedback_task(
     request: AddFeedbackRequest,
@@ -20,7 +21,7 @@ async def add_feedback_task(
     )
 
 
-@router.subscriber("tasks.delete_feedback")
+@router.subscriber("recsys_events.delete_feedback", stream=recommendations_stream)
 @inject
 async def delete_feedback_task(
     request: AddFeedbackRequest,

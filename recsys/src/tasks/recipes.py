@@ -1,6 +1,7 @@
 from dishka.integrations.faststream import inject
 from faststream.nats import NatsRouter
 
+from src.core.stream import recommendations_stream
 from src.schemas.tasks import (
     AddRecipeRequest,
     DeleteRecipeRequest,
@@ -11,7 +12,7 @@ from src.services.recs_service import RecommendationServiceDependency
 router = NatsRouter()
 
 
-@router.subscriber("tasks.add_recipe")
+@router.subscriber("recsys_events.add_recipe", stream=recommendations_stream)
 @inject
 async def add_recipe_task(
     request: AddRecipeRequest,
@@ -24,7 +25,8 @@ async def add_recipe_task(
         tags=request.tags,
     )
 
-@router.subscriber("tasks.update_recipe")
+
+@router.subscriber("recsys_events.update_recipe", stream=recommendations_stream)
 @inject
 async def update_recipe_task(
     request: UpdateRecipeRequest,
@@ -38,7 +40,8 @@ async def update_recipe_task(
     )
 
 
-@router.subscriber("tasks.delete_recipe")
+@router.subscriber("recsys_events.delete_recipe", stream=recommendations_stream)
+@inject
 async def delete_recipe_task(
     request: DeleteRecipeRequest,
     service: RecommendationServiceDependency,
