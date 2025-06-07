@@ -120,11 +120,12 @@ export default function RegistrationForm() {
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="Введите пароль"
+                        className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors pr-10"
                         {...field}
                       />
                       <button
                         type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
@@ -153,11 +154,12 @@ export default function RegistrationForm() {
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Повторите пароль"
+                        className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors pr-10"
                         {...field}
                       />
                       <button
                         type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       >
                         {showConfirmPassword ? (
@@ -172,9 +174,9 @@ export default function RegistrationForm() {
                 </FormItem>
               )}
             />
-            <Button 
-              type="submit" 
-              className="w-full bg-orange-400 hover:bg-orange-500 text-white font-medium"
+            <Button
+              type="submit"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
               disabled={isLoading}
             >
               {isLoading ? "Регистрация..." : "Зарегистрироваться"}

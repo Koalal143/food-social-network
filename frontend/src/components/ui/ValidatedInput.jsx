@@ -100,7 +100,7 @@ export default function ValidatedInput({
     };
 
     const getInputClassName = () => {
-        let baseClass = className || '';
+        let baseClass = className || 'bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors';
 
         if (validationState.isValid === true) {
             baseClass += ' border-green-500 focus:border-green-500 focus:ring-green-500';

@@ -10,7 +10,6 @@ import NotFound from "@/app/not-found";
 import InfiniteRecipesList from "@/components/shared/InfiniteRecipeList";
 import RecipesService from "@/services/recipes.service";
 import AuthorProfileCard from "@/components/ui/profile/AuthorProfileCard";
-import AuthorProfileCard from "@/components/ui/profile/AuthorProfileCard";
 
 const RECIPES_PER_PAGE = 9;
 
@@ -83,12 +82,6 @@ export default function ProfileIdPage({ params }) {
                 setRecipes(prev => {
                     const existingIds = new Set(prev.map(r => r.id));
                     const uniqueNewRecipes = newRecipes.filter(r => !existingIds.has(r.id));
-                    const newRecipesList = [...prev, ...uniqueNewRecipes];
-
-                    // Обновляем hasMore на основе нового количества рецептов
-                    setHasMore(newRecipesList.length < (result.totalCount || 0) && newRecipes.length > 0);
-
-                    return newRecipesList;
                     const newRecipesList = [...prev, ...uniqueNewRecipes];
 
                     // Обновляем hasMore на основе нового количества рецептов
@@ -200,7 +193,6 @@ export default function ProfileIdPage({ params }) {
                         </div>
                     )}
                 </div>
-            </div>
             </div>
         </Container>
     );

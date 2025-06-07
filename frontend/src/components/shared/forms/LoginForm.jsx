@@ -69,11 +69,11 @@ export default function LoginForm() {
                   <FormControl>
                     <Input
                       placeholder="Введите email или юзернейм"
-                      className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+                      className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage className="text-red-500" />
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -88,12 +88,12 @@ export default function LoginForm() {
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="Введите пароль"
-                        className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+                        className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors pr-10"
                         {...field}
                       />
                       <button
                         type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition-colors"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
@@ -104,13 +104,13 @@ export default function LoginForm() {
                       </button>
                     </div>
                   </FormControl>
-                  <FormMessage className="text-red-500" />
+                  <FormMessage />
                 </FormItem>
               )}
             />
-            <Button 
-              type="submit" 
-              className="w-full bg-orange-400 hover:bg-orange-500 text-white font-medium"
+            <Button
+              type="submit"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
               disabled={isLoading}
             >
               {isLoading ? "Вход..." : "Войти"}
