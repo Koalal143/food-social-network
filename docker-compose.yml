@@ -166,10 +166,13 @@ services:
   nats:
     image: nats:2.10-alpine
     container_name: recsys-nats
+    command: ["nats-server", "--config", "/etc/nats/nats.conf"]
     ports:
       - "4222:4222"
+      - "8222:8222"  # HTTP monitoring port
     volumes:
       - nats_data:/data
+      - ./nats.conf:/etc/nats/nats.conf:ro
     networks:
       - recsys-network
 

@@ -161,8 +161,13 @@ services:
 
   test-nats:
     image: nats:2.10-alpine
+    command: ["nats-server", "--config", "/etc/nats/nats.conf"]
     ports:
       - "4223:4222"
+      - "8223:8222"  # HTTP monitoring port for tests
+    volumes:
+      - test_nats_data:/data
+      - ./nats.conf:/etc/nats/nats.conf:ro
     networks:
       - recsys-network
 
@@ -236,3 +241,4 @@ networks:
 volumes:
   test-elasticsearch-data:
   test-minio-data:
+  test_nats_data:
