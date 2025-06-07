@@ -16,7 +16,7 @@ export default function RegistrationPage() {
             </div>
             <RegistrationForm />
             <div className='text-center text-sm'>
-                Нажимая на кнопку, вы даете согласие на <a className="text-blue-600 hover:underline" href='/docs/policy'>обработку персональных данных</a>.
+                Нажимая на кнопку, вы даете согласие на <a className="text-blue-600 hover:underline" href='/docs/policy'>обработку персональных данных</a> и <a className="text-blue-600 hover:underline" href='/docs/recommendations-policy'>использование рекомендательных систем</a>.
             </div>
             <p className="text-center text-sm text-gray-600">
                 Уже есть аккаунт?{" "}
