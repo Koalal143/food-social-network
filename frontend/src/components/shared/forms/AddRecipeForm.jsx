@@ -30,6 +30,7 @@ import {
 import { useRecipeTags } from '@/hooks/useRecipeTags';
 import RecipeTagsInput from './RecipeTagsInput';
 import { handleApiError } from '@/utils/errorHandler';
+import PhotoUploadInfo from '@/components/ui/PhotoUploadInfo';
 
 const AddRecipeForm = () => {
     const { addRecipe } = useRecipes();
@@ -284,7 +285,14 @@ const AddRecipeForm = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Фото блюда</Label>
+                        <div className="flex items-center gap-2">
+                            <Label>Фото блюда</Label>
+                            <PhotoUploadInfo
+                                recommendedSize="1200×800px (3:2)"
+                                maxFileSize="5MB"
+                                formats="JPG, PNG, GIF"
+                            />
+                        </div>
                         <Controller
                             name="main_photo"
                             control={control}
@@ -301,12 +309,18 @@ const AddRecipeForm = () => {
                                         }}
                                         placeholder="Загрузите фото блюда"
                                     />
+                                    <PhotoUploadInfo
+                                        recommendedSize="1200×800px (3:2)"
+                                        maxFileSize="5MB"
+                                        formats="JPG, PNG, GIF"
+                                        className="md:hidden"
+                                    />
                                     {mainPhotoPreview && (
                                         <div className="relative inline-block">
-                                            <img 
-                                                src={mainPhotoPreview} 
-                                                alt="Превью главного фото" 
-                                                className="w-32 h-32 object-cover rounded-lg border" 
+                                            <img
+                                                src={mainPhotoPreview}
+                                                alt="Превью главного фото"
+                                                className="w-32 h-32 object-cover rounded-lg border"
                                             />
                                             <Button
                                                 type="button"
@@ -433,44 +447,59 @@ const AddRecipeForm = () => {
                                 rows={2}
                                 maxLength={RECIPE_VALIDATION_CONSTANTS.INSTRUCTION_DESCRIPTION_MAX_LENGTH}
                             />
-                            <div className="flex items-center gap-2">
-                            <Controller
-                                name={`instructions.${index}.photo`}
-                                control={control}
-                                render={({ field }) => (
-                                <div className="flex flex-col gap-2 w-full">
-                                    <Input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        const file = e.target.files[0];
-                                        field.onChange(file);
-                                        handleInstructionPhotoChange(index, file);
-                                    }}
-                                    className="w-full"
-                                    placeholder="Загрузите фото для шага"
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Label className="text-sm text-muted-foreground">Фото шага (необязательно)</Label>
+                                    <PhotoUploadInfo
+                                        recommendedSize="800×600px (4:3)"
+                                        maxFileSize="5MB"
+                                        formats="JPG, PNG, GIF"
+                                        className="hidden md:block"
                                     />
-                                    {instructionPhotoPreviews[index] && (
-                                        <div className="relative inline-block">
-                                            <img 
-                                                src={instructionPhotoPreviews[index]} 
-                                                alt={`Превью шага ${index + 1}`} 
-                                                className="w-24 h-24 object-cover rounded-lg border" 
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleRemoveInstructionPhoto(index)}
-                                                className="absolute -top-2 -right-2 text-destructive hover:text-destructive/80 bg-background border rounded-full w-6 h-6 p-0"
-                                            >
-                                                &times;
-                                            </Button>
-                                        </div>
-                                    )}
                                 </div>
-                                )}
-                            />
+                                <Controller
+                                    name={`instructions.${index}.photo`}
+                                    control={control}
+                                    render={({ field }) => (
+                                    <div className="flex flex-col gap-2 w-full">
+                                        <Input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files[0];
+                                            field.onChange(file);
+                                            handleInstructionPhotoChange(index, file);
+                                        }}
+                                        className="w-full"
+                                        placeholder="Загрузите фото для шага"
+                                        />
+                                        <PhotoUploadInfo
+                                            recommendedSize="800×600px (4:3)"
+                                            maxFileSize="5MB"
+                                            formats="JPG, PNG, GIF"
+                                            className="md:hidden"
+                                        />
+                                        {instructionPhotoPreviews[index] && (
+                                            <div className="relative inline-block">
+                                                <img
+                                                    src={instructionPhotoPreviews[index]}
+                                                    alt={`Превью шага ${index + 1}`}
+                                                    className="w-24 h-24 object-cover rounded-lg border"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleRemoveInstructionPhoto(index)}
+                                                    className="absolute -top-2 -right-2 text-destructive hover:text-destructive/80 bg-background border rounded-full w-6 h-6 p-0"
+                                                >
+                                                    &times;
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    )}
+                                />
                             </div>
                         </div>
                         {instructionFields.length > 1 && (

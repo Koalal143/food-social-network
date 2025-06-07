@@ -30,6 +30,7 @@ import {
 } from '@/lib/validation/recipe.validation';
 import { useRecipeTags } from '@/hooks/useRecipeTags';
 import RecipeTagsInput from './RecipeTagsInput';
+import PhotoUploadInfo from '@/components/ui/PhotoUploadInfo';
 
 const EditRecipeForm = ({ slug, onSuccess }) => {
   const { getRecipeBySlug, updateRecipe } = useRecipes();
@@ -378,7 +379,14 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
           </div>
 
           <div className="space-y-2">
-            <Label>Фото блюда</Label>
+            <div className="flex items-center gap-2">
+              <Label>Фото блюда</Label>
+              <PhotoUploadInfo
+                recommendedSize="1200×800px (3:2)"
+                maxFileSize="5MB"
+                formats="JPG, PNG, GIF"
+              />
+            </div>
             <Controller
               name="main_photo"
               control={control}
@@ -394,12 +402,18 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                     }}
                     placeholder="Загрузите фото блюда"
                   />
+                  <PhotoUploadInfo
+                    recommendedSize="1200×800px (3:2)"
+                    maxFileSize="5MB"
+                    formats="JPG, PNG, GIF"
+                    className="md:hidden"
+                  />
                   {mainPhotoPreview && (
                     <div className="relative inline-block">
-                      <img 
-                        src={mainPhotoPreview} 
-                        alt="Превью главного фото" 
-                        className="w-32 h-32 object-cover rounded-lg border" 
+                      <img
+                        src={mainPhotoPreview}
+                        alt="Превью главного фото"
+                        className="w-32 h-32 object-cover rounded-lg border"
                       />
                       <Button
                         type="button"
@@ -526,7 +540,16 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                   rows={2}
                   maxLength={RECIPE_VALIDATION_CONSTANTS.INSTRUCTION_DESCRIPTION_MAX_LENGTH}
                 />
-                <div className="flex items-center gap-2">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm text-muted-foreground">Фото шага (необязательно)</Label>
+                    <PhotoUploadInfo
+                      recommendedSize="800×600px (4:3)"
+                      maxFileSize="5MB"
+                      formats="JPG, PNG, GIF"
+                      className="hidden md:block"
+                    />
+                  </div>
                   <Controller
                     name={`instructions.${index}.photo`}
                     control={control}
@@ -543,12 +566,18 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                           className="w-full"
                           placeholder="Загрузите фото для шага"
                         />
+                        <PhotoUploadInfo
+                          recommendedSize="800×600px (4:3)"
+                          maxFileSize="5MB"
+                          formats="JPG, PNG, GIF"
+                          className="md:hidden"
+                        />
                         {instructionPhotoPreviews[index] && (
                           <div className="relative inline-block">
-                            <img 
-                              src={instructionPhotoPreviews[index]} 
-                              alt={`Превью шага ${index + 1}`} 
-                              className="w-24 h-24 object-cover rounded-lg border" 
+                            <img
+                              src={instructionPhotoPreviews[index]}
+                              alt={`Превью шага ${index + 1}`}
+                              className="w-24 h-24 object-cover rounded-lg border"
                             />
                             <Button
                               type="button"
