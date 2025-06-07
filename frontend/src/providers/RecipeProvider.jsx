@@ -26,7 +26,7 @@ export default function RecipeProvider({ children }) {
 
             setTotalCount(totalCount)
             
-            const newOffset = resetExisting ? LIMIT : currentOffset + LIMIT;
+            const newOffset = resetExisting ? data.length : currentOffset + data.length;
             const moreAvailable = newOffset < totalCount;
             setHasMore(moreAvailable);
             

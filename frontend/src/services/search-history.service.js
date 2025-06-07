@@ -2,8 +2,21 @@ import { BASE_API } from "@/constants/backend-urls"
 import { tokenManager } from "@/utils/tokenManager"
 import AuthService from "./auth.service";
 
+const LOCALSTORAGE_KEY = "cookie_consent_accepted";
+
 export default class SearchHistoryService {
+    // Проверка согласия на куки
+    static hasConsentForCookies() {
+        const consent = localStorage.getItem(LOCALSTORAGE_KEY);
+        return consent === '1';
+    }
     static async getLastFiveSearches() {
+        // Проверяем согласие на куки перед запросом
+        if (!this.hasConsentForCookies()) {
+            console.log('Загрузка истории поиска пропущена: нет согласия на использование куки');
+            return [];
+        }
+
         await tokenManager.ensureValidToken();
 
         const accessToken = AuthService.getAccessToken();
@@ -27,6 +40,12 @@ export default class SearchHistoryService {
     }
 
     static async addSearch(search) {
+        // Проверяем согласие на куки перед сохранением
+        if (!this.hasConsentForCookies()) {
+            console.log('Сохранение поискового запроса пропущено: нет согласия на использование куки');
+            return { saved: false, reason: 'no_consent' };
+        }
+
         await tokenManager.ensureValidToken();
 
         const accessToken = AuthService.getAccessToken();

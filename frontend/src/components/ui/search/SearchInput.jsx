@@ -39,6 +39,10 @@ export default function SearchInput({ setShowMobileSearch }) {
     }
 
     const handleClick = () => {
+      // Если нет запроса, очищаем результаты при переходе на страницу поиска
+      if (!query.trim()) {
+        clearSearchResults()
+      }
       router.push('/search')
     }
 
