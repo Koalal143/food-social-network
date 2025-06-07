@@ -29,7 +29,9 @@ export default class UsersService {
 
     static async getUserByUsername(username) {
         try {
-            const response = await fetch(`${BASE_API}/v1/users/${username}`);
+            const response = await fetch(`${BASE_API}/v1/users/${username}`, {
+                credentials: 'include'
+            });
             
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));

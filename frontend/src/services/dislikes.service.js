@@ -23,7 +23,8 @@ export default class DislikesService {
             const response = await fetch(`${BASE_API}/v1/disliked-recipes`, {
                 method: 'POST',
                 body: JSON.stringify({'recipe_id': recipeId}),
-                headers: headers
+                headers: headers,
+                credentials: 'include'
             })
 
             if (!response.ok) {
@@ -62,7 +63,8 @@ export default class DislikesService {
 
             const response = await fetch(`${BASE_API}/v1/disliked-recipes/${recipeId}`, {
                 method: 'DELETE',
-                headers: headers
+                headers: headers,
+                credentials: 'include'
             })
 
             if (!response.ok) {

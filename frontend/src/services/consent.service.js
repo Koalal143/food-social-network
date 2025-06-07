@@ -8,7 +8,8 @@ export default class ConsentService {
                 body: JSON.stringify({'is_analytics_allowed': is_analytics_allowed}),
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                credentials: 'include'
             });
             
             if (!response.ok) {

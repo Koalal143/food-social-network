@@ -36,8 +36,12 @@ export default class AuthService {
         };
 
         try {
-            const response = await fetch(url, { ...options, headers });
-            
+            const response = await fetch(url, {
+                ...options,
+                headers,
+                credentials: 'include'
+            });
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 
@@ -87,6 +91,7 @@ export default class AuthService {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ username, email, password }),
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -122,6 +127,7 @@ export default class AuthService {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(loginData),
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -154,7 +160,11 @@ export default class AuthService {
 
             const response = await fetch(`${BASE_API}/v1/auth/refresh`, {
                 method: 'POST',
-                body: JSON.stringify({'refresh_token': refreshToken})
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({'refresh_token': refreshToken}),
+                credentials: 'include'
             });
 
             if (!response.ok) {
