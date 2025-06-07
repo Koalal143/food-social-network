@@ -10,7 +10,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bookmark, ThumbsDown, Eye, Info, ChevronRight, RefreshCw, X, FastForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-// import { RecommendationsSkeleton } from '@/components/ui/skeletons'; // Теперь используется в ProtectedRoute
 
 export default function RecommendationsPage() {
   const router = useRouter();
@@ -73,15 +72,6 @@ export default function RecommendationsPage() {
     }
   }, [currentIndex]);
 
-  // Скелетон теперь показывается в ProtectedRoute
-  // if (loading && recipes.length === 0) {
-  //   return (
-  //     <Container className="py-8">
-  //       <RecommendationsSkeleton />
-  //     </Container>
-  //   );
-  // }
-
   const tutorialContent = [
     {
       title: "Свайп влево",
@@ -140,7 +130,7 @@ export default function RecommendationsPage() {
                 onViewRecipe={handleViewRecipe}
               />
             ) : (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-6 relative h-80 md:h-96 flex flex-col items-center justify-center rounded-2xl md:rounded-3xl bg-gradient-to-br from-gray-50 via-white to-blue-50 border border-gray-200 shadow-lg overflow-hidden px-4 max-w-sm mx-auto"
@@ -148,17 +138,17 @@ export default function RecommendationsPage() {
                 <div className="absolute top-4 left-4 w-8 h-8 md:w-12 md:h-12 bg-yellow-200/30 rounded-full blur-xl" />
                 <div className="absolute bottom-6 right-6 w-6 h-6 md:w-8 md:h-8 bg-blue-200/30 rounded-full blur-lg" />
                 <div className="absolute top-1/2 right-4 w-4 h-4 md:w-6 md:h-6 bg-pink-200/30 rounded-full blur-md" />
-                
-                <motion.div 
+
+                <motion.div
                   className="text-5xl md:text-6xl mb-4"
-                  animate={{ 
+                  animate={{
                     rotate: [0, 10, -10, 0],
                     scale: [1, 1.1, 1]
                   }}
-                  transition={{ 
-                    duration: 2, 
-                    repeat: Infinity, 
-                    repeatType: "reverse" 
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "reverse"
                   }}
                 >
                   🍽️

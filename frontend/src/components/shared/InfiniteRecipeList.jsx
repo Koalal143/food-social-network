@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useEffect } from "react";
 import RecipeCard from "@/components/shared/RecipeCard";
-import { InfiniteLoadingSkeleton } from "@/components/ui/skeletons";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function InfiniteRecipesList({ recipes, loading, hasMore, onLoadMore, source='feed', editable=false }) {
     const observerRef = useRef(null);
@@ -39,7 +39,15 @@ export default function InfiniteRecipesList({ recipes, loading, hasMore, onLoadM
         </div>
         
         <div ref={loadMoreRef} className="w-full">
-            {loading && <InfiniteLoadingSkeleton count={3} />}
+            {loading && (
+                <div className="flex justify-center py-8">
+                    <LoadingSpinner
+                        variant="chef"
+                        size="md"
+                        text="Загружаем рецепты..."
+                    />
+                </div>
+            )}
         </div>
         
         {!hasMore && recipes.length > 0 && (

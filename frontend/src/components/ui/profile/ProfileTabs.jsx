@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../tabs"
 import InfiniteRecipesList from "@/components/shared/InfiniteRecipeList"
 import { ChefHat, Heart } from "lucide-react"
-import EmptyState from "@/components/ui/EmptyState"
+import EmptyState, { EmptyStateVariants } from "@/components/ui/EmptyState"
 
 export default function ProfileTabs({ 
     recipes, 
@@ -41,8 +41,7 @@ export default function ProfileTabs({
                 ) : (
                     <EmptyState
                         icon={ChefHat}
-                        title="У вас пока нет рецептов"
-                        description="Поделитесь своими кулинарными шедеврами с сообществом! Добавьте свой первый рецепт."
+                        {...EmptyStateVariants.noUserRecipes}
                         actionText="Добавить первый рецепт"
                         actionHref="/recipe/add"
                     />
@@ -61,8 +60,7 @@ export default function ProfileTabs({
                 ) : (
                     <EmptyState
                         icon={Heart}
-                        title="В избранном пусто"
-                        description="Находите интересные рецепты и добавляйте их в избранное, чтобы сохранить для будущего приготовления"
+                        {...EmptyStateVariants.noFavorites}
                         actionText="Найти рецепты"
                         actionHref="/"
                         variant="outline"
