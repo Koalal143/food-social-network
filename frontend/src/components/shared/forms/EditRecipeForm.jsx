@@ -31,6 +31,8 @@ import {
 import { useRecipeTags } from '@/hooks/useRecipeTags';
 import RecipeTagsInput from './RecipeTagsInput';
 import PhotoUploadInfo from '@/components/ui/PhotoUploadInfo';
+import { handleApiError } from '@/utils/errorHandler';
+import FileUploadProgress from '@/components/ui/FileUploadProgress';
 
 const EditRecipeForm = ({ slug, onSuccess }) => {
   const { getRecipeBySlug, updateRecipe } = useRecipes();
@@ -58,27 +60,10 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
     maxTagsCount,
     setTagsFromExternal,
   } = useRecipeTags();
-  // Хук для управления тегами
-  const {
-    tags,
-    tagInput,
-    tagError,
-    addTag,
-    removeTag,
-    setTagInput,
-    handleTagInputKeyPress,
-    validateAllTags,
-    canAddMoreTags,
-    maxTagsCount,
-    setTagsFromExternal,
-  } = useRecipeTags();
 
   // Состояния для превью фотографий
   const [mainPhotoPreview, setMainPhotoPreview] = useState(null);
   const [instructionPhotoPreviews, setInstructionPhotoPreviews] = useState({});
-
-  // Правила валидации
-  const validationRules = getRecipeValidationRules();
 
   // Правила валидации
   const validationRules = getRecipeValidationRules();
@@ -113,7 +98,6 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
         const normalizedTags = Array.isArray(data.tags)
           ? data.tags.map(tag => typeof tag === 'string' ? tag : tag.name)
           : [];
-        setTagsFromExternal(normalizedTags);
         setTagsFromExternal(normalizedTags);
 
         // Устанавливаем превью главного фото
@@ -199,7 +183,6 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
 
   const handleAddInstruction = () => {
     if (instructionFields.length < RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT) {
-    if (instructionFields.length < RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT) {
       const nextStepNumber = instructionFields.length + 1;
       appendInstruction({ step_number: nextStepNumber, description: '', photo: null });
     }
@@ -251,22 +234,14 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
   const onSubmit = async (data) => {
     // Валидация тегов
     if (!validateAllTags()) {
-    // Валидация тегов
-    if (!validateAllTags()) {
       return;
     }
 
     // Валидация ингредиентов
     const ingredientsValidation = validateIngredients(data.ingredients);
     if (ingredientsValidation !== true) {
-
-    // Валидация ингредиентов
-    const ingredientsValidation = validateIngredients(data.ingredients);
-    if (ingredientsValidation !== true) {
       toast({
         variant: 'destructive',
-        title: 'Ошибка валидации',
-        description: ingredientsValidation,
         title: 'Ошибка валидации',
         description: ingredientsValidation,
       });
@@ -276,14 +251,8 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
     // Валидация инструкций
     const instructionsValidation = validateInstructions(data.instructions);
     if (instructionsValidation !== true) {
-
-    // Валидация инструкций
-    const instructionsValidation = validateInstructions(data.instructions);
-    if (instructionsValidation !== true) {
       toast({
         variant: 'destructive',
-        title: 'Ошибка валидации',
-        description: instructionsValidation,
         title: 'Ошибка валидации',
         description: instructionsValidation,
       });
@@ -297,13 +266,13 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
         description: "Изменения были сохранены.",
       });
       router.push('/');
-      router.push('/');
       if (onSuccess) onSuccess();
     } catch (error) {
+      const { message, type } = handleApiError(error);
       toast({
-        variant: 'destructive',
+        variant: type,
         title: "Ошибка",
-        description: error.message || "Произошла ошибка при обновлении рецепта",
+        description: message,
       });
     }
   };
@@ -323,11 +292,8 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
             <Label>Название рецепта</Label>
             <Input
               {...register('title', validationRules.title)}
-              {...register('title', validationRules.title)}
               type="text"
               placeholder="Введите название рецепта"
-              maxLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MAX_LENGTH}
-              minLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MIN_LENGTH}
               maxLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MAX_LENGTH}
               minLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MIN_LENGTH}
             />
@@ -338,11 +304,8 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
             <Label>Описание</Label>
             <Textarea
               {...register('short_description', validationRules.short_description)}
-              {...register('short_description', validationRules.short_description)}
               rows={2}
               placeholder="Краткое описание рецепта"
-              minLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MIN_LENGTH}
-              maxLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MAX_LENGTH}
               minLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MIN_LENGTH}
               maxLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MAX_LENGTH}
             />
@@ -350,10 +313,8 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
           </div>
 
           {/* Теги */}
-          {/* Теги */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Label>Теги</Label>
               <Label>Теги</Label>
               <TooltipProvider>
                 <Tooltip>
@@ -364,22 +325,10 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Подбирайте теги тщательнее, они влияют на продвижение вашего рецепта</p>
-                    <p>Подбирайте теги тщательнее, они влияют на продвижение вашего рецепта</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <RecipeTagsInput
-              tags={tags}
-              tagInput={tagInput}
-              tagError={tagError}
-              onTagInputChange={setTagInput}
-              onAddTag={addTag}
-              onRemoveTag={removeTag}
-              onTagInputKeyPress={handleTagInputKeyPress}
-              canAddMoreTags={canAddMoreTags}
-              maxTagsCount={maxTagsCount}
-            />
             <RecipeTagsInput
               tags={tags}
               tagInput={tagInput}
@@ -398,11 +347,8 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
               <Label>Время приготовления (в минутах)</Label>
               <Input
                 {...register('cook_time_minutes', validationRules.cook_time_minutes)}
-                {...register('cook_time_minutes', validationRules.cook_time_minutes)}
                 type="number"
                 placeholder="Например: 60"
-                max={RECIPE_VALIDATION_CONSTANTS.COOK_TIME_MAX}
-                min={1}
                 max={RECIPE_VALIDATION_CONSTANTS.COOK_TIME_MAX}
                 min={1}
               />
@@ -441,7 +387,7 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
               <PhotoUploadInfo
                 recommendedSize="1200×800px (3:2)"
                 maxFileSize="5MB"
-                formats="JPG, PNG, GIF"
+                formats="PNG, JPG, JPEG"
               />
             </div>
             <Controller
@@ -449,20 +395,25 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
               control={control}
               render={({ field }) => (
                 <div className="space-y-2">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
+                  <FileUploadProgress
+                    onFileSelect={async (file) => {
                       field.onChange(file);
                       handleMainPhotoChange(file);
                     }}
-                    placeholder="Загрузите фото блюда"
-                  />
+                    accept="image/png,image/jpg,image/jpeg"
+                    maxSize={5 * 1024 * 1024}
+                  >
+                    <Input
+                      type="file"
+                      accept="image/png,image/jpg,image/jpeg"
+                      placeholder="Загрузите фото блюда"
+                      className="cursor-pointer"
+                    />
+                  </FileUploadProgress>
                   <PhotoUploadInfo
                     recommendedSize="1200×800px (3:2)"
                     maxFileSize="5MB"
-                    formats="JPG, PNG, GIF"
+                    formats="PNG, JPG, JPEG"
                     className="md:hidden"
                   />
                   {mainPhotoPreview && (
@@ -478,7 +429,7 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                         size="sm"
                         onClick={() => {
                           field.onChange(null);
-                          setMainPhotoPreview(null);
+                          setMainPhotoPreview(initialData?.main_photo || null);
                         }}
                         className="absolute -top-2 -right-2 text-destructive hover:text-destructive/80 bg-background border rounded-full w-6 h-6 p-0"
                       >
@@ -504,11 +455,9 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
               size="sm"
               onClick={() => {
                 if (ingredientFields.length < RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT) {
-                if (ingredientFields.length < RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT) {
                   appendIngredient({ name: '', quantity: '' });
                 }
               }}
-              disabled={ingredientFields.length >= RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT}
               disabled={ingredientFields.length >= RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -521,20 +470,15 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
             <div key={field.id} className="flex items-center gap-2">
               <Input
                 {...register(`ingredients.${index}.name`, validationRules.ingredientName)}
-                {...register(`ingredients.${index}.name`, validationRules.ingredientName)}
                 type="text"
                 placeholder="Название (например, Мука)"
-                minLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MIN_LENGTH}
-                maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MAX_LENGTH}
                 minLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MIN_LENGTH}
                 maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MAX_LENGTH}
               />
               <Input
                 {...register(`ingredients.${index}.quantity`, validationRules.ingredientQuantity)}
-                {...register(`ingredients.${index}.quantity`, validationRules.ingredientQuantity)}
                 type="text"
                 placeholder="Количество (например, 200 г)"
-                maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_QUANTITY_MAX_LENGTH}
                 maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_QUANTITY_MAX_LENGTH}
               />
               {ingredientFields.length > 1 && (
@@ -572,28 +516,6 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
           <p className="text-sm text-muted-foreground">
             {ingredientFields.length} из {RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT} ингредиентов
           </p>
-          {/* Показать ошибки валидации для ингредиентов */}
-          {Object.keys(errors).some(key => key.startsWith('ingredients.')) && (
-            <div className="space-y-1">
-              {ingredientFields.map((_, index) => (
-                <div key={index}>
-                  {errors.ingredients?.[index]?.name && (
-                    <p className="text-destructive text-sm">
-                      Ингредиент {index + 1}: {errors.ingredients[index].name.message}
-                    </p>
-                  )}
-                  {errors.ingredients?.[index]?.quantity && (
-                    <p className="text-destructive text-sm">
-                      Ингредиент {index + 1}: {errors.ingredients[index].quantity.message}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-          <p className="text-sm text-muted-foreground">
-            {ingredientFields.length} из {RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT} ингредиентов
-          </p>
         </CardContent>
       </Card>
 
@@ -606,7 +528,6 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
               variant="outline"
               size="sm"
               onClick={handleAddInstruction}
-              disabled={instructionFields.length >= RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT}
               disabled={instructionFields.length >= RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -623,10 +544,8 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
               <div className="flex-1 space-y-2">
                 <Textarea
                   {...register(`instructions.${index}.description`, validationRules.instructionDescription)}
-                  {...register(`instructions.${index}.description`, validationRules.instructionDescription)}
                   placeholder={`Шаг ${field.step_number}`}
                   rows={2}
-                  maxLength={RECIPE_VALIDATION_CONSTANTS.INSTRUCTION_DESCRIPTION_MAX_LENGTH}
                   maxLength={RECIPE_VALIDATION_CONSTANTS.INSTRUCTION_DESCRIPTION_MAX_LENGTH}
                 />
                 <div className="space-y-2">
@@ -635,7 +554,7 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                     <PhotoUploadInfo
                       recommendedSize="800×600px (4:3)"
                       maxFileSize="5MB"
-                      formats="JPG, PNG, GIF"
+                      formats="PNG, JPG, JPEG"
                       className="hidden md:block"
                     />
                   </div>
@@ -646,9 +565,30 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                       <div className="flex flex-col gap-2 w-full">
                         <Input
                           type="file"
-                          accept="image/*"
+                          accept="image/png,image/jpg,image/jpeg"
                           onChange={(e) => {
                             const file = e.target.files[0];
+                            // Валидация типа файла
+                            if (file) {
+                              const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+                              if (!allowedTypes.includes(file.type.toLowerCase())) {
+                                toast({
+                                  variant: 'destructive',
+                                  title: 'Ошибка',
+                                  description: 'Разрешены только PNG, JPG и JPEG файлы',
+                                });
+                                return;
+                              }
+                              // Валидация размера файла
+                              if (file.size > 5 * 1024 * 1024) {
+                                toast({
+                                  variant: 'destructive',
+                                  title: 'Ошибка',
+                                  description: 'Файл слишком большой. Максимальный размер: 5MB',
+                                });
+                                return;
+                              }
+                            }
                             field.onChange(file);
                             handleInstructionPhotoChange(index, file);
                           }}
@@ -658,7 +598,7 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                         <PhotoUploadInfo
                           recommendedSize="800×600px (4:3)"
                           maxFileSize="5MB"
-                          formats="JPG, PNG, GIF"
+                          formats="PNG, JPG, JPEG"
                           className="md:hidden"
                         />
                         {instructionPhotoPreviews[index] && (
@@ -721,23 +661,6 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
           <p className="text-sm text-muted-foreground">
             {instructionFields.length} из {RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT} шагов
           </p>
-          {/* Показать ошибки валидации для инструкций */}
-          {Object.keys(errors).some(key => key.startsWith('instructions.')) && (
-            <div className="space-y-1">
-              {instructionFields.map((_, index) => (
-                <div key={index}>
-                  {errors.instructions?.[index]?.description && (
-                    <p className="text-destructive text-sm">
-                      Шаг {index + 1}: {errors.instructions[index].description.message}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-          <p className="text-sm text-muted-foreground">
-            {instructionFields.length} из {RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT} шагов
-          </p>
         </CardContent>
       </Card>
 
@@ -746,7 +669,6 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
       </Button>
 
       <div className='text-center'>
-        Нажимая на кнопку, вы даете согласие на <a className="text-blue-600 hover:underline" href='/docs/policy'>обработку персональных данных</a> и <a className="text-blue-600 hover:underline" href='/docs/recommendations-policy'>использование рекомендательных систем</a>.
         Нажимая на кнопку, вы даете согласие на <a className="text-blue-600 hover:underline" href='/docs/policy'>обработку персональных данных</a> и <a className="text-blue-600 hover:underline" href='/docs/recommendations-policy'>использование рекомендательных систем</a>.
       </div>
     </form>

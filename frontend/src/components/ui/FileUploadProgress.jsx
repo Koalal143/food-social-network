@@ -27,6 +27,18 @@ export default function FileUploadProgress({
     const handleFileSelect = useCallback(async (file) => {
         if (!file) return;
 
+        // Валидация типа файла
+        const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+        if (!allowedTypes.includes(file.type.toLowerCase())) {
+            setUploadState({
+                isUploading: false,
+                progress: 0,
+                error: 'Разрешены только PNG, JPG и JPEG файлы',
+                success: false
+            });
+            return;
+        }
+
         // Валидация размера файла
         if (file.size > maxSize) {
             setUploadState({
