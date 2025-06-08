@@ -19,32 +19,36 @@ export default function RecipeProvider({ children }) {
     const fetchRecipes = async (resetExisting = false) => {
         try {
             setLoading(true)
-            
+
             const currentOffset = resetExisting ? 0 : offset
-            
+
             const { data, totalCount } = await RecipesService.getPaginatedRecipes(currentOffset, LIMIT)
 
             setTotalCount(totalCount)
-            
+
             const newOffset = resetExisting ? data.length : currentOffset + data.length;
             const moreAvailable = newOffset < totalCount;
             setHasMore(moreAvailable);
-            
+
             setRecipes(prev => {
                 if (resetExisting) return data;
 
                 const existingIds = prev.map(recipe => recipe.id);
                 const uniqueNewRecipes = data.filter(recipe => !existingIds.includes(recipe.id));
-                
+
                 return [...prev, ...uniqueNewRecipes];
             });
-            
+
             setOffset(newOffset);
         } catch (error) {
             setError(error)
         } finally {
             setLoading(false)
         }
+    }
+
+    const refreshRecipes = async () => {
+        await fetchRecipes(true);
     }
 
     useEffect(() => {
@@ -133,11 +137,15 @@ export default function RecipeProvider({ children }) {
     
             await RecipesService.updateRecipe(recipeWithPhotos);
 
-            await RecipesService.updateRecipe({
+            const publishedRecipe = await RecipesService.updateRecipe({
                 id: recipe.id,
                 is_published: true
             });
-    
+
+            // Обновляем локальное состояние - добавляем новый рецепт в начало списка
+            setRecipes(prev => [publishedRecipe, ...prev]);
+            setTotalCount(prev => prev + 1);
+
             return recipeWithPhotos;
     
         } catch (error) {
@@ -250,6 +258,7 @@ export default function RecipeProvider({ children }) {
                 hasMore,
                 totalCount,
                 fetchRecipes,
+                refreshRecipes,
                 getRecipeBySlug,
                 addRecipe,
                 getRecipesByAuthorId,
