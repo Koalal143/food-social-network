@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useRouter } from 'next/navigation'
-import { LogOut, User, PlusCircle, Search, X, Shield, Cookie, FileText } from 'lucide-react'
+import { LogOut, User, PlusCircle, Search, X, Shield, Cookie, FileText, ShoppingCart } from 'lucide-react'
 import Container from './Container'
 import SearchInput from '../ui/search/SearchInput'
 import { useState } from 'react'
@@ -72,6 +72,19 @@ export default function Header() {
                                         <Link href="/recipe/add">
                                             <PlusCircle className="mr-2 h-4 w-4" />
                                             Добавить рецепт
+                                        </Link>
+                                    </Button>
+
+                                    {/* Кнопка списка покупок */}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        asChild
+                                        className="p-1"
+                                        title="Список покупок"
+                                    >
+                                        <Link href="/shopping-list">
+                                            <ShoppingCart className="h-5 w-5 text-gray-700" />
                                         </Link>
                                     </Button>
 

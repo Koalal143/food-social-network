@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Star, User, Plus, Bot, Cookie } from "lucide-react"
+import { Home, Star, User, Plus, Bot, Cookie, ShoppingCart } from "lucide-react"
 import Container from "./Container"
 import { Button } from "../ui/button"
 import Link from "next/link"
@@ -23,6 +23,12 @@ export default function MobileMenu() {
                 <Button variant="icon" size="icon" className={`flex flex-col items-center ${isActive('/recommendations') ? 'text-primary' : 'text-muted-foreground'}`}>
                     <Star className={`h-5 w-5 ${isActive('/recommendations') ? 'text-primary' : 'text-muted-foreground'}`} />
                     <span className={"text-xs"}>Рекомендации</span>
+                </Button>
+            </Link>
+            <Link href="/shopping-list" passHref>
+                <Button variant="icon" size="icon" className={`flex flex-col items-center ${isActive('/shopping-list') ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <ShoppingCart className={`h-5 w-5 ${isActive('/shopping-list') ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={"text-xs"}>Покупки</span>
                 </Button>
             </Link>
             <Link href="/profile" passHref>
