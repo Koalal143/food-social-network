@@ -13,6 +13,7 @@ from src.schemas.recipe import (
     RecipeUpdate,
 )
 from src.schemas.search_query import SearchQueryRead
+from src.schemas.shopping_list_item import ShoppingListItemCreate, ShoppingListItemRead, ShoppingListItemUpdate
 from src.schemas.token import Token, TokenPayload
 from src.schemas.user import (
     UserCreate,
@@ -45,6 +46,9 @@ __all__ = [
     "RecipeReadShort",
     "RecipeUpdate",
     "SearchQueryRead",
+    "ShoppingListItemCreate",
+    "ShoppingListItemRead",
+    "ShoppingListItemUpdate",
     "Token",
     "TokenPayload",
     "UserCreate",

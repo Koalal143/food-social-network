@@ -9,6 +9,7 @@ from src.api.v1 import (
     recipe_search,
     recipes,
     recommendations,
+    shopping_list,
     user,
 )
 
@@ -23,5 +24,6 @@ router.include_router(recipes.router)
 router.include_router(favorite_recipe.router)
 router.include_router(disliked_recipe.router)
 router.include_router(recommendations.router)
+router.include_router(shopping_list.router)
 
 __all__ = ["router"]

@@ -26,6 +26,7 @@ from src.repositories.interfaces import (
     RecsysRepositoryProtocol,
     RefreshTokenRepositoryProtocol,
     SearchQueryRepositoryProtocol,
+    ShoppingListItemRepositoryProtocol,
     UserAvatarRepositoryProtocol,
     UserProfileRepositoryProtocol,
     UserRepositoryProtocol,
@@ -39,6 +40,7 @@ from src.repositories.recipe_search import RecipeSearchRepository
 from src.repositories.recipe_tag import RecipeTagRepository
 from src.repositories.recsys_client import RecsysRepository
 from src.repositories.search_query import SearchQueryRepository
+from src.repositories.shopping_list_item import ShoppingListItemRepository
 from src.repositories.token import RefreshTokenRepository
 from src.repositories.user import UserRepository
 from src.repositories.user_avatar import UserAvatarRepository
@@ -122,3 +124,7 @@ class RepositoryProvider(Provider):
     @provide
     def get_recsys_repository(self, adapter: RecommendationsAdapterProtocol) -> RecsysRepositoryProtocol:
         return RecsysRepository(adapter)
+
+    @provide
+    def get_shopping_list_item_repository(self, session: AsyncSession) -> ShoppingListItemRepositoryProtocol:
+        return ShoppingListItemRepository(session)
