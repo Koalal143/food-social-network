@@ -1,7 +1,7 @@
-export default function RecipeIngridients({ recipe }) {
+export default function RecipeIngridients({ recipe, showTitle = false }) {
     return (
       <section className="space-y-3">
-        <h2 className="text-lg font-bold">Ингредиенты</h2>
+        {showTitle && <h2 className="text-lg font-bold">Ингредиенты</h2>}
         <ul className="space-y-2">
           {recipe.ingredients.map((ingredient, index) => (
             <li key={index} className="flex items-center justify-between p-3 bg-background rounded-lg shadow-sm">
