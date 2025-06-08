@@ -7,6 +7,7 @@ from src.models.base import Base
 
 if TYPE_CHECKING:
     from src.models.recipe import Recipe
+    from src.models.shopping_list_item import ShoppingListItem
 
 
 class RecipeIngredient(Base):
@@ -17,3 +18,4 @@ class RecipeIngredient(Base):
     quantity: Mapped[str] = mapped_column(String(135), nullable=True)
 
     recipe: Mapped["Recipe"] = relationship(back_populates="ingredients")
+    shopping_list_items: Mapped[list["ShoppingListItem"]] = relationship(back_populates="recipe_ingredient")
