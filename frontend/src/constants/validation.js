@@ -11,7 +11,6 @@ export const BANNED_USERNAMES = [
     "me",
 ];
 
-// Создаем регулярку для проверки запрещенных имен как подстрок
 export const BANNED_USERNAME_REGEX = new RegExp(
     BANNED_USERNAMES.map(name => `(${name})`).join('|'),
     'i'
