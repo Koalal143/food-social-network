@@ -23,8 +23,35 @@ export const PASSWORD_MIN_LENGTH = 8;
 
 export const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
 
-// === РЕЦЕПТЫ ===
-// Синхронизировано с бэкендом (backend/src/schemas/recipe.py)
+/**
+ 
+ @param {string} username - Имя пользователя для проверки
+ * @returns {boolean} true если username содержит запрещенный контент, false если допустим
+ */
+export const isBannedUsername = (username) => {
+    if (!username || typeof username !== 'string') {
+        return false;
+    }
+
+    const lowerUsername = username.toLowerCase();
+
+    if (BANNED_USERNAMES.some(bannedName => lowerUsername === bannedName.toLowerCase())) {
+        return true;
+    }
+
+    const additionalBannedPatterns = [
+        /^(admin|administrator|root|moderator|support|help|owner|staff|avatar|me)\d*$/i, 
+        /^(admin|administrator|root|moderator|support|help|owner|staff|avatar|me)[-_]/i, 
+        /[-_](admin|administrator|root|moderator|support|help|owner|staff|avatar|me)$/i, 
+        /^(test|demo|sample|example|null|undefined|anonymous|guest|user)$/i, 
+        /^(api|www|mail|ftp|blog|shop|store|news|forum|chat)$/i, 
+        /^(fuck|shit|damn|bitch|ass|sex|porn|xxx|666|hitler|nazi)$/i, 
+    ];
+
+    return additionalBannedPatterns.some(pattern => pattern.test(username));
+};
+
+
 
 // Основные поля рецепта
 export const RECIPE_TITLE_MIN_LENGTH = 3;
