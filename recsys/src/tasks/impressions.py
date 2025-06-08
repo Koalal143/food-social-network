@@ -8,7 +8,9 @@ from src.services.recs_service import RecommendationServiceDependency
 router = NatsRouter()
 
 
-@router.subscriber("recsys_events.add_impression", stream=recommendations_stream)
+@router.subscriber(
+    "recsys_events.add_impression", stream=recommendations_stream, queue="recsys-events-impressions-queue"
+)
 @inject
 async def add_impression_task(
     request: AddImpressionRequest,
@@ -21,7 +23,9 @@ async def add_impression_task(
     )
 
 
-@router.subscriber("recsys_events.add_impressions_bulk", stream=recommendations_stream)
+@router.subscriber(
+    "recsys_events.add_impressions_bulk", stream=recommendations_stream, queue="recsys-events-impressions-queue"
+)
 @inject
 async def add_impressions_bulk_task(
     request: list[AddImpressionRequest],
