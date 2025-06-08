@@ -19,9 +19,11 @@ export default function FavoritesProvider({ children }) {
             
             const result = await FavoritesService.getPaginatedFavorites(offset, limit)
 
-            setFavorites(prev => 
-                offset === 0 ? result.data : [...prev, ...result.data]
-            )
+            setFavorites(prev => {
+                const newData = Array.isArray(result.data) ? result.data : []
+                if (offset === 0) return newData
+                return Array.isArray(prev) ? [...prev, ...newData] : newData
+            })
 
             setFavoritesTotalCount(result.totalCount)
 
@@ -39,19 +41,31 @@ export default function FavoritesProvider({ children }) {
     }, [])
 
     const addFavorite = (recipe) => {
-        const updatedFavorites = FavoritesService.addToFavorites(recipe)
-        setFavorites(updatedFavorites)
+        FavoritesService.addToFavorites(recipe)
+        setFavorites(prev => {
+            if (!Array.isArray(prev)) return [recipe]
+            // Проверяем, что рецепт еще не в избранном
+            if (prev.some(fav => fav.id === recipe.id)) return prev
+            return [...prev, recipe]
+        })
+        setFavoritesTotalCount(prev => prev + 1)
     }
 
     // Удаление рецепта из избранного
     const removeFavorite = (recipeId) => {
         FavoritesService.removeFromFavorites(recipeId)
-        setFavorites(prev => prev.filter(recipe => recipe.id !== recipeId))
+        setFavorites(prev => {
+            if (!Array.isArray(prev)) return []
+            return prev.filter(recipe => recipe.id !== recipeId)
+        })
         setFavoritesTotalCount(prev => Math.max(0, prev - 1))
     }
 
     const removeFromFavoritesOnDelete = (recipeId) => {
-        setFavorites(prev => prev.filter(recipe => recipe.id !== recipeId))
+        setFavorites(prev => {
+            if (!Array.isArray(prev)) return []
+            return prev.filter(recipe => recipe.id !== recipeId)
+        })
         setFavoritesTotalCount(prev => Math.max(0, prev - 1))
     }
 

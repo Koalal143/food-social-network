@@ -11,6 +11,7 @@ from src.repositories.interfaces.recipe_instruction import RecipeInstructionRepo
 from src.repositories.interfaces.recipe_search import RecipeSearchRepositoryProtocol
 from src.repositories.interfaces.recipe_tag import RecipeTagRepositoryProtocol
 from src.repositories.interfaces.recsys import RecsysRepositoryProtocol
+from src.repositories.interfaces.search_query import SearchQueryRepositoryProtocol
 from src.repositories.interfaces.token import RefreshTokenRepositoryProtocol
 from src.repositories.interfaces.user import UserRepositoryProtocol
 from src.repositories.interfaces.user_avatar import UserAvatarRepositoryProtocol

@@ -1,23 +1,40 @@
 import Link from "next/link"
 import Image from "next/image"
+import { ChefHat } from "lucide-react"
 
 export default function AuthorCard({ author }) {
   return (
-    <Link href={`/profile/${author.username}`}>
-      <div className="flex rounded-lg bg-card m-4 p-4 cursor-pointer items-center mb-6 hover:bg-muted/50 transition-colors">
-        <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4">
-          <Image
-            src={author.profile?.avatar_url || '/images/user-dummy.svg'}
-            alt={author.username}
-            fill
-            priority
-            unoptimized={true}
-            className="rounded-full object-cover bg-secondary"
-          />
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Автор рецепта</p>
-          <p className="font-medium">{author.username}</p>
+    <Link href={`/profile/${author.username}`} className="block">
+      <div className="group cursor-pointer transition-all duration-200 hover:shadow-md p-3 bg-background rounded-lg shadow-sm border">
+        <div className="flex items-center gap-3">
+          <div className="relative flex-shrink-0">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
+              <Image
+                src={author.profile?.avatar_url || '/images/user-dummy.svg'}
+                alt={author.username}
+                width={40}
+                height={40}
+                priority
+                unoptimized={true}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <ChefHat className="w-3 h-3 text-primary" />
+              <p className="text-xs font-medium text-muted-foreground">Автор рецепта</p>
+            </div>
+            <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+              {author.username}
+            </p>
+            {author.profile?.about && (
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                {author.profile.about}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </Link>

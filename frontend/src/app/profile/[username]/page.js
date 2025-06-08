@@ -3,13 +3,13 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import Container from "@/components/layout/Container";
 import { useRecipes } from "@/context/RecipeContext";
-import Loader from "@/components/ui/Loader";
+import { AuthorProfileSkeleton } from "@/components/ui/skeletons";
 import { useUser } from "@/context/UserContext";
-import Image from "next/image";
 import CopyLinkButton from "@/components/ui/CopyLinkButton"
 import NotFound from "@/app/not-found";
 import InfiniteRecipesList from "@/components/shared/InfiniteRecipeList";
 import RecipesService from "@/services/recipes.service";
+import AuthorProfileCard from "@/components/ui/profile/AuthorProfileCard";
 
 const RECIPES_PER_PAGE = 9;
 
@@ -82,13 +82,16 @@ export default function ProfileIdPage({ params }) {
                 setRecipes(prev => {
                     const existingIds = new Set(prev.map(r => r.id));
                     const uniqueNewRecipes = newRecipes.filter(r => !existingIds.has(r.id));
-                    
-                    return [...prev, ...uniqueNewRecipes];
+                    const newRecipesList = [...prev, ...uniqueNewRecipes];
+
+                    // Обновляем hasMore на основе нового количества рецептов
+                    setHasMore(newRecipesList.length < (result.totalCount || 0) && newRecipes.length > 0);
+
+                    return newRecipesList;
                 });
-                
+
+
                 setOffset(prev => prev + newRecipes.length);
-                
-                setHasMore(recipes.length + newRecipes.length < (result.totalCount || 0));
                 
             } catch (err) {
                 console.error("Error loading more recipes:", err);
@@ -111,7 +114,11 @@ export default function ProfileIdPage({ params }) {
     }, [fetchInitialData]);
 
     if (globalLoading) {
-        return <Loader />;
+        return (
+            <Container className="py-8">
+                <AuthorProfileSkeleton />
+            </Container>
+        );
     }
 
     if (error) {
@@ -138,42 +145,55 @@ export default function ProfileIdPage({ params }) {
     }
 
     return (
-        <Container className="py-6">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                    <Image
-                        src={user.profile?.avatar_url || '/images/user-dummy.svg'}
-                        alt={user.username}
-                        width={120} 
-                        height={120}
-                        priority
-                        unoptimized={true}
-                        className="w-24 h-24 rounded-full mr-4 bg-secondary"
-                    />
-                    <div>
-                        <h3 className="text-xl font-semibold">{user.username}</h3>
-                        <p className="text-gray-600">{user.profile.about}</p>
-                    </div>
-                </div>
-                <CopyLinkButton 
-                    link={`${window.location.origin}/profile/${username}`}
-                    tooltipText="Скопировать ссылку на профиль"
+        <Container className="py-8">
+            <div className="space-y-8">
+                {/* Профиль автора */}
+                <AuthorProfileCard
+                    user={user}
+                    totalRecipes={totalCount}
                 />
-            </div>
-            <h3 className="text-lg font-bold mb-4">Рецепты ({totalCount})</h3>
-            <InfiniteRecipesList 
-                recipes={recipes}
-                loading={isLoading}
-                hasMore={hasMore}
-                onLoadMore={loadMoreRecipes}
-                source="author-page"
-            />
-            
-            {recipes.length === 0 && !isLoading && (
-                <div className="text-center py-12 text-gray-500">
-                    У этого пользователя пока нет рецептов
+
+                {/* Рецепты */}
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold tracking-tight">
+                            Рецепты {totalCount > 0 && (
+                                <span className="text-muted-foreground font-normal">({totalCount})</span>
+                            )}
+                        </h2>
+                        <CopyLinkButton
+                            link={`${window.location.origin}/profile/${username}`}
+                            tooltipText="Скопировать ссылку на профиль"
+                        />
+                    </div>
+
+                    <InfiniteRecipesList
+                        recipes={recipes}
+                        loading={isLoading}
+                        hasMore={hasMore}
+                        onLoadMore={loadMoreRecipes}
+                        source="author-page"
+                    />
+
+                    {recipes.length === 0 && !isLoading && (
+                        <div className="text-center py-16">
+                            <div className="space-y-3">
+                                <div className="w-16 h-16 mx-auto bg-secondary/60 rounded-full flex items-center justify-center">
+                                    <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-lg font-semibold text-muted-foreground">
+                                    У этого пользователя пока нет рецептов
+                                </h3>
+                                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                                    Возможно, они скоро поделятся своими кулинарными шедеврами
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
         </Container>
     );
 }

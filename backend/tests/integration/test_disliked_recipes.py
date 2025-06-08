@@ -334,17 +334,15 @@ class TestDislikedRecipesBusinessLogic:
         user1_payload = {"recipe_id": test_recipe["id"]}
         await api_client.post("/v1/disliked-recipes", json=user1_payload, headers=auth_headers)
 
-        user2_response = await api_client.post("/v1/auth/register", json={
-            "username": "testuser2",
-            "email": "test2@example.com",
-            "password": "TestPass123!"
-        })
+        user2_response = await api_client.post(
+            "/v1/auth/register",
+            json={"username": "testuser2", "email": "test2@example.com", "password": "TestPass123!"},
+        )
         assert user2_response.status_code == status.HTTP_201_CREATED
 
-        user2_login = await api_client.post("/v1/auth/login", json={
-            "email": "test2@example.com",
-            "password": "TestPass123!"
-        })
+        user2_login = await api_client.post(
+            "/v1/auth/login", json={"email": "test2@example.com", "password": "TestPass123!"}
+        )
         user2_token = user2_login.json()["access_token"]
         user2_headers = {"Authorization": f"Bearer {user2_token}"}
 
@@ -431,9 +429,7 @@ class TestDislikedRecipesBusinessLogic:
         auth_headers: dict[str, str],
     ):
         response = await api_client.post(
-            "/v1/disliked-recipes",
-            content="invalid json",
-            headers={**auth_headers, "Content-Type": "application/json"}
+            "/v1/disliked-recipes", content="invalid json", headers={**auth_headers, "Content-Type": "application/json"}
         )
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

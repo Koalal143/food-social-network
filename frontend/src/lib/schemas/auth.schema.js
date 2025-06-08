@@ -3,7 +3,8 @@ import {
   USERNAME_MAX_LENGTH,
   USERNAME_MIN_LENGTH,
   PASSWORD_MIN_LENGTH,
-  USERNAME_REGEX
+  USERNAME_REGEX,
+  isBannedUsername
 } from "@/constants/validation";
 
 export const loginSchema = z.object({
@@ -25,7 +26,10 @@ export const registrationSchema = z
       .string()
       .min(USERNAME_MIN_LENGTH, "Юзернейм должен содержать минимум 3 символа")
       .max(USERNAME_MAX_LENGTH, "Юзернейм не должен превышать 30 символов")
-      .regex(USERNAME_REGEX, "Юзернейм может содержать только латинские буквы, цифры, дефис и ниижнее подчеркивание"),
+      .regex(USERNAME_REGEX, "Юзернейм может содержать только латинские буквы, цифры, дефис и ниижнее подчеркивание")
+      .refine((username) => !isBannedUsername(username), {
+        message: "Данное имя пользователя запрещено"
+      }),
     email: z
       .string()
       .email("Введите корректный email"),

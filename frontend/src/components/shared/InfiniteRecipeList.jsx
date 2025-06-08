@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useEffect } from "react";
 import RecipeCard from "@/components/shared/RecipeCard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function InfiniteRecipesList({ recipes, loading, hasMore, onLoadMore, source='feed', editable=false }) {
     const observerRef = useRef(null);
@@ -37,8 +38,16 @@ export default function InfiniteRecipesList({ recipes, loading, hasMore, onLoadM
             ))}
         </div>
         
-        <div ref={loadMoreRef} className="w-full h-10 flex justify-center">
-            {loading && <LoadingSpinner />}
+        <div ref={loadMoreRef} className="w-full">
+            {loading && (
+                <div className="flex justify-center py-8">
+                    <LoadingSpinner
+                        variant="chef"
+                        size="md"
+                        text="Загружаем рецепты..."
+                    />
+                </div>
+            )}
         </div>
         
         {!hasMore && recipes.length > 0 && (
@@ -50,10 +59,3 @@ export default function InfiniteRecipesList({ recipes, loading, hasMore, onLoadM
     );
 }
 
-function LoadingSpinner() {
-    return (
-        <div className="flex justify-center my-4">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-    );
-}

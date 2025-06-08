@@ -15,6 +15,7 @@ from src.repositories.interfaces import (
     RecipeTagRepositoryProtocol,
     RecsysRepositoryProtocol,
     RefreshTokenRepositoryProtocol,
+    SearchQueryRepositoryProtocol,
     UserAvatarRepositoryProtocol,
     UserProfileRepositoryProtocol,
     UserRepositoryProtocol,
@@ -119,11 +120,13 @@ class ServiceProvider(Provider):
     def get_search_service(
         self,
         recipe_search_repository: RecipeSearchRepositoryProtocol,
+        search_query_repository: SearchQueryRepositoryProtocol,
         recipe_repository: RecipeRepositoryProtocol,
         recipe_image_repository: RecipeImageRepositoryProtocol,
     ) -> SearchService:
         return SearchService(
             recipe_search_repository=recipe_search_repository,
+            search_query_repository=search_query_repository,
             recipe_repository=recipe_repository,
             recipe_image_repository=recipe_image_repository,
         )

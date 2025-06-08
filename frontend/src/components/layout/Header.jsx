@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useRouter } from 'next/navigation'
-import { LogOut, User, PlusCircle, Search, Menu, X, Shield } from 'lucide-react'
+import { LogOut, User, PlusCircle, Search, X, Shield, Cookie, FileText } from 'lucide-react'
 import Container from './Container'
 import SearchInput from '../ui/search/SearchInput'
 import { useState } from 'react'
@@ -112,13 +112,19 @@ export default function Header() {
                                             </DropdownMenuItem>
                                             {user?.is_superuser && (
                                                 <DropdownMenuItem asChild>
-                                                    <Link href="/admin" className="flex items-center">
+                                                    <Link href="/system-management-panel" className="flex items-center">
                                                         <Shield className="mr-2 h-4 w-4" />
                                                         Админ-панель
                                                     </Link>
                                                 </DropdownMenuItem>
                                             )}
 
+                                            <DropdownMenuItem asChild>
+                                                <Link href="/docs/cookies" className="flex items-center">
+                                                    <Cookie className="mr-2 h-4 w-4" />
+                                                    Управление куки
+                                                </Link>
+                                            </DropdownMenuItem>
 
                                             <DropdownMenuItem
                                                 className="text-red-600 focus:text-red-600"
@@ -132,6 +138,11 @@ export default function Header() {
                                 </>
                             ) : (
                                 <>
+                                    <Button variant="ghost" size="sm" asChild className="md:hidden text-gray-700 hover:text-gray-900 hover:bg-gray-100/50 text-xs p-1">
+                                        <Link href="/docs/cookies" title="Политики">
+                                            <FileText className="h-4 w-4" />
+                                        </Link>
+                                    </Button>
                                     <Button variant="ghost" size="sm" asChild className="text-gray-700 hover:text-gray-900 hover:bg-gray-100/50 text-xs md:text-sm">
                                         <Link href="/login">
                                             Войти

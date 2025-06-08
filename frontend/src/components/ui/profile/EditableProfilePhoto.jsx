@@ -6,6 +6,7 @@ import { Upload, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { fileSchema } from "@/lib/schemas/file.schema";
+import PhotoUploadInfo from "../PhotoUploadInfo";
 
 export default function EditableProfilePhoto({ user, className = "" }) {
     const { toast } = useToast();
@@ -102,9 +103,14 @@ export default function EditableProfilePhoto({ user, className = "" }) {
                     </div>
                 </div>
             </div>
-            <p className="text-xs text-muted-foreground text-center">
-                Разрешены JPG, GIF или PNG. Максимальный размер 5MB.
-            </p>
+            <div className="text-center">
+                <PhotoUploadInfo
+                    recommendedSize="400×400px (квадрат)"
+                    maxFileSize="5MB"
+                    formats="JPG, PNG, GIF"
+                    className="justify-center"
+                />
+            </div>
         </div>
     );
 }

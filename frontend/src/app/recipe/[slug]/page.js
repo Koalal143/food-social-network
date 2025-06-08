@@ -2,12 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
+import { useDislikes } from "@/context/DislikesContext";
 import Container from "@/components/layout/Container";
 import { useRecipes } from "@/context/RecipeContext";
-import Loader from "@/components/ui/Loader";
+import { RecipeDetailSkeleton } from "@/components/ui/skeletons";
 import Image from "next/image";
 import AuthorCard from "@/components/ui/recipe-page/AuthorCard";
-import { Bookmark, Trash2 } from "lucide-react";
+import AnimatedActionButtons from "@/components/ui/recipe-page/AnimatedActionButtons";
+import { Share2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CopyLinkButton from "@/components/ui/CopyLinkButton";
 import RecipeInfoCards from "@/components/ui/recipe-page/RecipeInfoCards";
@@ -23,10 +25,13 @@ import DeleteRecipeDialog from "@/components/shared/recipeActions/DeleteRecipeDi
 export default function RecipePage({ params }) {
     const { getRecipeBySlug, error, loading } = useRecipes();
     const { addFavorite, removeFavorite } = useFavorites();
-    const [ recipe, setRecipe ] = useState(null);
+    const { addToDisliked, removeFromDisliked } = useDislikes();
+    const [recipe, setRecipe] = useState(null);
     const { toast } = useToast()
-    const [ isSaved, setIsSaved ] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
+    const [isDisliked, setIsDisliked] = useState(false);
     const { isAuth, user } = useAuth();
+    const [isImageLoading, setIsImageLoading] = useState(true);
     
     const { slug } = React.use(params);
     const searchParams = useSearchParams();
@@ -37,117 +42,188 @@ export default function RecipePage({ params }) {
             try {
                 const recipeData = await getRecipeBySlug(slug, source);
                 if (recipeData) {
-                setRecipe(recipeData);
-                setIsSaved(recipeData.is_on_favorites);
+                    setRecipe(recipeData);
+                    setIsSaved(recipeData.is_on_favorites || false);
+                    setIsDisliked(recipeData.is_on_dislikes || false);
                 }
             } catch (error) {
                 const { message, type } = handleApiError(error);
-                
                 toast({
-                variant: type,
-                title: "Ошибка",
-                description: message,
+                    variant: type,
+                    title: "Ошибка",
+                    description: message,
                 });
             }
         };
         fetchData();
     }, [slug]);
 
-    // Проверка прав на удаление рецепта
     const canDeleteRecipe = () => {
         if (!user || !recipe) return false;
-        // Владелец рецепта или суперпользователь может удалить рецепт
         return user.id === recipe.author.id || user.is_superuser;
     };
 
-    const handleSave = () => {
-        if (isSaved) {
-            removeFavorite(recipe.id);
-        } else {
-            addFavorite(recipe.id);
+    const handleSave = async () => {
+        if (!isAuth) {
+            return;
         }
-        setIsSaved(!isSaved);
+
+        try {
+            if (isSaved) {
+                removeFavorite(recipe.id);
+                setIsSaved(false);
+            } else {
+                if (isDisliked) {
+                    await removeFromDisliked(recipe.id);
+                    setIsDisliked(false);
+                }
+                addFavorite(recipe.id);
+                setIsSaved(true);
+            }
+        } catch (error) {
+            const { message, type } = handleApiError(error);
+            toast({
+                variant: type,
+                title: "Ошибка",
+                description: message,
+            });
+        }
     };
-  
-  
+
+    const handleDislike = async () => {
+        if (!isAuth) {
+            return;
+        }
+
+        try {
+            if (isDisliked) {
+                await removeFromDisliked(recipe.id);
+                setIsDisliked(false);
+            } else {
+                if (isSaved) {
+                    removeFavorite(recipe.id);
+                    setIsSaved(false);
+                }
+                await addToDisliked(recipe.id);
+                setIsDisliked(true);
+            }
+        } catch (error) {
+            const { message, type } = handleApiError(error);
+            toast({
+                variant: type,
+                title: "Ошибка",
+                description: message,
+            });
+        }
+    };
+
     if (loading) {
-        return <Loader />
+        return (
+            <Container>
+                <div className="py-8">
+                    <RecipeDetailSkeleton />
+                </div>
+            </Container>
+        )
     }
-  
+
     if (error) {
         return <NotFound />
     }
 
     if (!recipe) {
-        return <Loader />
+        return (
+            <Container>
+                <div className="py-8">
+                    <RecipeDetailSkeleton />
+                </div>
+            </Container>
+        )
     }
 
     return (
         <Container>
-        <article className="py-8">
-            <div className="max-w-3xl mx-auto space-y-8 bg-secondary/100 rounded-3xl pb-4">
-                {/* Фотография и кнопки */}
-                <div className="relative aspect-[16/9] rounded-t-3xl overflow-hidden">
-                    <Image
-                    src={recipe.image_url || '/images/image-dummy.svg'}
-                    alt={recipe.title}
-                    fill
-                    className="object-cover"
-                    priority
-                    unoptimized={true}
-                    />
-                    <div className="absolute top-0 right-0 flex gap-2 bg-background backdrop-blur p-1.5 rounded-bl-3xl">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="bg-transparent backdrop-blur rounded-full"
-                            onClick={handleSave}
-                            disabled={!isAuth}
-                        >
-                            <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-primary' : ''} ${!isAuth && 'text-gray-500'}`} />
-                        </Button>
-                        <CopyLinkButton
-                            link={`${window.location.origin}/recipe/${recipe.slug}?source=shared`}
-                            tooltipText="Скопировать ссылку на рецепт"
+            <article className="py-8">
+                <div className="max-w-3xl mx-auto bg-white dark:bg-secondary/100 rounded-3xl shadow-xl overflow-hidden">
+                    {/* Image with action buttons */}
+                    <div className="relative aspect-[16/9] w-full">
+                        <Image
+                            src={recipe.image_url || '/images/image-dummy.svg'}
+                            alt={recipe.title}
+                            fill
+                            className={`object-cover transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
+                            priority
+                            unoptimized={true}
+                            onLoadingComplete={() => setIsImageLoading(false)}
                         />
-                        {canDeleteRecipe() && (
-                            <DeleteRecipeDialog
-                                recipe={recipe}
+                        {isImageLoading && (
+                            <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
+                        <div className="absolute top-3 right-3 flex gap-1.5">
+                            <CopyLinkButton
+                                link={`${window.location.origin}/recipe/${recipe.slug}?source=shared`}
+                                tooltipText="Скопировать ссылку на рецепт"
                                 trigger={
                                     <Button
-                                        variant="destructive"
+                                        variant="ghost"
                                         size="icon"
-                                        className="bg-destructive/80 backdrop-blur rounded-full hover:bg-destructive"
+                                        className="h-8 w-8 bg-white/90 dark:bg-background/90 backdrop-blur rounded-full hover:bg-white dark:hover:bg-background shadow-md hover:scale-105 transition-transform"
                                     >
-                                        <Trash2 className="w-5 h-5" />
+                                        <Share2 className="w-3.5 h-3.5" />
                                     </Button>
                                 }
                             />
-                        )}
+                            {canDeleteRecipe() && (
+                                <DeleteRecipeDialog
+                                    recipe={recipe}
+                                    trigger={
+                                        <Button
+                                            variant="destructive"
+                                            size="icon"
+                                            className="h-8 w-8 bg-destructive/90 backdrop-blur rounded-full hover:bg-destructive shadow-md hover:scale-105 transition-transform"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                    }
+                                />
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Recipe Content */}
+                    <div className="p-4 space-y-4">
+                        {/* Заголовок и описание */}
+                        <div className="space-y-2">
+                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight overflow-wrap break-word word-break break-all">{recipe.title}</h1>
+                            <p className="text-sm md:text-base text-muted-foreground overflow-wrap break-word word-break break-all">
+                                {recipe.short_description}
+                            </p>
+                        </div>
+
+                        {/* Кнопки действий */}
+                        <AnimatedActionButtons
+                            isSaved={isSaved}
+                            isDisliked={isDisliked}
+                            onSave={handleSave}
+                            onDislike={handleDislike}
+                            disabled={!isAuth}
+                        />
+
+                        {/* Author card */}
+                        <AuthorCard author={recipe.author} />
+
+                        {/* Recipe info cards */}
+                        <RecipeInfoCards recipe={recipe} />
+
+                        {/* Ingredients */}
+                        <RecipeIngridients recipe={recipe} />
+
+                        {/* Instructions */}
+                        <RecipeInstruction recipe={recipe} />
                     </div>
                 </div>
-
-                {/* Заголовок */}
-                <div className="space-y-2 m-4">
-                    <h1 className="text-3xl font-bold tracking-tight overflow-wrap break-word word-break break-all">{recipe.title}</h1>
-                    <p className="text-lg text-muted-foreground overflow-wrap break-word word-break break-all">
-                        {recipe.short_description}
-                    </p>
-                </div>
-
-                {/* Информация о рецепте */}
-                <RecipeInfoCards recipe={recipe} />
-
-                {/* Карточка автора */}
-                <AuthorCard author={recipe.author} />
-
-                {/* Ингредиенты */}
-                <RecipeIngridients recipe={recipe} />
-
-                {/* Инструкция */}
-                <RecipeInstruction recipe={recipe} />
-            </div>
-        </article>
+            </article>
         </Container>
     );
-} 
+}

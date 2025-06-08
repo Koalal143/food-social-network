@@ -1,11 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Container from "@/components/layout/Container";
 import RecipeSwipeCard from "@/components/shared/RecipeSwipeCard";
 import { useRouter } from 'next/navigation';
 import { useRecomendations } from '@/context/RecomendationsContext';
 import { useDislikes } from '@/context/DislikesContext';
-import Loader from "@/components/ui/Loader";
 import { useFavorites } from "@/context/FavoritesContext";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bookmark, ThumbsDown, Eye, Info, ChevronRight, RefreshCw, X, FastForward } from 'lucide-react';
@@ -14,13 +13,20 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function RecommendationsPage() {
   const router = useRouter();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const { recipes, loading, fetchRecipes } = useRecomendations();
+  const {
+    loadingMore,
+    isPreloading,
+    moveToNextRecipe,
+    getCurrentRecipe
+  } = useRecomendations();
   const { addFavorite } = useFavorites();
   const { addToDisliked } = useDislikes();
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [direction, setDirection] = useState(null);
+
+  // Получаем текущий рецепт
+  const currentRecipe = getCurrentRecipe();
 
   const nextTutorialStep = () => {
     if (tutorialStep < 3) {
@@ -36,50 +42,36 @@ export default function RecommendationsPage() {
     setTutorialStep(0);
   };
 
-  const handleDislike = () => {
-    if (recipes[currentIndex]) {
-      addToDisliked(recipes[currentIndex].id)
+  const handleDislike = async () => {
+    if (currentRecipe) {
+      addToDisliked(currentRecipe.id)
     }
     setDirection('left');
-    if (currentIndex < recipes.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+
+    // Переходим к следующему рецепту с помощью новой логики
+    await moveToNextRecipe();
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     setDirection('up');
-    if (currentIndex < recipes.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+
+    // Переходим к следующему рецепту с помощью новой логики
+    await moveToNextRecipe();
   };
 
-  const handleLike = () => {
-    if (recipes[currentIndex]) {
-      addFavorite(recipes[currentIndex].id);
+  const handleLike = async () => {
+    if (currentRecipe) {
+      addFavorite(currentRecipe.id);
     }
     setDirection('right');
-    if (currentIndex < recipes.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+
+    // Переходим к следующему рецепту с помощью новой логики
+    await moveToNextRecipe();
   };
 
   const handleViewRecipe = (recipe) => {
     router.push(`/recipe/${recipe.slug}?source=recs-detail`);
   };
-
-  useEffect(() => {
-    if (currentIndex >= recipes.length - 1 && recipes.length > 0) {
-      fetchRecipes(true);
-    }
-  }, [currentIndex]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center">
-        <Loader />
-      </div>
-    );
-  }
 
   const tutorialContent = [
     {
@@ -121,17 +113,17 @@ export default function RecommendationsPage() {
   ];
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute skeleton="recommendations">
       <Container className="h-full flex flex-col">
         <div className="flex-grow">
           <AnimatePresence
             mode="wait"
             onExitComplete={() => setDirection(null)}
           >
-            {recipes.length > 0 && currentIndex < recipes.length ? (
+            {currentRecipe ? (
               <RecipeSwipeCard
-                key={currentIndex}
-                recipe={recipes[currentIndex]}
+                key={`recipe-${currentRecipe.id}`}
+                recipe={currentRecipe}
                 direction={direction}
                 onSkip={handleSkip}
                 onDislike={handleDislike}
@@ -139,7 +131,7 @@ export default function RecommendationsPage() {
                 onViewRecipe={handleViewRecipe}
               />
             ) : (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-6 relative h-80 md:h-96 flex flex-col items-center justify-center rounded-2xl md:rounded-3xl bg-gradient-to-br from-gray-50 via-white to-blue-50 border border-gray-200 shadow-lg overflow-hidden px-4 max-w-sm mx-auto"
@@ -147,17 +139,17 @@ export default function RecommendationsPage() {
                 <div className="absolute top-4 left-4 w-8 h-8 md:w-12 md:h-12 bg-yellow-200/30 rounded-full blur-xl" />
                 <div className="absolute bottom-6 right-6 w-6 h-6 md:w-8 md:h-8 bg-blue-200/30 rounded-full blur-lg" />
                 <div className="absolute top-1/2 right-4 w-4 h-4 md:w-6 md:h-6 bg-pink-200/30 rounded-full blur-md" />
-                
-                <motion.div 
+
+                <motion.div
                   className="text-5xl md:text-6xl mb-4"
-                  animate={{ 
+                  animate={{
                     rotate: [0, 10, -10, 0],
                     scale: [1, 1.1, 1]
                   }}
-                  transition={{ 
-                    duration: 2, 
-                    repeat: Infinity, 
-                    repeatType: "reverse" 
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "reverse"
                   }}
                 >
                   🍽️
@@ -174,7 +166,7 @@ export default function RecommendationsPage() {
         </div>
 
         {/* Кнопки лайк, дизлайк, скип */}
-        {recipes.length > 0 && currentIndex < recipes.length && (
+        {currentRecipe && (
           <motion.div className="my-4">
             <div className="flex justify-center gap-4 md:gap-6">
               <button
@@ -203,7 +195,7 @@ export default function RecommendationsPage() {
         )}
 
         {/* Кнопка инструкции внизу страницы */}
-        <motion.div 
+        <motion.div
           className="my-6"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

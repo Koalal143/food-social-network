@@ -8,25 +8,28 @@ import AuthProvider from "./AuthProvider"
 import { SearchProvider } from "./SearchProvider"
 import RecomendationsProvider from "./RecomendationsProvider"
 import DislikesProvider from "./DislikesProvider"
+import SidebarProvider from "./SidebarProvider"
 
 export default function MainProvider({ children }) {
     return (
         <AuthProvider>
-            <RecipeProvider>
-                    <UserProvider>
-                        <FavoritesProvider>
-                            <DislikesProvider>
-                                <SearchHistoryProvider>                        
-                                    <SearchProvider>
-                                        <RecomendationsProvider>
-                                            {children}
-                                        </RecomendationsProvider>
-                                    </SearchProvider>
-                                </SearchHistoryProvider>
-                            </DislikesProvider>
-                        </FavoritesProvider>
-                    </UserProvider>
-            </RecipeProvider>
+            <SidebarProvider>
+                <RecipeProvider>
+                        <UserProvider>
+                            <FavoritesProvider>
+                                <DislikesProvider>
+                                    <SearchHistoryProvider>
+                                        <SearchProvider>
+                                            <RecomendationsProvider>
+                                                {children}
+                                            </RecomendationsProvider>
+                                        </SearchProvider>
+                                    </SearchHistoryProvider>
+                                </DislikesProvider>
+                            </FavoritesProvider>
+                        </UserProvider>
+                </RecipeProvider>
+            </SidebarProvider>
         </AuthProvider>
     )
 }

@@ -20,28 +20,53 @@ import { useRecipes } from '@/context/RecipeContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRouter } from 'next/navigation';
 
-const AddRecipeForm = () => {
-    const { addRecipe } = useRecipes()
+// Импорты для новой валидации
+import {
+    getRecipeValidationRules,
+    validateIngredients,
+    validateInstructions,
+    RECIPE_VALIDATION_CONSTANTS,
+} from '@/lib/validation/recipe.validation';
+import { useRecipeTags } from '@/hooks/useRecipeTags';
+import RecipeTagsInput from './RecipeTagsInput';
+import { handleApiError } from '@/utils/errorHandler';
+import PhotoUploadInfo from '@/components/ui/PhotoUploadInfo';
+import FileUploadProgress from '@/components/ui/FileUploadProgress';
 
-    // Локальный стейт для тэгов
-    const [tags, setTags] = useState([]);
-    const [tagInput, setTagInput] = useState("");
-    const [tagError, setTagError] = useState("");
+const AddRecipeForm = () => {
+    const { addRecipe } = useRecipes();
+    const router = useRouter();
+    const { toast } = useToast();
+
+    // Хук для управления тегами
+    const {
+        tags,
+        tagInput,
+        tagError,
+        addTag,
+        removeTag,
+        setTagInput,
+        handleTagInputKeyPress,
+        validateAllTags,
+        canAddMoreTags,
+        maxTagsCount,
+    } = useRecipeTags();
 
     // Состояния для превью фотографий
     const [mainPhotoPreview, setMainPhotoPreview] = useState(null);
     const [instructionPhotoPreviews, setInstructionPhotoPreviews] = useState({});
 
-    const router = useRouter();
-
+    // Правила валидации
+    const validationRules = getRecipeValidationRules();
+    
     const { control, handleSubmit, register, setValue, formState: { errors } } = useForm({
         defaultValues: {
-        ingredients: [{ name: '', quantity: '' }],
-        instructions: [{ step_number: 1, description: '', photo: null }],
-        difficulty: '',
+            ingredients: [{ name: '', quantity: '' }],
+            instructions: [{ step_number: 1, description: '', photo: null }],
+            difficulty: '',
         },
     });
-    
+
     const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({
         control,
         name: 'ingredients',
@@ -66,64 +91,10 @@ const AddRecipeForm = () => {
     }, [instructionFields, setValue]);
     
     const handleAddInstruction = () => {
-        if (instructionFields.length < 25) {
+        if (instructionFields.length < RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT) {
             const nextStepNumber = instructionFields.length + 1;
             appendInstruction({ step_number: nextStepNumber, description: '', photo: null });
         }
-    };
-    
-    const { toast } = useToast();
-
-    // Валидация названия
-    const validateTitle = (value) => {
-        if (!value) return 'Название обязательно';
-        if (value.length > 135) return 'Название не должно превышать 135 символов';
-        const trimmed = value.trim();
-        if (trimmed.indexOf(' ') === -1 && trimmed.length > 25) {
-            return 'Название не должно быть одним длинным словом (>25 символов)';
-        }
-        return true;
-    };
-
-    // Валидация описания
-    const validateDescription = (value) => {
-        if (!value) return 'Описание обязательно';
-        if (value.length > 255) return 'Описание не должно превышать 255 символов';
-        return true;
-    };
-
-    // Валидация времени
-    const validateCookTime = (value) => {
-        if (!value) return 'Время обязательно';
-        const num = Number(value);
-        if (isNaN(num) || num <= 0) return 'Время должно быть больше 0';
-        if (num >= 1440) return 'Время не должно превышать 24 часа (1440 минут)';
-        return true;
-    };
-
-    // Функции для работы с тэгами
-    const handleAddTag = () => {
-        const newTag = tagInput.trim();
-        if (!newTag) return;
-        if (tags.length >= 15) {
-            setTagError('Максимум 15 тэгов');
-            return;
-        }
-        if (newTag.length > 30) {
-            setTagError('Тэг не должен превышать 30 символов');
-            return;
-        }
-        if (tags.includes(newTag)) {
-            setTagError('Такой тэг уже добавлен');
-            return;
-        }
-        setTags([...tags, newTag]);
-        setTagInput("");
-        setTagError("");
-    };
-    const handleRemoveTag = (idx) => {
-        setTags(tags.filter((_, i) => i !== idx));
-        setTagError("");
     };
 
     // Обработка главного фото
@@ -170,37 +141,41 @@ const AddRecipeForm = () => {
     };
 
     const onSubmit = (data) => {
-        if (tags.length === 0) {
-            setTagError('Добавьте хотя бы один тэг');
-        return;
+        // Валидация тегов
+        if (!validateAllTags()) {
+            return;
         }
-        if (tags.length > 15) {
-            setTagError('Максимум 15 тэгов');
-        return;
-        }
-        if (data.ingredients.length > 50) {
+
+        // Валидация ингредиентов
+        const ingredientsValidation = validateIngredients(data.ingredients);
+        if (ingredientsValidation !== true) {
             toast({
                 variant: 'destructive',
-                title: 'Ошибка',
-                description: 'Максимум 50 ингредиентов',
+                title: 'Ошибка валидации',
+                description: ingredientsValidation,
             });
             return;
         }
-        if (data.instructions.length > 50) {
+
+        // Валидация инструкций
+        const instructionsValidation = validateInstructions(data.instructions);
+        if (instructionsValidation !== true) {
             toast({
                 variant: 'destructive',
-                title: 'Ошибка',
-                description: 'Максимум 50 шагов инструкции',
+                title: 'Ошибка валидации',
+                description: instructionsValidation,
             });
             return;
         }
+
+
         try {
             addRecipe({ ...data, tags });
             toast({
                 title: "Рецепт успешно добавлен",
                 description: "Ваш рецепт был сохранен.",
             });
-            router.push('/')
+            router.push('/');
         } catch (error) {
             const { message, type } = handleApiError(error);
             toast({
@@ -221,11 +196,11 @@ const AddRecipeForm = () => {
                     <div className="space-y-2">
                         <Label>Название рецепта</Label>
                         <Input
-                            {...register('title', { validate: validateTitle })}
+                            {...register('title', validationRules.title)}
                             type="text"
                             placeholder="Введите название рецепта"
-                            maxLength={135}
-                            minLength={3}
+                            maxLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MAX_LENGTH}
+                            minLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MIN_LENGTH}
                         />
                         {errors.title && <p className="text-destructive text-sm">{errors.title.message}</p>}
                     </div>
@@ -233,64 +208,56 @@ const AddRecipeForm = () => {
                     <div className="space-y-2">
                         <Label>Описание</Label>
                         <Textarea
-                            {...register('short_description', { validate: validateDescription })}
+                            {...register('short_description', validationRules.short_description)}
                             rows={2}
                             placeholder="Краткое описание рецепта"
-                            minLength={3}
-                            maxLength={255}
+                            minLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MIN_LENGTH}
+                            maxLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MAX_LENGTH}
                         />
                         {errors.short_description && <p className="text-destructive text-sm">{errors.short_description.message}</p>}
                     </div>
 
-                    {/* Конструктор тэгов */}
+                    {/* Теги */}
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                        <Label>Тэги</Label>
-                        <TooltipProvider>
-                            <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button type="button" className="text-muted-foreground hover:text-primary">
-                                <Info className="w-4 h-4" />
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Подбирайте тэги тщательнее, они влияют на продвижение вашего рецепта</p>
-                            </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+                            <Label>Теги</Label>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button type="button" className="text-muted-foreground hover:text-primary">
+                                            <Info className="w-4 h-4" />
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Подбирайте теги тщательнее, они влияют на продвижение вашего рецепта</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
-                        <div className="flex gap-2">
-                        <Input
-                            value={tagInput}
-                            onChange={e => setTagInput(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); }}}
-                            placeholder="Введите тэг и нажмите Enter или +"
-                            minLength={2}
-                            maxLength={50}
+                        <RecipeTagsInput
+                            tags={tags}
+                            tagInput={tagInput}
+                            tagError={tagError}
+                            onTagInputChange={setTagInput}
+                            onAddTag={addTag}
+                            onRemoveTag={removeTag}
+                            onTagInputKeyPress={handleTagInputKeyPress}
+                            canAddMoreTags={canAddMoreTags}
+                            maxTagsCount={maxTagsCount}
                         />
-                        <Button type="button" onClick={handleAddTag} disabled={tags.length >= 15}>+</Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                        {tags.map((tag, idx) => (
-                            <span key={idx} className="bg-primary/10 px-2 py-1 rounded flex items-center gap-1">
-                            {tag}
-                            <button type="button" className="ml-1 text-destructive" onClick={() => handleRemoveTag(idx)}>&times;</button>
-                            </span>
-                        ))}
-                        </div>
-                        {tagError && <p className="text-destructive text-sm">{tagError}</p>}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                        <Label>Время приготовления (в минутах)</Label>
-                        <Input
-                            {...register('cook_time_minutes', { validate: validateCookTime })}
-                            type="number"
-                            placeholder="Например: 60"
-                            max={1440}
-                        />
-                        {errors.cook_time_minutes && <p className="text-destructive text-sm">{errors.cook_time_minutes.message}</p>}
+                            <Label>Время приготовления (в минутах)</Label>
+                            <Input
+                                {...register('cook_time_minutes', validationRules.cook_time_minutes)}
+                                type="number"
+                                placeholder="Например: 60"
+                                max={RECIPE_VALIDATION_CONSTANTS.COOK_TIME_MAX}
+                                min={1}
+                            />
+                            {errors.cook_time_minutes && <p className="text-destructive text-sm">{errors.cook_time_minutes.message}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -320,29 +287,47 @@ const AddRecipeForm = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Фото блюда</Label>
+                        <div className="flex items-center gap-2">
+                            <Label>Фото блюда</Label>
+                            <PhotoUploadInfo
+                                recommendedSize="1200×800px (3:2)"
+                                maxFileSize="5MB"
+                                formats="PNG, JPG, JPEG"
+                            />
+                        </div>
                         <Controller
                             name="main_photo"
                             control={control}
                             rules={{ required: 'Фото обязательно' }}
                             render={({ field }) => (
                                 <div className="space-y-2">
-                                    <Input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files[0];
+                                    <FileUploadProgress
+                                        onFileSelect={async (file) => {
                                             field.onChange(file);
                                             handleMainPhotoChange(file);
                                         }}
-                                        placeholder="Загрузите фото блюда"
+                                        accept="image/png,image/jpg,image/jpeg"
+                                        maxSize={5 * 1024 * 1024}
+                                    >
+                                        <Input
+                                            type="file"
+                                            accept="image/png,image/jpg,image/jpeg"
+                                            placeholder="Загрузите фото блюда"
+                                            className="cursor-pointer"
+                                        />
+                                    </FileUploadProgress>
+                                    <PhotoUploadInfo
+                                        recommendedSize="1200×800px (3:2)"
+                                        maxFileSize="5MB"
+                                        formats="PNG, JPG, JPEG"
+                                        className="md:hidden"
                                     />
                                     {mainPhotoPreview && (
                                         <div className="relative inline-block">
-                                            <img 
-                                                src={mainPhotoPreview} 
-                                                alt="Превью главного фото" 
-                                                className="w-32 h-32 object-cover rounded-lg border" 
+                                            <img
+                                                src={mainPhotoPreview}
+                                                alt="Превью главного фото"
+                                                className="w-32 h-32 object-cover rounded-lg border"
                                             />
                                             <Button
                                                 type="button"
@@ -375,11 +360,11 @@ const AddRecipeForm = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                            if (ingredientFields.length < 50) {
-                            appendIngredient({ name: '', quantity: '' });
+                            if (ingredientFields.length < RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT) {
+                                appendIngredient({ name: '', quantity: '' });
                             }
                         }}
-                        disabled={ingredientFields.length >= 50}
+                        disabled={ingredientFields.length >= RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT}
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Добавить ингредиент
@@ -390,17 +375,17 @@ const AddRecipeForm = () => {
                     {ingredientFields.map((field, index) => (
                         <div key={field.id} className="flex items-center gap-2">
                         <Input
-                            {...register(`ingredients.${index}.name`, { required: 'Название обязательно' })}
+                            {...register(`ingredients.${index}.name`, validationRules.ingredientName)}
                             type="text"
                             placeholder="Название (например, Мука)"
-                            minLength={2}
-                            maxLength={135}
+                            minLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MIN_LENGTH}
+                            maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MAX_LENGTH}
                         />
                         <Input
-                            {...register(`ingredients.${index}.quantity`, { required: 'Количество обязательно' })}
+                            {...register(`ingredients.${index}.quantity`, validationRules.ingredientQuantity)}
                             type="text"
                             placeholder="Количество (например, 200 г)"
-                            maxLength={30}
+                            maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_QUANTITY_MAX_LENGTH}
                         />
                         {ingredientFields.length > 1 && (
                             <Button
@@ -415,7 +400,28 @@ const AddRecipeForm = () => {
                         )}
                         </div>
                     ))}
-                    {ingredientFields.length > 50 && <p className="text-destructive text-sm">Максимум 50 ингредиентов</p>}
+                    {/* Показать ошибки валидации для ингредиентов */}
+                    {Object.keys(errors).some(key => key.startsWith('ingredients.')) && (
+                        <div className="space-y-1">
+                            {ingredientFields.map((_, index) => (
+                                <div key={index}>
+                                    {errors.ingredients?.[index]?.name && (
+                                        <p className="text-destructive text-sm">
+                                            Ингредиент {index + 1}: {errors.ingredients[index].name.message}
+                                        </p>
+                                    )}
+                                    {errors.ingredients?.[index]?.quantity && (
+                                        <p className="text-destructive text-sm">
+                                            Ингредиент {index + 1}: {errors.ingredients[index].quantity.message}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                        {ingredientFields.length} из {RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT} ингредиентов
+                    </p>
                 </CardContent>
             </Card>
 
@@ -428,7 +434,7 @@ const AddRecipeForm = () => {
                         variant="outline"
                         size="sm"
                         onClick={handleAddInstruction}
-                        disabled={instructionFields.length >= 25}
+                        disabled={instructionFields.length >= RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT}
                     >
                     <Plus className="w-4 h-4 mr-2" />
                     Добавить шаг
@@ -443,50 +449,85 @@ const AddRecipeForm = () => {
                         </div>
                         <div className="flex-1 space-y-2">
                             <Textarea
-                                {...register(`instructions.${index}.description`, { required: 'Текст шага обязателен' })}
+                                {...register(`instructions.${index}.description`, validationRules.instructionDescription)}
                                 placeholder={`Шаг ${field.step_number}`}
                                 rows={2}
-                                minLength={2}
-                                maxLength={255}
+                                maxLength={RECIPE_VALIDATION_CONSTANTS.INSTRUCTION_DESCRIPTION_MAX_LENGTH}
                             />
-                            <div className="flex items-center gap-2">
-                            <Controller
-                                name={`instructions.${index}.photo`}
-                                control={control}
-                                render={({ field }) => (
-                                <div className="flex flex-col gap-2 w-full">
-                                    <Input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        const file = e.target.files[0];
-                                        field.onChange(file);
-                                        handleInstructionPhotoChange(index, file);
-                                    }}
-                                    className="w-full"
-                                    placeholder="Загрузите фото для шага"
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Label className="text-sm text-muted-foreground">Фото шага (необязательно)</Label>
+                                    <PhotoUploadInfo
+                                        recommendedSize="800×600px (4:3)"
+                                        maxFileSize="5MB"
+                                        formats="PNG, JPG, JPEG"
+                                        className="hidden md:block"
                                     />
-                                    {instructionPhotoPreviews[index] && (
-                                        <div className="relative inline-block">
-                                            <img 
-                                                src={instructionPhotoPreviews[index]} 
-                                                alt={`Превью шага ${index + 1}`} 
-                                                className="w-24 h-24 object-cover rounded-lg border" 
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleRemoveInstructionPhoto(index)}
-                                                className="absolute -top-2 -right-2 text-destructive hover:text-destructive/80 bg-background border rounded-full w-6 h-6 p-0"
-                                            >
-                                                &times;
-                                            </Button>
-                                        </div>
-                                    )}
                                 </div>
-                                )}
-                            />
+                                <Controller
+                                    name={`instructions.${index}.photo`}
+                                    control={control}
+                                    render={({ field }) => (
+                                    <div className="flex flex-col gap-2 w-full">
+                                        <Input
+                                        type="file"
+                                        accept="image/png,image/jpg,image/jpeg"
+                                        onChange={(e) => {
+                                            const file = e.target.files[0];
+                                            // Валидация типа файла
+                                            if (file) {
+                                                const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+                                                if (!allowedTypes.includes(file.type.toLowerCase())) {
+                                                    toast({
+                                                        variant: 'destructive',
+                                                        title: 'Ошибка',
+                                                        description: 'Разрешены только PNG, JPG и JPEG файлы',
+                                                    });
+                                                    return;
+                                                }
+                                                // Валидация размера файла
+                                                if (file.size > 5 * 1024 * 1024) {
+                                                    toast({
+                                                        variant: 'destructive',
+                                                        title: 'Ошибка',
+                                                        description: 'Файл слишком большой. Максимальный размер: 5MB',
+                                                    });
+                                                    return;
+                                                }
+                                            }
+                                            field.onChange(file);
+                                            handleInstructionPhotoChange(index, file);
+                                        }}
+                                        className="w-full"
+                                        placeholder="Загрузите фото для шага"
+                                        />
+                                        <PhotoUploadInfo
+                                            recommendedSize="800×600px (4:3)"
+                                            maxFileSize="5MB"
+                                            formats="PNG, JPG, JPEG"
+                                            className="md:hidden"
+                                        />
+                                        {instructionPhotoPreviews[index] && (
+                                            <div className="relative inline-block">
+                                                <img
+                                                    src={instructionPhotoPreviews[index]}
+                                                    alt={`Превью шага ${index + 1}`}
+                                                    className="w-24 h-24 object-cover rounded-lg border"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleRemoveInstructionPhoto(index)}
+                                                    className="absolute -top-2 -right-2 text-destructive hover:text-destructive/80 bg-background border rounded-full w-6 h-6 p-0"
+                                                >
+                                                    &times;
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    )}
+                                />
                             </div>
                         </div>
                         {instructionFields.length > 1 && (
@@ -509,7 +550,23 @@ const AddRecipeForm = () => {
                         )}
                         </div>
                     ))}
-                    {instructionFields.length > 50 && <p className="text-destructive text-sm">Максимум 50 шагов</p>}
+                    {/* Показать ошибки валидации для инструкций */}
+                    {Object.keys(errors).some(key => key.startsWith('instructions.')) && (
+                        <div className="space-y-1">
+                            {instructionFields.map((_, index) => (
+                                <div key={index}>
+                                    {errors.instructions?.[index]?.description && (
+                                        <p className="text-destructive text-sm">
+                                            Шаг {index + 1}: {errors.instructions[index].description.message}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                        {instructionFields.length} из {RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT} шагов
+                    </p>
                 </CardContent>
             </Card>
 
@@ -518,7 +575,7 @@ const AddRecipeForm = () => {
             </Button>
 
             <div className='text-center'>
-                Нажимая на кнопку, вы даете согласие на <a className="text-blue-600 hover:underline" href='/docs/policy'>обработку персональных данных</a>.
+                Нажимая на кнопку, вы даете согласие на <a className="text-blue-600 hover:underline" href='/docs/policy'>обработку персональных данных</a> и <a className="text-blue-600 hover:underline" href='/docs/recommendations-policy'>использование рекомендательных систем</a>.
             </div>
         </form>
     );

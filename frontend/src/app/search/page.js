@@ -1,20 +1,22 @@
 "use client"
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import Container from '@/components/layout/Container';
 import { useSearchHistory } from '@/context/SearchHistoryContext';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Search, AlertCircle } from 'lucide-react';
 import InfiniteRecipesList from '@/components/shared/InfiniteRecipeList';
 import { useSearch } from '@/context/SearchContext';
 import SearchFilters from '@/components/ui/search/SearchFilters';
+import { SearchLoadingSkeleton } from '@/components/ui/skeletons';
+import EmptyState, { EmptyStateVariants } from '@/components/ui/EmptyState';
 
 export default function SearchPage() {
   const router = useRouter();
   const { searchHistory } = useSearchHistory();
-  const { searchResults, searchLoading, searchError, searchQuery, performSearch, loadMore, hasMore, updateFilters } = useSearch();
+  const { searchResults, searchLoading, searchError, searchQuery, performSearch, loadMore, hasMore, updateFilters, clearSearchResults, filters } = useSearch();
 
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get('q');
@@ -24,13 +26,18 @@ export default function SearchPage() {
     router.push('/');
   };
 
+  const updateFiltersCallback = useCallback((newFilters) => {
+    updateFilters(newFilters);
+  }, [updateFilters]);
+
   useEffect(() => {
-    if (debouncedQuery) {
-      performSearch(debouncedQuery);
-    } else {
-      performSearch('');
+    if (debouncedQuery && debouncedQuery.trim()) {
+      performSearch(debouncedQuery.trim());
+    } else if (debouncedQuery === '') {
+      // Очищаем результаты когда запрос пустой (например, при переходе на /search без параметров)
+      clearSearchResults();
     }
-  }, [debouncedQuery]);
+  }, [debouncedQuery]); // Убираем performSearch из зависимостей чтобы избежать бесконечных циклов
 
   return (
     <Container className="py-8">
@@ -44,34 +51,48 @@ export default function SearchPage() {
           На главную
         </Button>
 
-        <SearchFilters filters={{}} onChange={updateFilters} />
+        <SearchFilters filters={filters} onChange={updateFiltersCallback} />
 
-        {!urlQuery && searchHistory.length > 0 && (
+        {!urlQuery && searchHistory && searchHistory.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Недавние запросы</h3>
             <div className="flex flex-wrap gap-2">
-              {searchHistory.map((item) => (
-                <Button
-                  key={item.id}
-                  variant="outline"
-                  onClick={() => router.push(`/search?q=${encodeURIComponent(item.query)}`)}
-                >
-                  {item.query}
-                </Button>
-              ))}
+              {searchHistory.map((item, index) => {
+                // Поддерживаем как объекты с query, так и строки
+                const query = typeof item === 'string' ? item : item.query;
+                const key = typeof item === 'string' ? `${query}-${index}` : item.id || `${query}-${index}`;
+
+                // Не показываем пустые запросы
+                if (!query || !query.trim()) {
+                  return null;
+                }
+
+                return (
+                  <Button
+                    key={key}
+                    variant="outline"
+                    onClick={() => router.push(`/search?q=${encodeURIComponent(query)}`)}
+                    className="text-sm"
+                  >
+                    {query}
+                  </Button>
+                );
+              }).filter(Boolean)}
             </div>
           </div>
         )}
 
         {searchLoading && searchResults.length === 0 ? (
-          <div className="flex justify-center py-8">
-            <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-          </div>
+          <SearchLoadingSkeleton />
         ) : searchError ? (
-          <div className="text-center py-12 text-red-500">
-            <p className="text-xl">Ошибка при выполнении поиска:</p>
-            <p>{searchError}</p>
-          </div>
+          <EmptyState
+            icon={AlertCircle}
+            title="Что-то пошло не так"
+            description={`Ошибка при выполнении поиска: ${searchError}`}
+            theme="error"
+            actionText="Попробовать снова"
+            actionOnClick={() => window.location.reload()}
+          />
         ) : searchQuery && searchResults && searchResults.length > 0 ? (
           <InfiniteRecipesList
             recipes={searchResults}
@@ -81,17 +102,18 @@ export default function SearchPage() {
             source="search"
           />
         ) : searchQuery && searchResults ? (
-          <div className="text-center py-12">
-            <p className="text-xl text-muted-foreground">
-              По запросу "{searchQuery}" ничего не найдено
-            </p>
-          </div>
+          <EmptyState
+            icon={Search}
+            {...EmptyStateVariants.noSearchResults}
+            description={`По запросу "${searchQuery}" ничего не найдено. Попробуйте другие ключевые слова или проверьте правописание.`}
+          />
         ) : (
-          <div className="text-center py-12">
-            <p className="text-xl text-muted-foreground">
-              Введите запрос для поиска рецептов
-            </p>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="Найдите свой идеальный рецепт"
+            description="Введите название блюда в поисковую строку выше"
+            theme="search"
+          />
         )}
       </div>
     </Container>

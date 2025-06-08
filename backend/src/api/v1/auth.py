@@ -131,7 +131,7 @@ async def login(
             UserNicknameAlreadyExistsError,
             InactiveOrNotExistingUserError,
             IncorrectCredentialsError,
-            UserNotFoundError
+            UserNotFoundError,
         ) as e:
             raise AppHTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

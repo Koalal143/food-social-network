@@ -1,21 +1,19 @@
 "use client"
 
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useFavorites } from '@/context/FavoritesContext'
-import { useRecipes } from '@/context/RecipeContext'
 import Container from '@/components/layout/Container'
 import { useToast } from '@/hooks/use-toast'
 import EditableProfileInfo from '@/components/ui/profile/EditableProfileInfo'
 import EditableProfilePhoto from '@/components/ui/profile/EditableProfilePhoto'
 import ProfileTabs from '@/components/ui/profile/ProfileTabs'
 import { handleApiError } from '@/utils/errorHandler'
-import Loader from '@/components/ui/Loader'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import AuthService from '@/services/auth.service'
+// import { ProfileSkeleton } from '@/components/ui/skeletons' // Теперь используется в ProtectedRoute
 
 const RECIPES_PER_PAGE = 9;
 
@@ -135,10 +133,14 @@ export default function ProfilePage() {
                 setUserRecipes(prev => {
                     const existingIds = new Set(prev.map(r => r.id))
                     const uniqueNewRecipes = newRecipes.filter(r => !existingIds.has(r.id))
-                    return [...prev, ...uniqueNewRecipes]
+                    const newRecipesList = [...prev, ...uniqueNewRecipes]
+
+                    // Обновляем hasMore на основе нового количества рецептов
+                    setRecipesHasMore(newRecipesList.length < (result.totalCount || 0) && newRecipes.length > 0)
+
+                    return newRecipesList
                 })
                 setOffset(prev => prev + newRecipes.length)
-                setRecipesHasMore(userRecipes.length + newRecipes.length < (result.totalCount || 0))
             } catch (error) {
                 const { message } = handleApiError(error)
                 setError(message)
@@ -149,12 +151,17 @@ export default function ProfilePage() {
         }, 300)
     }, [offset, recipesHasMore, userRecipes.length, totalCount])
 
-    if (authLoading || isInitialLoading) {
-        return <Loader />
-    }
+    // Скелетон теперь показывается в ProtectedRoute
+    // if (authLoading || isInitialLoading) {
+    //     return (
+    //         <Container className="py-8">
+    //             <ProfileSkeleton />
+    //         </Container>
+    //     )
+    // }
 
     return (
-        <ProtectedRoute>
+        <ProtectedRoute skeleton="profile">
             <Container className="py-8">
                 <div className="space-y-8">
                     <div className="flex items-start justify-between">

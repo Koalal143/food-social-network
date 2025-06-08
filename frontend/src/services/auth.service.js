@@ -2,20 +2,56 @@ import { BASE_API } from "../constants/backend-urls";
 import { tokenManager } from "@/utils/tokenManager";
 import { ERROR_MESSAGES } from "@/constants/errors";
 import { ValidationError, NetworkError, AuthError } from "@/utils/errors";
-import { BANNED_USERNAME_REGEX } from '@/constants/validation';
+import { isBannedUsername } from '@/constants/validation';
+import { CookieManager } from '@/utils/cookies';
 
 export default class AuthService {
     static getAccessToken() {
-        return localStorage.getItem('access_token');
+        // Теперь используем cookies как основной источник
+        let token = CookieManager.getAccessToken();
+
+        // Если токена нет в cookies, пытаемся найти в localStorage (для миграции)
+        // Проверяем наличие localStorage для SSR безопасности
+        if (!token && typeof localStorage !== 'undefined') {
+            token = localStorage.getItem('access_token');
+            // Если нашли в localStorage, мигрируем в cookies
+            if (token) {
+                const refreshToken = localStorage.getItem('refresh_token');
+                if (refreshToken) {
+                    this.setTokens(token, refreshToken);
+                }
+            }
+        }
+
+        return token;
     }
 
     static getRefreshToken() {
-        return localStorage.getItem('refresh_token');
+        // Теперь используем cookies как основной источник
+        let token = CookieManager.getRefreshToken();
+
+        // Если токена нет в cookies, пытаемся найти в localStorage (для миграции)
+        // Проверяем наличие localStorage для SSR безопасности
+        if (!token && typeof localStorage !== 'undefined') {
+            token = localStorage.getItem('refresh_token');
+            // Если нашли в localStorage, мигрируем в cookies
+            if (token) {
+                const accessToken = localStorage.getItem('access_token');
+                if (accessToken) {
+                    this.setTokens(accessToken, token);
+                }
+            }
+        }
+
+        return token;
     }
 
     static setTokens(accessToken, refreshToken) {
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', refreshToken);
+        // Теперь cookies - основное хранилище
+        CookieManager.setAuthTokens(accessToken, refreshToken);
+
+        // Очищаем старые токены из localStorage
+        CookieManager.clearAuthTokensFromLocalStorage();
     }
 
     static async makeAuthenticatedRequest(url, options = {}) {
@@ -32,10 +68,14 @@ export default class AuthService {
         };
 
         try {
-            const response = await fetch(url, { ...options, headers });
-            
+            const response = await fetch(url, {
+                ...options,
+                headers,
+                credentials: 'include'
+            });
+
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 
                 if (response.status === 401) {
                     if (errorData.error_key === 'token_expired') {
@@ -73,7 +113,7 @@ export default class AuthService {
 
     static async register(username, email, password) {
         try {
-            if (BANNED_USERNAME_REGEX.test(username.toLowerCase())) {
+            if (isBannedUsername(username)) {
                 throw new ValidationError(ERROR_MESSAGES.username_banned);
             }
 
@@ -83,25 +123,17 @@ export default class AuthService {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ username, email, password }),
+                credentials: 'include'
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 
-                if (String(response.status).startsWith('4')) {
-                    if (errorData.error_key === 'user_email_already_exists') {
-                        throw new ValidationError(ERROR_MESSAGES.user_email_already_exists);
-                    }
-                    if (errorData.error_key === 'user_nickname_already_exists') {
-                        throw new ValidationError(ERROR_MESSAGES.user_nickname_already_exists);
-                    }
-                    if (errorData.error_key === 'suspicious_email') {
-                        throw new ValidationError(ERROR_MESSAGES.suspicious_email);
-                    }
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new ValidationError(ERROR_MESSAGES[errorData.error_key]);
+                } else {
                     throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
                 }
-                
-                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
             }
 
             return await response.json();
@@ -127,23 +159,17 @@ export default class AuthService {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(loginData),
+                credentials: 'include'
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 
-                if (response.status === 401) {
-                    if (errorData.error_key === 'inactive_user') {
-                        throw new AuthError(ERROR_MESSAGES.inactive_user);
-                    }
-                    throw new AuthError(ERROR_MESSAGES.incorrect_email_username_or_password);
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new Error(ERROR_MESSAGES[errorData.error_key]);
+                } else {
+                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
                 }
-                
-                if (response.status === 400) {
-                    throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
-                }
-                
-                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
             }
 
             const data = await response.json();
@@ -166,15 +192,21 @@ export default class AuthService {
 
             const response = await fetch(`${BASE_API}/v1/auth/refresh`, {
                 method: 'POST',
-                body: JSON.stringify({'refresh_token': refreshToken})
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({'refresh_token': refreshToken}),
+                credentials: 'include'
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                if (response.status === 401) {
-                    throw new AuthError(ERROR_MESSAGES.invalid_refresh_token);
+                const errorData = await response.json().catch(() => ({}));
+
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new AuthError(ERROR_MESSAGES[errorData.error_key]);
+                } else {
+                    throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
                 }
-                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
             }
 
             const data = await response.json();
@@ -229,7 +261,7 @@ export default class AuthService {
 
     static async deleteAvatar() {
         try {
-            const response = await this.makeAuthenticatedRequest(`${BASE_API}/v1/users/me/avatar`, {
+            await this.makeAuthenticatedRequest(`${BASE_API}/v1/users/me/avatar`, {
                 method: 'DELETE'
             });
             return true;
@@ -239,8 +271,11 @@ export default class AuthService {
     }
 
     static logout() {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        // Очищаем токены аутентификации из localStorage (если остались)
+        CookieManager.clearAuthTokensFromLocalStorage();
+
+        // Полная очистка всех cookies (согласно требованиям)
+        CookieManager.clearAllCookies();
     }
 
     static async getPaginatedRecipes(offset = 0, limit = 10) {
@@ -266,11 +301,11 @@ export default class AuthService {
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 
-                if (response.status === 503) {
-                    throw new NetworkError(ERROR_MESSAGES.service_unavailable);
+                if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
+                    throw new Error(ERROR_MESSAGES[errorData.error_key]);
+                } else {
+                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
                 }
-                
-                throw new Error(errorData.detail || 'Ошибка при загрузке рецептов');
             }
 
             const data = await response.json();
@@ -284,7 +319,6 @@ export default class AuthService {
             if (error instanceof TypeError && error.message === 'Failed to fetch') {
                 throw new NetworkError(ERROR_MESSAGES.service_unavailable);
             }
-            
             throw error;
         }
     }

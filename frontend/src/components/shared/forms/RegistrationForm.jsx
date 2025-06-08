@@ -1,6 +1,7 @@
 "use client"
 
 import { useToast } from "@/hooks/use-toast";
+import { useEnhancedToast } from "@/hooks/useEnhancedToast";
 import { handleApiError } from "@/utils/errorHandler";
 import { registrationSchema } from "@/lib/schemas/auth.schema";
 import {
@@ -15,19 +16,22 @@ import {
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
+import ValidatedInput from "../../ui/ValidatedInput";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { AuthValidationRules, createConfirmPasswordRules } from "@/lib/validation/formValidation";
 
 export default function RegistrationForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(false); // Отслеживаем попытку отправки формы
     const { register } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
+    const enhancedToast = useEnhancedToast();
 
     const form = useForm({
         resolver: zodResolver(registrationSchema),
@@ -40,21 +44,17 @@ export default function RegistrationForm() {
     });
     
     const onSubmit = async (data) => {
+    setIsSubmitted(true); // Отмечаем, что форма была отправлена
     setIsLoading(true);
     try {
         await register(data.username, data.email, data.password);
-        toast({
-        title: "Успешная регистрация",
-        description: "Добро пожаловать в наше сообщество!",
-        });
         router.push("/");
     } catch (error) {
         const { message, type } = handleApiError(error);
-        toast({
-        variant: type,
-        title: "Ошибка",
-        description: message,
-        });
+        enhancedToast.error(
+            "Ошибка регистрации",
+            message
+        );
     } finally {
         setIsLoading(false);
     }
@@ -70,9 +70,13 @@ export default function RegistrationForm() {
                 <FormItem>
                   <FormLabel>Юзернейм</FormLabel>
                   <FormControl>
-                    <Input
+                    <ValidatedInput
                       placeholder="Введите юзернейм"
-                      {...field}
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      showErrors={isSubmitted}
+                      validationRules={AuthValidationRules.username}
                     />
                   </FormControl>
                   <FormMessage />
@@ -86,10 +90,14 @@ export default function RegistrationForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input
+                    <ValidatedInput
                       type="email"
                       placeholder="Введите email"
-                      {...field}
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      showErrors={isSubmitted}
+                      validationRules={AuthValidationRules.email}
                     />
                   </FormControl>
                   <FormMessage />
@@ -103,24 +111,29 @@ export default function RegistrationForm() {
                 <FormItem>
                   <FormLabel>Пароль</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Введите пароль"
-                        {...field}
-                      />
-                      <button
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
+                    <ValidatedInput
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Введите пароль"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      showErrors={isSubmitted}
+                      validationRules={AuthValidationRules.password}
+                      className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors"
+                      rightElement={
+                        <button
+                          type="button"
+                          className="text-gray-500 hover:text-gray-700 transition-colors"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      }
+                    />
                   </FormControl>
                   <FormDescription>
                     Минимум 8 символов, включая заглавные и строчные буквы, цифры и специальные символы
@@ -136,32 +149,37 @@ export default function RegistrationForm() {
                 <FormItem>
                   <FormLabel>Подтверждение пароля</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Повторите пароль"
-                        {...field}
-                      />
-                      <button
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
+                    <ValidatedInput
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Повторите пароль"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      showErrors={isSubmitted}
+                      validationRules={createConfirmPasswordRules(form.watch("password"))}
+                      className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors"
+                      rightElement={
+                        <button
+                          type="button"
+                          className="text-gray-500 hover:text-gray-700 transition-colors"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      }
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button 
-              type="submit" 
-              className="w-full bg-orange-400 hover:bg-orange-500 text-white font-medium"
+            <Button
+              type="submit"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
               disabled={isLoading}
             >
               {isLoading ? "Регистрация..." : "Зарегистрироваться"}

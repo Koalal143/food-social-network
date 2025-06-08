@@ -1,12 +1,14 @@
 'use client'
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ConsentService from "@/services/consent.service";
 import { useToast } from "@/hooks/use-toast";
 import { ERROR_MESSAGES } from "@/constants/errors";
 import { useAuth } from "@/context/AuthContext";
+import { useCookieConsent } from "@/hooks/useCookieConsent";
 
 const LOCALSTORAGE_KEY = "cookie_consent_accepted";
 
@@ -15,29 +17,33 @@ export default function CookieConsent() {
   const [loading, setLoading] = useState(false);
   const { isAuth } = useAuth();
   const { toast } = useToast();
+  const { hasConsent, isLoading: consentLoading, setConsent } = useCookieConsent();
 
   useEffect(() => {
+    // Не показываем диалог пока идет загрузка состояния согласия
+    if (consentLoading) return;
+
     if (!isAuth) {
-      const consent = localStorage.getItem(LOCALSTORAGE_KEY);
-      if (!consent) setOpen(true);
+      // Показываем диалог только если нет согласия
+      if (!hasConsent) {
+        setOpen(true);
+      }
     } else {
       setOpen(false);
-      localStorage.setItem(LOCALSTORAGE_KEY, "1");
+      // Для авторизованных пользователей автоматически устанавливаем согласие
+      if (!hasConsent) {
+        setConsent(true);
+      }
     }
-  }, [isAuth]);
+  }, [isAuth, hasConsent, consentLoading, setConsent]);
 
   const handleConsent = async (isAllowed) => {
     setLoading(true);
     try {
         await ConsentService.sendConsent(isAllowed);
-        localStorage.setItem(LOCALSTORAGE_KEY, isAllowed ? "1" : "0");
+        // Используем хук для сохранения согласия
+        setConsent(isAllowed);
         setOpen(false);
-        toast({
-            title: "Спасибо!",
-            description: isAllowed
-            ? "Вы разрешили использование cookies."
-            : "Вы отказались от использования cookies.",
-        });
     } catch (e) {
         toast({
             title: "Ошибка",
@@ -60,7 +66,12 @@ export default function CookieConsent() {
                 <CardTitle className="text-center text-base font-semibold mb-1">Cookies</CardTitle>
             </div>
             <CardContent className="p-0 text-center text-xs text-muted-foreground mb-2 w-full">
-                Сайт применяет cookie для анализа посещений. Подтвердите согласие на их использование.
+                <p className="mb-2">
+                    Сайт применяет cookie для анализа посещений. Подтвердите согласие на их использование.
+                </p>
+                <Link href="/cookies" className="text-blue-600 hover:text-blue-800 underline">
+                    Управление куки-файлами
+                </Link>
             </CardContent>
             <CardFooter className="flex gap-2 justify-center p-0 w-full">
                 <Button
