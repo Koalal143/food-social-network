@@ -8,6 +8,7 @@ from src.services.recipe_impression import RecipeImpressionService
 from src.services.recipe_instructions import RecipeInstructionsService
 from src.services.search import SearchService
 from src.services.security import SecurityService
+from src.services.shopping_list_item import ShoppingListItemService
 from src.services.token import RefreshTokenService, TokenService
 from src.services.user import UserService
 
@@ -22,6 +23,7 @@ __all__ = [
     "RefreshTokenService",
     "SearchService",
     "SecurityService",
+    "ShoppingListItemService",
     "TokenService",
     "UserAvatarService",
     "UserService",

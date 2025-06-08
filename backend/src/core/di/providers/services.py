@@ -16,6 +16,7 @@ from src.repositories.interfaces import (
     RecsysRepositoryProtocol,
     RefreshTokenRepositoryProtocol,
     SearchQueryRepositoryProtocol,
+    ShoppingListItemRepositoryProtocol,
     UserAvatarRepositoryProtocol,
     UserProfileRepositoryProtocol,
     UserRepositoryProtocol,
@@ -32,6 +33,7 @@ from src.services.recipe_instructions import RecipeInstructionsService
 from src.services.recommendation import RecommendationService
 from src.services.search import SearchService
 from src.services.security import SecurityService
+from src.services.shopping_list_item import ShoppingListItemService
 from src.services.token import RefreshTokenService, TokenService
 from src.services.user import UserService
 
@@ -203,4 +205,15 @@ class ServiceProvider(Provider):
             recsys_repository=recsys_repository,
             recipe_repository=recipe_repository,
             recipe_image_repository=recipe_image_repository,
+        )
+
+    @provide
+    def get_shopping_list_item_service(
+        self,
+        shopping_list_item_repository: ShoppingListItemRepositoryProtocol,
+        recipe_ingredient_repository: RecipeIngredientRepositoryProtocol,
+    ) -> ShoppingListItemService:
+        return ShoppingListItemService(
+            shopping_list_item_repository=shopping_list_item_repository,
+            recipe_ingredient_repository=recipe_ingredient_repository,
         )
