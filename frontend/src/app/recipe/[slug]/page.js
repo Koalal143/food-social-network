@@ -9,17 +9,18 @@ import { RecipeDetailSkeleton } from "@/components/ui/skeletons";
 import Image from "next/image";
 import AuthorCard from "@/components/ui/recipe-page/AuthorCard";
 import AnimatedActionButtons from "@/components/ui/recipe-page/AnimatedActionButtons";
-import { Share2, Trash2 } from "lucide-react";
+import { Share2, Trash2, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CopyLinkButton from "@/components/ui/CopyLinkButton";
 import RecipeInfoCards from "@/components/ui/recipe-page/RecipeInfoCards";
 import RecipeIngridients from "@/components/ui/recipe-page/RecipeIngridients";
 import RecipeInstruction from "@/components/ui/recipe-page/RecipeInstruction";
+import AddToShoppingListModal from "@/components/recipe/AddToShoppingListModal";
 import { useToast } from "@/hooks/use-toast";
 import { handleApiError } from "@/utils/errorHandler";
 import NotFound from "@/app/not-found";
 import { useAuth } from "@/context/AuthContext";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import DeleteRecipeDialog from "@/components/shared/recipeActions/DeleteRecipeDialog";
 
 export default function RecipePage({ params }) {
@@ -32,7 +33,9 @@ export default function RecipePage({ params }) {
     const [isDisliked, setIsDisliked] = useState(false);
     const { isAuth, user } = useAuth();
     const [isImageLoading, setIsImageLoading] = useState(true);
-    
+    const [isShoppingListModalOpen, setIsShoppingListModalOpen] = useState(false);
+    const router = useRouter();
+
     const { slug } = React.use(params);
     const searchParams = useSearchParams();
     const source = searchParams.get('source');
@@ -61,6 +64,18 @@ export default function RecipePage({ params }) {
     const canDeleteRecipe = () => {
         if (!user || !recipe) return false;
         return user.id === recipe.author.id || user.is_superuser;
+    };
+
+    const handleOpenShoppingListModal = () => {
+        setIsShoppingListModalOpen(true);
+    };
+
+    const handleCloseShoppingListModal = () => {
+        setIsShoppingListModalOpen(false);
+    };
+
+    const handleNavigateToShoppingList = () => {
+        router.push('/shopping-list');
     };
 
     const handleSave = async () => {
@@ -217,13 +232,35 @@ export default function RecipePage({ params }) {
                         <RecipeInfoCards recipe={recipe} />
 
                         {/* Ingredients */}
-                        <RecipeIngridients recipe={recipe} />
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-lg font-bold">Ингредиенты</h2>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleOpenShoppingListModal}
+                                    className="flex items-center gap-2"
+                                >
+                                    <ShoppingCart className="w-4 h-4" />
+                                    Добавить в список покупок
+                                </Button>
+                            </div>
+                            <RecipeIngridients recipe={recipe} />
+                        </div>
 
                         {/* Instructions */}
                         <RecipeInstruction recipe={recipe} />
                     </div>
                 </div>
             </article>
+
+            {/* Shopping List Modal */}
+            <AddToShoppingListModal
+                isOpen={isShoppingListModalOpen}
+                onClose={handleCloseShoppingListModal}
+                recipe={recipe}
+                onNavigateToShoppingList={handleNavigateToShoppingList}
+            />
         </Container>
     );
 }
