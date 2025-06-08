@@ -1,10 +1,11 @@
 from collections.abc import Sequence
 from typing import Any
 
-from sqlalchemy import Select, delete, exists, func, select, text, union_all, update
+from sqlalchemy import Select, delete, exists, func, literal_column, select, text, union_all, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
+from src.enums.recipe_sort_field import RecipeSortFieldEnum
 from src.models.favorite_recipes import FavoriteRecipe
 from src.models.recipe import Recipe
 from src.models.recipe_impression import RecipeImpression
@@ -73,6 +74,34 @@ class RecipeRepository(RecipeRepositoryProtocol):
 
         return query.add_columns(impressions_subquery)
 
+    def _apply_sorting(
+        self,
+        query: Select,
+        sort_by: RecipeSortFieldEnum | None = None
+    ) -> Select:
+        """Apply sorting to the query based on sort_by enum value.
+
+        Follows Django ORM pattern where "-" prefix means descending order.
+        """
+        if not sort_by:
+            return query
+
+        sort_value = sort_by.value
+        is_descending = sort_value.startswith("-")
+        field_name = sort_value.lstrip("-")
+
+        sort_mapping = {
+            "created_at": Recipe.created_at,
+            "impressions_count": literal_column("impressions_count"),  # Use the subquery alias
+        }
+
+        if field_name not in sort_mapping:
+            return query
+
+        sort_column = sort_mapping[field_name]
+
+        return query.order_by(sort_column.desc()) if is_descending else query.order_by(sort_column.asc())
+
     async def get_by_id(self, recipe_id: int, user_id: int | None = None) -> RecipeWithExtra | None:
         stmt = self._get_with_author_short().where(Recipe.id == recipe_id)
         stmt = self._add_impressions_subquery(stmt)
@@ -108,6 +137,7 @@ class RecipeRepository(RecipeRepositoryProtocol):
         skip: int = 0,
         limit: int = 100,
         additional_filters: list[Any] | None = None,
+        sort_by: RecipeSortFieldEnum | None = None,
         **filters: Any,
     ) -> tuple[Select, list[RecipeWithExtra]]:
         stmt = self._main_query().offset(skip).limit(limit)
@@ -119,6 +149,7 @@ class RecipeRepository(RecipeRepositoryProtocol):
                 stmt = stmt.where(filter_condition)
 
         stmt = self._add_impressions_subquery(stmt)
+        stmt = self._apply_sorting(stmt, sort_by)
         recipes: list[RecipeWithExtra] = []
         if user_id is not None:
             stmt = self._add_is_favorite_subquery(stmt, user_id)
@@ -156,9 +187,16 @@ class RecipeRepository(RecipeRepositoryProtocol):
         user_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
+        sort_by: RecipeSortFieldEnum | None = None,
         **filters: Any,
     ) -> tuple[int, Sequence[RecipeWithExtra]]:
-        _, recipes = await self._get_recipes_with_filters(user_id=user_id, skip=skip, limit=limit, **filters)
+        _, recipes = await self._get_recipes_with_filters(
+            user_id=user_id,
+            skip=skip,
+            limit=limit,
+            sort_by=sort_by,
+            **filters
+        )
 
         count = await self._get_count_with_filters(**filters)
         return count, recipes
@@ -169,12 +207,18 @@ class RecipeRepository(RecipeRepositoryProtocol):
         user_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
+        sort_by: RecipeSortFieldEnum | None = None,
         **filters: Any,
     ) -> tuple[int, Sequence[RecipeWithExtra]]:
         author_filter = Recipe.author.has(User.username == author_username)
 
         _, recipes = await self._get_recipes_with_filters(
-            user_id=user_id, skip=skip, limit=limit, additional_filters=[author_filter], **filters
+            user_id=user_id,
+            skip=skip,
+            limit=limit,
+            additional_filters=[author_filter],
+            sort_by=sort_by,
+            **filters
         )
 
         count = await self._get_count_with_filters(additional_filters=[author_filter], **filters)
@@ -187,6 +231,7 @@ class RecipeRepository(RecipeRepositoryProtocol):
         user_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
+        sort_by: RecipeSortFieldEnum | None = None,
         **filters: Any,
     ) -> tuple[int, Sequence[RecipeWithExtra]]:
         author_filter = Recipe.author.has(User.id == author_id)
@@ -196,6 +241,7 @@ class RecipeRepository(RecipeRepositoryProtocol):
             skip=skip,
             limit=limit,
             additional_filters=[author_filter],
+            sort_by=sort_by,
             **filters,
         )
 

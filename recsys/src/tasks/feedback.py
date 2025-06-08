@@ -8,7 +8,7 @@ from src.services.recs_service import RecommendationServiceDependency
 router = NatsRouter()
 
 
-@router.subscriber("recsys_events.add_feedback", stream=recommendations_stream)
+@router.subscriber("recsys_events.add_feedback", stream=recommendations_stream, queue="recsys-events-feedback-queue")
 @inject
 async def add_feedback_task(
     request: AddFeedbackRequest,
@@ -21,7 +21,7 @@ async def add_feedback_task(
     )
 
 
-@router.subscriber("recsys_events.delete_feedback", stream=recommendations_stream)
+@router.subscriber("recsys_events.delete_feedback", stream=recommendations_stream, queue="recsys-events-feedback-queue")
 @inject
 async def delete_feedback_task(
     request: AddFeedbackRequest,

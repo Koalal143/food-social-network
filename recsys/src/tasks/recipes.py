@@ -12,7 +12,7 @@ from src.services.recs_service import RecommendationServiceDependency
 router = NatsRouter()
 
 
-@router.subscriber("recsys_events.add_recipe", stream=recommendations_stream)
+@router.subscriber("recsys_events.add_recipe", stream=recommendations_stream, queue="recsys-events-recipes-queue")
 @inject
 async def add_recipe_task(
     request: AddRecipeRequest,
@@ -26,7 +26,7 @@ async def add_recipe_task(
     )
 
 
-@router.subscriber("recsys_events.update_recipe", stream=recommendations_stream)
+@router.subscriber("recsys_events.update_recipe", stream=recommendations_stream, queue="recsys-events-recipes-queue")
 @inject
 async def update_recipe_task(
     request: UpdateRecipeRequest,
@@ -40,7 +40,7 @@ async def update_recipe_task(
     )
 
 
-@router.subscriber("recsys_events.delete_recipe", stream=recommendations_stream)
+@router.subscriber("recsys_events.delete_recipe", stream=recommendations_stream, queue="recsys-events-recipes-queue")
 @inject
 async def delete_recipe_task(
     request: DeleteRecipeRequest,

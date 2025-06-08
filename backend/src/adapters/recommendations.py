@@ -129,7 +129,7 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
             msg = f"Error publishing delete_recipe task for recipe {recipe_id}"
             logger.exception(msg)
 
-    async def update_recipe(self, author_id: int, recipe_id: int, title: str, tags: str) -> None:
+    async def update_recipe(self, author_id: int, recipe_id: int, title: str, tags: str, *, is_published: bool) -> None:
         """Update recipe in recommendations service.
 
         Args:
@@ -137,6 +137,7 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
             recipe_id: Recipe ID
             title: New recipe title
             tags: New recipe tags
+            is_published: Is the recipe published or not
 
         Raises:
             Exception: When message publishing fails
@@ -147,6 +148,7 @@ class RecommendationsAdapter(RecommendationsAdapterProtocol):
             recipe_id=recipe_id,
             title=title,
             tags=tags,
+            is_published=is_published,
         )
 
         try:

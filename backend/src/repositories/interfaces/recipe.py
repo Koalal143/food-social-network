@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from typing import Any, Protocol
 
+from src.enums.recipe_sort_field import RecipeSortFieldEnum
 from src.models.recipe import Recipe
 from src.typings.recipe_with_favorite import RecipeWithExtra
 
@@ -15,6 +16,7 @@ class RecipeRepositoryProtocol(Protocol):
         user_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
+        sort_by: RecipeSortFieldEnum | None = None,
         **filters: Any,
     ) -> tuple[int, Sequence[Recipe]]: ...
 
@@ -24,6 +26,7 @@ class RecipeRepositoryProtocol(Protocol):
         user_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
+        sort_by: RecipeSortFieldEnum | None = None,
         **filters: Any,
     ) -> tuple[int, Sequence[Recipe]]: ...
 
@@ -33,6 +36,7 @@ class RecipeRepositoryProtocol(Protocol):
         user_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
+        sort_by: RecipeSortFieldEnum | None = None,
         **filters: Any,
     ) -> tuple[int, Sequence[Recipe]]: ...
 
