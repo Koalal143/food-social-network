@@ -3,6 +3,7 @@ from typing import Annotated, Literal
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, HttpUrl, PositiveInt
 
 from src.enums.recipe_difficulty import RecipeDifficultyEnum
+from src.enums.recipe_sort_field import RecipeSortFieldEnum
 from src.schemas.base import BaseReadSchema, BaseSchema
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.user import UserReadShort
@@ -128,3 +129,12 @@ class RecipeSearchQuery(BaseModel):
     cook_time_from: int | None = Field(default=None, ge=0)
     cook_time_to: int | None = Field(default=None, ge=0)
     sort_by: Literal["-created_at", "created_at"] | None = Field(default=None)
+
+
+class RecipeFilterParams(BaseModel):
+    """Parameters for filtering and sorting recipes."""
+
+    sort_by: RecipeSortFieldEnum | None = Field(
+        default=None,
+        description="Field and direction to sort by (e.g., 'created_at', '-impressions_count')"
+    )

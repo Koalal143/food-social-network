@@ -3,6 +3,7 @@ from typing import cast
 
 from pydantic import HttpUrl
 
+from src.enums.recipe_sort_field import RecipeSortFieldEnum
 from src.exceptions.recipe import (
     NoRecipeImageError,
     NoRecipeInstructionsError,
@@ -98,11 +99,12 @@ class RecipeService:
         skip: int = 0,
         limit: int = 10,
         user_id: int | None = None,
+        sort_by: RecipeSortFieldEnum | None = RecipeSortFieldEnum.IMPRESSIONS_COUNT_DESC,
         *,
         is_published: bool = True,
     ) -> tuple[int, Sequence[RecipeReadShort]]:
         count, recipes = await self.recipe_repository.get_all(
-            user_id=user_id, skip=skip, limit=limit, is_published=is_published
+            user_id=user_id, skip=skip, limit=limit, sort_by=sort_by, is_published=is_published
         )
         recipe_schemas = [await self._to_recipe_short_schema(recipe) for recipe in recipes]
 
@@ -192,7 +194,11 @@ class RecipeService:
                     existing_tags = [tag.name for tag in existing_recipe.tags] if existing_recipe.tags else []
                     new_tags_str = ", ".join(existing_tags)
                 await self.recsys_repository.update_recipe(
-                    cast("int", existing_recipe.author_id), cast("int", existing_recipe.id), new_title, new_tags_str
+                    cast("int", existing_recipe.author_id),
+                    cast("int", existing_recipe.id),
+                    new_title,
+                    new_tags_str,
+                    is_published=recipe_update.is_published,
                 )
             else:
                 tags = ", ".join([tag.name for tag in existing_recipe.tags]) if existing_recipe.tags else ""
@@ -201,7 +207,13 @@ class RecipeService:
                 )
 
         if existing_recipe.is_published and recipe_update.is_published is False:
-            await self.recsys_repository.delete_recipe(existing_recipe.id)
+            await self.recsys_repository.update_recipe(
+                cast("int", existing_recipe.author_id),
+                cast("int", existing_recipe.id),
+                existing_recipe.title,
+                ", ".join([tag.name for tag in existing_recipe.tags]) if existing_recipe.tags else "",
+                is_published=recipe_update.is_published,
+            )
 
     async def create(self, user: User, recipe_create: RecipeCreate) -> RecipeRead:
         recipe_data = recipe_create.model_dump(exclude={"ingredients", "instructions", "tags"})
