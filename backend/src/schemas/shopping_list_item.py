@@ -5,8 +5,8 @@ from src.utils.partial_model import partial_model
 
 
 class ShoppingListItemBase(BaseSchema):
-    name: str = Field(examples=["Молоко"])
-    quantity: str = Field(examples=["1 литр"])
+    name: str = Field(min_length=2, max_length=135, examples=["Молоко"])
+    quantity: str | None = Field(max_length=50, examples=["1 литр"])
 
 
 class ShoppingListItemCreate(ShoppingListItemBase):
@@ -38,4 +38,4 @@ class ShoppingListItemToggle(BaseModel):
 
 
 class ShoppingListItemBulkCreate(BaseModel):
-    items: list[ShoppingListItemCreate] = Field(max_length=25)
+    items: list[ShoppingListItemCreate] = Field(min_length=1, max_length=25)

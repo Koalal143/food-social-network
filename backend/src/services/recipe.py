@@ -23,7 +23,7 @@ from src.repositories.interfaces import (
 )
 from src.schemas.direct_upload import DirectUpload
 from src.schemas.recipe import (
-    Ingredient,
+    IngredientCreate,
     RecipeCreate,
     RecipeInstructionCreate,
     RecipeRead,
@@ -143,7 +143,7 @@ class RecipeService:
         recipe_schemas = [await self._to_recipe_short_schema(recipe) for recipe in recipes]
         return count, recipe_schemas
 
-    async def _create_ingredients(self, recipe_id: int, ingredients: list[Ingredient]) -> None:
+    async def _create_ingredients(self, recipe_id: int, ingredients: list[IngredientCreate]) -> None:
         ingredients_data = []
         for ingredient in ingredients:
             ingredient_dict = ingredient.model_dump()

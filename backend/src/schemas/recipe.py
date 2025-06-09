@@ -19,9 +19,17 @@ RecipeTitle = Annotated[
 ]
 
 
-class Ingredient(BaseSchema):
+class BaseIngredient(BaseSchema):
     name: str = Field(min_length=2, max_length=135, examples=["Tomato", "Чеснок"])
     quantity: str | None = Field(default=None, max_length=30, examples=["2 pieces", "два зубчика"])
+
+
+class IngredientCreate(BaseIngredient):
+    pass
+
+
+class IngredientRead(IngredientCreate):
+    id: PositiveInt
 
 
 class BaseRecipeInstruction(BaseSchema):
@@ -70,7 +78,7 @@ class BaseRecipeSchema(BaseModel):
 
 
 class _IngredientsMixin(BaseSchema):
-    ingredients: list[Ingredient] = Field(min_length=1, max_length=50)
+    ingredients: list[IngredientRead] = Field(min_length=1, max_length=50)
 
 
 class _TagsMixin(BaseSchema):
@@ -101,12 +109,13 @@ class RecipeReadFull(RecipeRead):
     author: UserReadShort
 
 
-class RecipeCreate(_IngredientsMixin, _TagsMixin, BaseRecipeSchema):
+class RecipeCreate(_TagsMixin, BaseRecipeSchema):
     image_path: str | None = Field(default=None, max_length=255, examples=["images/recipes/1/main.png"])
 
     instructions: Annotated[list[RecipeInstructionCreate] | None, AfterValidator(validate_instructions_steps)] = Field(
         default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT
     )
+    ingredients: list[IngredientCreate] = Field(min_length=1, max_length=50)
 
 
 @partial_model
@@ -115,7 +124,7 @@ class RecipeUpdate(_IsPublishedMixin, BaseRecipeSchema):
     instructions: Annotated[list[RecipeInstructionCreate] | None, AfterValidator(validate_instructions_steps)] = Field(
         default=None, max_length=MAX_RECIPE_INSTRUCTIONS_COUNT
     )
-    ingredients: list[Ingredient] | None = Field(default=None)
+    ingredients: list[IngredientCreate] | None = Field(default=None)
     tags: list[RecipeTag] | None = Field(default=None)
 
 
@@ -135,6 +144,5 @@ class RecipeFilterParams(BaseModel):
     """Parameters for filtering and sorting recipes."""
 
     sort_by: RecipeSortFieldEnum | None = Field(
-        default=None,
-        description="Field and direction to sort by (e.g., 'created_at', '-impressions_count')"
+        default=None, description="Field and direction to sort by (e.g., 'created_at', '-impressions_count')"
     )

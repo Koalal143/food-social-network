@@ -40,11 +40,23 @@ class ShoppingListItemService:
 
         return count, [ShoppingListItemRead.model_validate(item) for item in items]
 
+    async def get_by_id(self, item_id: int, user_id: int) -> ShoppingListItemRead:
+        item = await self.shopping_list_item_repository.get_by_id(item_id)
+
+        if not item or item.user_id != user_id:
+            msg = "Shopping list item not found"
+            raise ShoppingListItemNotFoundError(msg)
+
+        return ShoppingListItemRead.model_validate(item)
+
     async def create(self, user_id: int, item_data: ShoppingListItemCreate) -> ShoppingListItemRead:
         item = await self.shopping_list_item_repository.create(user_id=user_id, **item_data.model_dump())
         return ShoppingListItemRead.model_validate(item)
 
     async def bulk_create(self, user_id: int, bulk_data: ShoppingListItemBulkCreate) -> Sequence[ShoppingListItemRead]:
+        if not bulk_data.items:
+            return []
+
         items_data = []
         ingredients_ids_to_check: set[int] = set()
 
