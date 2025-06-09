@@ -172,13 +172,23 @@ class ShoppingListAPI {
      * @returns {Promise<void>}
      */
     static async bulkDeleteItems(itemIds) {
-        const response = await fetch(`${API_BASE_URL}/api/v1/shopping-list/bulk`, {
+        // Проверяем, что передан массив ID
+        if (!Array.isArray(itemIds) || itemIds.length === 0) {
+            throw new Error('Необходимо передать массив ID элементов для удаления')
+        }
+
+        // Формируем query-параметры из массива ID
+        const params = new URLSearchParams()
+        itemIds.forEach(id => {
+            params.append('item_ids', id.toString())
+        })
+
+        const response = await fetch(`${API_BASE_URL}/api/v1/shopping-list/bulk?${params}`, {
             method: 'DELETE',
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.getAuthToken()}`
-            },
-            body: JSON.stringify(itemIds)
+            }
+            // Убираем body - данные теперь передаются через query-параметры
         })
 
         if (!response.ok) {
