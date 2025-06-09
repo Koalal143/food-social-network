@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Container from "@/components/layout/Container";
 import RecipeSwipeCard from "@/components/shared/RecipeSwipeCard";
 import { useRouter } from 'next/navigation';
@@ -14,10 +14,14 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 export default function RecommendationsPage() {
   const router = useRouter();
   const {
+    recipes,
+    loading,
     loadingMore,
     isPreloading,
+    error,
     moveToNextRecipe,
-    getCurrentRecipe
+    getCurrentRecipe,
+    fetchRecipes
   } = useRecomendations();
   const { addFavorite } = useFavorites();
   const { addToDisliked } = useDislikes();
@@ -27,6 +31,14 @@ export default function RecommendationsPage() {
 
   // Получаем текущий рецепт
   const currentRecipe = getCurrentRecipe();
+
+  // Автоматическая загрузка рецептов при монтировании компонента
+  useEffect(() => {
+    // Загружаем рецепты только если их нет и нет активной загрузки
+    if (recipes.length === 0 && !loading && !error) {
+      fetchRecipes();
+    }
+  }, [recipes.length, loading, error]); // Убираем fetchRecipes из зависимостей
 
   const nextTutorialStep = () => {
     if (tutorialStep < 3) {

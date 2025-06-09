@@ -28,14 +28,30 @@ export default function RecomendationsProvider({ children }) {
     // Ref для отслеживания последнего времени действия пользователя
     const lastActionTime = useRef(0)
 
+    // Ref для debouncing запросов
+    const debounceTimeoutRef = useRef(null)
+
+    // Ref для отслеживания последнего времени API запроса
+    const lastApiCallTime = useRef(0)
+
+    // Минимальный интервал между API запросами (в миллисекундах)
+    const MIN_API_INTERVAL = 1000
+
     const fetchNewRecipe = async (isPreload = false, forceRefresh = false) => {
         // Предотвращаем множественные одновременные запросы
         if (isLoadingRef.current && !isPreload) {
             return null
         }
 
+        // Проверяем минимальный интервал между API запросами
+        const timeSinceLastApiCall = Date.now() - lastApiCallTime.current
+        if (timeSinceLastApiCall < MIN_API_INTERVAL && !forceRefresh) {
+            await new Promise(resolve => setTimeout(resolve, MIN_API_INTERVAL - timeSinceLastApiCall))
+        }
+
         try {
             isLoadingRef.current = true
+            lastApiCallTime.current = Date.now()
 
             if (isPreload) {
                 setIsPreloading(true)
@@ -52,50 +68,67 @@ export default function RecomendationsProvider({ children }) {
                 }
             }
 
-            // Пытаемся получить новый уникальный рецепт
+            // Ограничиваем количество попыток для предотвращения бесконечных запросов
+            const maxAttempts = forceRefresh ? 2 : 3 // Значительно уменьшаем количество попыток
             let attempts = 0
-            const maxAttempts = forceRefresh ? 3 : 8 // Меньше попыток для принудительного обновления
 
             while (attempts < maxAttempts) {
-                const newRecipes = await RecomendationsService.getRecomendationsRecipes(BATCH_SIZE)
+                try {
+                    const newRecipes = await RecomendationsService.getRecomendationsRecipes(BATCH_SIZE)
 
-                if (newRecipes.length === 0) {
-                    // Если API не возвращает рецепты, ждем и пробуем еще раз
-                    if (attempts < maxAttempts - 1) {
-                        await new Promise(resolve => setTimeout(resolve, forceRefresh ? 200 : 500))
-                        attempts++
-                        continue
+                    if (newRecipes.length === 0) {
+                        // Если API не возвращает рецепты, прекращаем попытки
+                        break
                     }
-                    return null
-                }
 
-                const newRecipe = newRecipes[0]
+                    const newRecipe = newRecipes[0]
 
-                // Проверяем, не показывали ли мы уже этот рецепт
-                if (!shownRecipeIds.current.has(newRecipe.id)) {
-                    // Добавляем ID в множество показанных
-                    shownRecipeIds.current.add(newRecipe.id)
-                    return newRecipe
-                }
+                    // Проверяем, не показывали ли мы уже этот рецепт
+                    if (!shownRecipeIds.current.has(newRecipe.id)) {
+                        // Добавляем ID в множество показанных
+                        shownRecipeIds.current.add(newRecipe.id)
+                        return newRecipe
+                    }
 
-                attempts++
+                    attempts++
 
-                // Более короткая задержка для принудительного обновления
-                if (attempts < maxAttempts) {
-                    await new Promise(resolve => setTimeout(resolve, forceRefresh ? 100 : 200))
+                    // Добавляем задержку между попытками только если это не последняя попытка
+                    if (attempts < maxAttempts) {
+                        const delay = forceRefresh ? 300 : 500
+                        await new Promise(resolve => setTimeout(resolve, delay))
+                    }
+                } catch (apiError) {
+                    console.error(`Ошибка API при получении рецепта:`, apiError)
+                    attempts++
+
+                    // Если это сетевая ошибка, прекращаем попытки
+                    if (apiError.name === 'TypeError' || apiError.message.includes('fetch')) {
+                        break
+                    }
+
+                    // Добавляем задержку перед повторной попыткой при ошибке
+                    if (attempts < maxAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, 1000))
+                    }
                 }
             }
 
-            // Если после всех попыток получаем дубликаты, сбрасываем историю
-            if (!forceRefresh) {
-                console.log('Сброс истории показанных рецептов - все рецепты уже показаны')
+            // Если после всех попыток не получили уникальный рецепт
+            // Сбрасываем историю только если это не принудительное обновление
+            // и у нас есть показанные рецепты
+            if (!forceRefresh && shownRecipeIds.current.size > 0) {
                 shownRecipeIds.current.clear()
 
-                const freshRecipes = await RecomendationsService.getRecomendationsRecipes(BATCH_SIZE)
-                if (freshRecipes.length > 0) {
-                    const freshRecipe = freshRecipes[0]
-                    shownRecipeIds.current.add(freshRecipe.id)
-                    return freshRecipe
+                // Делаем только одну попытку после сброса истории
+                try {
+                    const freshRecipes = await RecomendationsService.getRecomendationsRecipes(BATCH_SIZE)
+                    if (freshRecipes.length > 0) {
+                        const freshRecipe = freshRecipes[0]
+                        shownRecipeIds.current.add(freshRecipe.id)
+                        return freshRecipe
+                    }
+                } catch (resetError) {
+                    console.error('Ошибка при получении рецепта после сброса истории:', resetError)
                 }
             }
 
@@ -131,7 +164,7 @@ export default function RecomendationsProvider({ children }) {
         }
 
         return null
-    }, [])
+    }, []) // Пустой массив зависимостей для предотвращения пересоздания
 
     // Функция для получения актуального рецепта после действия пользователя
     const getNextRecipeAfterAction = useCallback(async () => {
@@ -140,7 +173,7 @@ export default function RecomendationsProvider({ children }) {
 
         // Получаем новый рецепт с принудительным обновлением
         return await getNextRecipe(true)
-    }, [getNextRecipe])
+    }, []) // Убираем getNextRecipe из зависимостей для предотвращения циклов
 
     const fetchRecipes = async (append = false) => {
         try {
@@ -153,11 +186,16 @@ export default function RecomendationsProvider({ children }) {
 
                 // При первой загрузке получаем первый рецепт
                 const firstRecipe = await fetchNewRecipe(false, false)
+
                 if (firstRecipe) {
                     setRecipes([firstRecipe])
+                } else {
+                    // Устанавливаем ошибку, если не получили рецепт
+                    setError(new Error('Не удалось загрузить рецепты. Попробуйте позже.'));
                 }
             }
         } catch (error) {
+            console.error('Ошибка при загрузке рецептов:', error);
             setError(error)
         } finally {
             if (!append) {
@@ -168,17 +206,32 @@ export default function RecomendationsProvider({ children }) {
 
     // Функция для перехода к следующему рецепту с актуальными рекомендациями
     const moveToNextRecipe = useCallback(async () => {
-        // Всегда загружаем новый актуальный рецепт после действия пользователя
-        const newRecipe = await getNextRecipeAfterAction()
-
-        if (newRecipe) {
-            const nextIndex = currentRecipeIndex + 1
-            setCurrentRecipeIndex(nextIndex)
-            return newRecipe
+        // Очищаем предыдущий debounce timeout
+        if (debounceTimeoutRef.current) {
+            clearTimeout(debounceTimeoutRef.current)
         }
 
-        return null
-    }, [currentRecipeIndex, getNextRecipeAfterAction])
+        // Создаем debounced версию для предотвращения частых вызовов
+        return new Promise((resolve) => {
+            debounceTimeoutRef.current = setTimeout(async () => {
+                try {
+                    // Всегда загружаем новый актуальный рецепт после действия пользователя
+                    const newRecipe = await getNextRecipeAfterAction()
+
+                    if (newRecipe) {
+                        // Используем функциональное обновление для избежания зависимости от currentRecipeIndex
+                        setCurrentRecipeIndex(prevIndex => prevIndex + 1)
+                        resolve(newRecipe)
+                    } else {
+                        resolve(null)
+                    }
+                } catch (error) {
+                    console.error('Ошибка при переходе к следующему рецепту:', error)
+                    resolve(null)
+                }
+            }, 300) // Debounce delay 300ms
+        })
+    }, []) // Убираем зависимости для предотвращения пересоздания функции
 
     // Получить текущий рецепт
     const getCurrentRecipe = useCallback(() => {
@@ -186,9 +239,16 @@ export default function RecomendationsProvider({ children }) {
     }, [recipes, currentRecipeIndex])
 
     const resetRecommendations = useCallback(() => {
+        // Очищаем все timeouts
+        if (debounceTimeoutRef.current) {
+            clearTimeout(debounceTimeoutRef.current)
+            debounceTimeoutRef.current = null
+        }
+
         shownRecipeIds.current.clear()
         isLoadingRef.current = false
         lastActionTime.current = 0
+        lastApiCallTime.current = 0
         setRecipes([])
         setCurrentRecipeIndex(0)
         setError(null)
@@ -201,8 +261,19 @@ export default function RecomendationsProvider({ children }) {
             setLoading(false)
             return
         }
-        fetchRecipes()
-    }, [user])
+
+        // Загружаем рецепты только если их еще нет
+        if (recipes.length === 0) {
+            fetchRecipes()
+        }
+
+        // Cleanup function для очистки timeouts при размонтировании
+        return () => {
+            if (debounceTimeoutRef.current) {
+                clearTimeout(debounceTimeoutRef.current)
+            }
+        }
+    }, [user]) // Убираем recipes из зависимостей для предотвращения циклов
 
     return (
         <RecomendationsContext.Provider
