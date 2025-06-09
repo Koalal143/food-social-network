@@ -21,7 +21,9 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.add_column("shopping_list_items", sa.Column("is_from_recipe", sa.Boolean(), nullable=False))
-    op.alter_column("shopping_list_items", "quantity", existing_type=sa.VARCHAR(), nullable=True)
+    op.alter_column(
+        "shopping_list_items", "quantity", existing_type=sa.VARCHAR(), nullable=True, server_default=sa.text("NULL")
+    )
 
 
 def downgrade() -> None:
