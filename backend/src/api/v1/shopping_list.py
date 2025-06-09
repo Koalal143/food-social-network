@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Body, Query, Response, status
+from fastapi import APIRouter, Query, Response, status
 from pydantic import PositiveInt
 
 from src.core.security import CurrentUserDependency
@@ -133,7 +133,7 @@ async def toggle_shopping_list_item(
 
 @router.delete("/bulk", summary="Bulk delete shopping list items", status_code=status.HTTP_204_NO_CONTENT)
 async def bulk_delete_shopping_list_items(
-    item_ids: Annotated[list[PositiveInt], Body()],
+    item_ids: Annotated[list[PositiveInt], Query()],
     current_user: CurrentUserDependency,
     service: FromDishka[ShoppingListItemService],
     uow: FromDishka[SQLAlchemyUnitOfWork],
