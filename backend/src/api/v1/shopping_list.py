@@ -1,7 +1,8 @@
 from typing import Annotated
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, Body, Query, Response, status
+from pydantic import PositiveInt
 
 from src.core.security import CurrentUserDependency
 from src.db.uow import SQLAlchemyUnitOfWork
@@ -130,29 +131,10 @@ async def toggle_shopping_list_item(
             return result
 
 
-@router.delete("/{item_id}", summary="Delete shopping list item", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_shopping_list_item(
-    item_id: int,
-    current_user: CurrentUserDependency,
-    service: FromDishka[ShoppingListItemService],
-    uow: FromDishka[SQLAlchemyUnitOfWork],
-) -> None:
-    async with uow:
-        try:
-            await service.delete(item_id=item_id, user_id=current_user.id)
-        except ShoppingListItemNotFoundError as e:
-            raise AppHTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=e.message,
-                error_key=e.error_key,
-            ) from None
-        else:
-            await uow.commit()
-
 
 @router.delete("/bulk", summary="Bulk delete shopping list items", status_code=status.HTTP_204_NO_CONTENT)
 async def bulk_delete_shopping_list_items(
-    item_ids: list[int],
+    item_ids: Annotated[list[PositiveInt    ], Body()],
     current_user: CurrentUserDependency,
     service: FromDishka[ShoppingListItemService],
     uow: FromDishka[SQLAlchemyUnitOfWork],
@@ -171,3 +153,24 @@ async def clear_shopping_list(
     async with uow:
         await service.clear_user_shopping_list(user_id=current_user.id)
         await uow.commit()
+
+
+
+@router.delete("/{item_id}", summary="Delete shopping list item", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_shopping_list_item(
+    item_id: int,
+    current_user: CurrentUserDependency,
+    service: FromDishka[ShoppingListItemService],
+    uow: FromDishka[SQLAlchemyUnitOfWork],
+) -> None:
+    async with uow:
+        try:
+            await service.delete(item_id=item_id, user_id=current_user.id)
+        except ShoppingListItemNotFoundError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=e.message,
+                error_key=e.error_key,
+            ) from None
+        else:
+            await uow.commit()
