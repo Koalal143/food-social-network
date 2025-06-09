@@ -25,7 +25,7 @@ class ShoppingListItem(Base):
 
     @hybrid_property
     def is_actual(self) -> bool:
-        if not self.is_from_recipee:
+        if not self.is_from_recipe:
             return True
         return self.recipe_id is not None and self.recipe_ingredient_id is not None
 
@@ -34,7 +34,7 @@ class ShoppingListItem(Base):
     def _is_actual_expression(cls) -> ColumnElement[bool]:
         return case(
             (cls.is_from_recipe.is_(False), True),
-            else_=(cls.recipe_id.is_not(None) & cls.recipe_ingredient_id.is_not(None))
+            else_=(cls.recipe_id.is_not(None) & cls.recipe_ingredient_id.is_not(None)),
         )
 
     user: Mapped["User"] = relationship(back_populates="shopping_list_items")
