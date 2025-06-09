@@ -20,7 +20,15 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column("shopping_list_items", sa.Column("is_from_recipe", sa.Boolean(), nullable=False))
+    op.add_column("shopping_list_items", sa.Column("is_from_recipe", sa.Boolean(), nullable=True))
+    op.execute("""
+        UPDATE shopping_list_items
+        SET is_from_recipe = CASE
+            WHEN recipe_id IS NOT NULL OR recipe_ingredient_id IS NOT NULL THEN TRUE
+            ELSE FALSE
+        END
+    """)
+    op.alter_column("shopping_list_items", "is_from_recipe", nullable=False)
     op.alter_column(
         "shopping_list_items", "quantity", existing_type=sa.VARCHAR(), nullable=True, server_default=sa.text("NULL")
     )
