@@ -15,6 +15,7 @@ export default function RecipeSwipeCard ({
   onViewRecipe = () => console.log('View recipe') 
 }) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isProcessingSwipe, setIsProcessingSwipe] = useState(false);
   const constraintsRef = useRef(null);
 
   // Motion values для плавной анимации
@@ -23,10 +24,15 @@ export default function RecipeSwipeCard ({
   const rotate = useTransform(x, [-300, 300], [-15, 15]);
   const opacity = useTransform(x, [-300, -100, 0, 100, 300], [0.3, 1, 1, 1, 0.3]);
 
-  // Цвета для индикаторов свайпа
-  const leftColor = useTransform(x, [0, -120], [0, 1]);
-  const rightColor = useTransform(x, [0, 120], [0, 1]);
-  const upColor = useTransform(y, [0, -120], [0, 1]);
+  // Цвета для индикаторов свайпа с улучшенной чувствительностью
+  const leftColor = useTransform(x, [-200, -80, 0], [1, 0.8, 0]);
+  const rightColor = useTransform(x, [0, 80, 200], [0, 0.8, 1]);
+  const upColor = useTransform(y, [-200, -80, 0], [1, 0.8, 0]);
+
+  // Дополнительные трансформации для улучшенной визуализации
+  const leftScale = useTransform(x, [-200, -80, 0], [1.1, 1.05, 1]);
+  const rightScale = useTransform(x, [0, 80, 200], [1, 1.05, 1.1]);
+  const upScale = useTransform(y, [-200, -80, 0], [1.1, 1.05, 1]);
   
   const variants = {
     enter: { 
@@ -47,17 +53,45 @@ export default function RecipeSwipeCard ({
         duration: 0.6
       }
     },
-    exit: (direction) => ({
-      x: direction === 'right' ? 400 : direction === 'left' ? -400 : 0,
-      y: direction === 'up' ? -400 : 0,
-      opacity: 0,
-      scale: 0.9,
-      rotate: direction === 'right' ? 20 : direction === 'left' ? -20 : 0,
-      transition: { 
-        duration: 0.4,
-        ease: [0.4, 0, 0.2, 1]
-      }
-    })
+    exit: (direction) => {
+      const exitAnimations = {
+        right: {
+          x: 500,
+          y: -50,
+          opacity: 0,
+          scale: 0.8,
+          rotate: 25,
+          transition: {
+            duration: 0.5,
+            ease: [0.4, 0, 0.2, 1]
+          }
+        },
+        left: {
+          x: -500,
+          y: -50,
+          opacity: 0,
+          scale: 0.8,
+          rotate: -25,
+          transition: {
+            duration: 0.5,
+            ease: [0.4, 0, 0.2, 1]
+          }
+        },
+        up: {
+          x: 0,
+          y: -600,
+          opacity: 0,
+          scale: 0.7,
+          rotate: 0,
+          transition: {
+            duration: 0.6,
+            ease: [0.4, 0, 0.2, 1]
+          }
+        }
+      };
+
+      return exitAnimations[direction] || exitAnimations.up;
+    }
   };
   const handleDislike = () => {
     onDislike(recipe);
@@ -77,18 +111,91 @@ export default function RecipeSwipeCard ({
 
   const handleDragEnd = (event, info) => {
     setIsDragging(false);
+
+    // Предотвращаем множественные вызовы
+    if (isProcessingSwipe) {
+      console.log('Свайп уже обрабатывается, пропускаем');
+      return;
+    }
+
     const { offset, velocity } = info;
-    
-    // Увеличены пороги для более точного управления
-    if (Math.abs(offset.x) > 120 || Math.abs(velocity.x) > 1000) {
+
+    console.log('Drag end info:', { offset, velocity });
+
+    // Определяем основное направление движения
+    const absX = Math.abs(offset.x);
+    const absY = Math.abs(offset.y);
+    const absVelX = Math.abs(velocity.x);
+    const absVelY = Math.abs(velocity.y);
+
+    // Пороговые значения для срабатывания свайпа
+    const DISTANCE_THRESHOLD = 80;  // Уменьшено для лучшей отзывчивости
+    const VELOCITY_THRESHOLD = 600; // Уменьшено для лучшей отзывчивости
+
+    // Проверяем, достаточно ли движения для срабатывания
+    const hasEnoughDistance = absX > DISTANCE_THRESHOLD || absY > DISTANCE_THRESHOLD;
+    const hasEnoughVelocity = absVelX > VELOCITY_THRESHOLD || absVelY > VELOCITY_THRESHOLD;
+
+    if (!hasEnoughDistance && !hasEnoughVelocity) {
+      console.log('Недостаточно движения для свайпа');
+      return; // Недостаточно движения для свайпа
+    }
+
+    setIsProcessingSwipe(true);
+
+    // Определяем направление на основе комбинации расстояния и скорости
+    let isHorizontal = false;
+    let isVertical = false;
+
+    // Проверяем горизонтальное движение
+    if (absX > DISTANCE_THRESHOLD || absVelX > VELOCITY_THRESHOLD) {
+      // Убеждаемся, что горизонтальное движение доминирует
+      if (absX > absY * 0.6 || absVelX > absVelY * 0.6) {
+        isHorizontal = true;
+      }
+    }
+
+    // Проверяем вертикальное движение (только вверх)
+    if ((absY > DISTANCE_THRESHOLD || absVelY > VELOCITY_THRESHOLD) && offset.y < 0) {
+      // Убеждаемся, что вертикальное движение доминирует
+      if (absY > absX * 0.6 || absVelY > absVelX * 0.6) {
+        isVertical = true;
+      }
+    }
+
+    // Выполняем действие на основе определенного направления
+    if (isVertical && !isHorizontal) {
+      console.log('Свайп вверх - скип');
+      handleSkip();
+    } else if (isHorizontal && !isVertical) {
       if (offset.x > 0) {
+        console.log('Свайп вправо - лайк');
         handleLike();
       } else {
+        console.log('Свайп влево - дизлайк');
         handleDislike();
       }
-    } else if (offset.y < -120 || velocity.y < -1000) {
-      handleSkip();
+    } else {
+      console.log('Неопределенное направление свайпа');
+      // Если направление неопределенно, используем доминирующую ось
+      if (absX > absY) {
+        if (offset.x > 0) {
+          console.log('Доминирует X+ - лайк');
+          handleLike();
+        } else {
+          console.log('Доминирует X- - дизлайк');
+          handleDislike();
+        }
+      } else if (offset.y < 0) {
+        console.log('Доминирует Y- - скип');
+        handleSkip();
+      }
     }
+
+    // Сбрасываем флаг обработки через небольшую задержку
+    setTimeout(() => {
+      setIsProcessingSwipe(false);
+    }, 500);
   };
 
   return (
@@ -107,40 +214,88 @@ export default function RecipeSwipeCard ({
           exit="exit"
           drag
           dragConstraints={constraintsRef}
-          dragElastic={0.18}
-          onDragStart={() => setIsDragging(true)}
+          dragElastic={0.2}
+          dragMomentum={false}
+          dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+          onDragStart={() => {
+            setIsDragging(true);
+            console.log('Drag started');
+          }}
+          onDrag={(event, info) => {
+            // Дополнительная обратная связь во время драга
+            const { offset } = info;
+            if (Math.abs(offset.x) > 50 || Math.abs(offset.y) > 50) {
+              // Можно добавить haptic feedback для мобильных устройств
+              if (navigator.vibrate) {
+                navigator.vibrate(1);
+              }
+            }
+          }}
           onDragEnd={handleDragEnd}
           style={{ x, y, rotate, opacity }}
-          className="relative w-full max-w-xs md:max-w-md aspect-[3/4] md:h-[650px] h-[70vh] min-h-[340px] rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl cursor-grab active:cursor-grabbing bg-white"
-          whileHover={{ scale: 1.02, y: -5 }}
-          whileTap={{ scale: 0.98 }}
+          className={`relative w-full max-w-xs md:max-w-md aspect-[3/4] md:h-[650px] h-[70vh] min-h-[340px] rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl bg-white transition-all duration-200 ${
+            isProcessingSwipe
+              ? 'cursor-wait opacity-80'
+              : isDragging
+                ? 'cursor-grabbing'
+                : 'cursor-grab'
+          }`}
+          whileHover={!isProcessingSwipe ? { scale: 1.02, y: -5 } : {}}
+          whileTap={!isProcessingSwipe ? { scale: 0.98 } : {}}
         >
-          {/* Overlay индикаторы свайпа */}
-          <motion.div 
+          {/* Overlay индикаторы свайпа с улучшенной анимацией */}
+          <motion.div
             className="absolute inset-0 bg-gradient-to-br from-red-500/90 to-red-600/90 flex items-center justify-center z-30 rounded-3xl backdrop-blur-sm"
             style={{ opacity: leftColor }}
           >
-            <div className="bg-white rounded-full p-4 md:p-6 shadow-xl">
+            <motion.div
+              className="bg-white rounded-full p-4 md:p-6 shadow-xl"
+              style={{ scale: leftScale }}
+            >
               <ThumbsDown className="w-8 h-8 md:w-10 md:h-10 text-red-500" />
-            </div>
+            </motion.div>
+            <motion.div
+              className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full"
+              style={{ opacity: leftColor }}
+            >
+              ДИЗЛАЙК
+            </motion.div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="absolute inset-0 bg-gradient-to-br from-pink-500/90 to-rose-500/90 flex items-center justify-center z-30 rounded-3xl backdrop-blur-sm"
             style={{ opacity: rightColor }}
           >
-            <div className="bg-white rounded-full p-4 md:p-6 shadow-xl">
+            <motion.div
+              className="bg-white rounded-full p-4 md:p-6 shadow-xl"
+              style={{ scale: rightScale }}
+            >
               <Bookmark className="w-8 h-8 md:w-10 md:h-10 text-pink-500 fill-pink-500" />
-            </div>
+            </motion.div>
+            <motion.div
+              className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full"
+              style={{ opacity: rightColor }}
+            >
+              ЛАЙК
+            </motion.div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="absolute inset-0 bg-gradient-to-br from-blue-500/90 to-indigo-500/90 flex items-center justify-center z-30 rounded-3xl backdrop-blur-sm"
             style={{ opacity: upColor }}
           >
-            <div className="bg-white rounded-full p-4 md:p-6 shadow-xl">
+            <motion.div
+              className="bg-white rounded-full p-4 md:p-6 shadow-xl"
+              style={{ scale: upScale }}
+            >
               <FastForward className="w-8 h-8 md:w-10 md:h-10 text-blue-500" />
-            </div>
+            </motion.div>
+            <motion.div
+              className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full"
+              style={{ opacity: upColor }}
+            >
+              СКИП
+            </motion.div>
           </motion.div>
 
           {/* Основной контент карточки */}

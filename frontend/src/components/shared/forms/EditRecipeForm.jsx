@@ -101,16 +101,16 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
         setTagsFromExternal(normalizedTags);
 
         // Устанавливаем превью главного фото
-        if (data.main_photo) {
-          setMainPhotoPreview(data.main_photo);
+        if (data.image_url) {
+          setMainPhotoPreview(data.image_url);
         }
 
         // Устанавливаем превью фото инструкций
         if (data.instructions) {
           const previews = {};
           data.instructions.forEach((inst, index) => {
-            if (inst.photo) {
-              previews[index] = inst.photo;
+            if (inst.image_url) {
+              previews[index] = inst.image_url;
             }
           });
           setInstructionPhotoPreviews(previews);
@@ -197,7 +197,7 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
       };
       reader.readAsDataURL(file);
     } else {
-      setMainPhotoPreview(initialData?.main_photo || null);
+      setMainPhotoPreview(initialData?.image_url || null);
     }
   };
 
@@ -224,11 +224,24 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
   // Удаление фото инструкции
   const handleRemoveInstructionPhoto = (index) => {
     setValue(`instructions.${index}.photo`, null);
-    setInstructionPhotoPreviews(prev => {
-      const newPreviews = { ...prev };
-      delete newPreviews[index];
-      return newPreviews;
-    });
+
+    // Восстанавливаем исходное изображение, если оно было
+    const originalInstruction = initialData?.instructions?.find(
+      inst => inst.step_number === index + 1
+    );
+
+    if (originalInstruction?.image_url) {
+      setInstructionPhotoPreviews(prev => ({
+        ...prev,
+        [index]: originalInstruction.image_url
+      }));
+    } else {
+      setInstructionPhotoPreviews(prev => {
+        const newPreviews = { ...prev };
+        delete newPreviews[index];
+        return newPreviews;
+      });
+    }
   };
 
   const onSubmit = async (data) => {
@@ -260,7 +273,12 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
     }
 
     try {
-      await updateRecipe({ ...data, tags, id: initialData.id });
+      await updateRecipe({
+        ...data,
+        tags,
+        id: initialData.id,
+        slug: initialData.slug // Передаем slug для получения текущих данных
+      });
       toast({
         title: "Рецепт успешно обновлен",
         description: "Изменения были сохранены.",
@@ -429,7 +447,7 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
                         size="sm"
                         onClick={() => {
                           field.onChange(null);
-                          setMainPhotoPreview(initialData?.main_photo || null);
+                          setMainPhotoPreview(initialData?.image_url || null);
                         }}
                         className="absolute -top-2 -right-2 text-destructive hover:text-destructive/80 bg-background border rounded-full w-6 h-6 p-0"
                       >

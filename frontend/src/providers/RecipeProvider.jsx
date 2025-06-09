@@ -183,6 +183,9 @@ export default function RecipeProvider({ children }) {
 
     const updateRecipe = async (formData) => {
         try {
+            // Получаем текущие данные рецепта для сохранения существующих изображений
+            const currentRecipe = await getRecipeBySlug(formData.slug || formData.id, null);
+
             // 1. Обновляем основные поля
             const updatedRecipe = {
                 id: formData.id,
@@ -194,22 +197,22 @@ export default function RecipeProvider({ children }) {
                 ingredients: formData.ingredients,
             };
 
-            console.log(formData);
-            
-
-            // 2. Фото блюда
-            let mainPhotoKey = formData.image_path;
+            // 2. Обработка главного фото
+            let mainPhotoKey = currentRecipe.image_path; // Сохраняем существующий путь
             if (isFile(formData.main_photo)) {
+                // Загружаем новое фото только если пользователь выбрал файл
                 const mainPhotoPresigned = await RecipesService.getUploadImageUrl(formData.id);
                 await S3Service.uploadImage(mainPhotoPresigned, formData.main_photo);
                 mainPhotoKey = mainPhotoPresigned.fields.key;
             }
-            // 3. Фото шагов
+
+            // 3. Обработка фото инструкций
             let presignedPostDatas = [];
             const stepsWithPhotos = formData.instructions
                 .map((inst, idx) => ({ ...inst, idx }))
                 .filter(inst => isFile(inst.photo))
                 .map(inst => inst.step_number);
+
             if (stepsWithPhotos.length > 0) {
                 presignedPostDatas = await RecipesService.getUploadInstructionsUrls(formData.id, stepsWithPhotos);
                 await Promise.all(
@@ -223,23 +226,33 @@ export default function RecipeProvider({ children }) {
                     })
                 );
             }
-            // 4. Формируем массив инструкций с image_path
+
+            // 4. Формируем массив инструкций с сохранением существующих изображений
             const instructions = formData.instructions.map(instruction => {
                 const presignedData = presignedPostDatas.find(
                     item => item.step_number === instruction.step_number
                 );
+
+                // Находим соответствующую инструкцию в текущем рецепте
+                const currentInstruction = currentRecipe.instructions?.find(
+                    inst => inst.step_number === instruction.step_number
+                );
+
                 return {
                     step_number: instruction.step_number,
                     description: instruction.description,
-                    image_path: presignedData?.fields?.key || instruction.image_path || null
+                    // Используем новый путь, если загружено новое фото, иначе сохраняем существующий
+                    image_path: presignedData?.fields?.key || currentInstruction?.image_path || null
                 };
             });
+
             // 5. Собираем финальный объект для PATCH
             const recipeWithPhotos = {
                 ...updatedRecipe,
                 image_path: mainPhotoKey,
                 instructions,
             };
+
             const updated = await RecipesService.updateRecipe(recipeWithPhotos);
             setRecipes(prev => prev.map(r => r.id === updated.id ? updated : r));
             return updated;
