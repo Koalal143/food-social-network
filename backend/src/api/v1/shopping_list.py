@@ -131,10 +131,9 @@ async def toggle_shopping_list_item(
             return result
 
 
-
 @router.delete("/bulk", summary="Bulk delete shopping list items", status_code=status.HTTP_204_NO_CONTENT)
 async def bulk_delete_shopping_list_items(
-    item_ids: Annotated[list[PositiveInt    ], Body()],
+    item_ids: Annotated[list[PositiveInt], Body()],
     current_user: CurrentUserDependency,
     service: FromDishka[ShoppingListItemService],
     uow: FromDishka[SQLAlchemyUnitOfWork],
@@ -153,7 +152,6 @@ async def clear_shopping_list(
     async with uow:
         await service.clear_user_shopping_list(user_id=current_user.id)
         await uow.commit()
-
 
 
 @router.delete("/{item_id}", summary="Delete shopping list item", status_code=status.HTTP_204_NO_CONTENT)
