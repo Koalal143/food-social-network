@@ -60,10 +60,12 @@ class ShoppingListItemRepository(ShoppingListItemRepositoryProtocol):
 
         return await self.session.scalar(stmt) or 0
 
-    async def create(self, **fields: Any) -> ShoppingListItem:
+    async def create(self, **fields: Any) -> ShoppingListItem | None:
         if "recipe_ingredient_id" in fields:
-            recipe_id_by_ingredient = select(RecipeIngredient.recipe_id).where(
-                RecipeIngredient.id == fields["recipe_ingredient_id"]
+            recipe_id_by_ingredient = (
+                select(RecipeIngredient.recipe_id)
+                .where(RecipeIngredient.id == fields["recipe_ingredient_id"])
+                .scalar_subquery()
             )
             fields["recipe_id"] = recipe_id_by_ingredient
 
