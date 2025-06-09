@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import Any
 
 from sqlalchemy import delete, insert, select
@@ -16,6 +16,15 @@ class RecipeIngredientRepository(RecipeIngredientRepositoryProtocol):
         stmt = select(RecipeIngredient).where(RecipeIngredient.id == ingredient_id)
         result = await self.session.scalars(stmt)
         return result.first()
+
+    async def get_by_ids(self, ingredient_ids: Iterable[int]) -> Sequence[RecipeIngredient]:
+        ingredient_ids_list = list(ingredient_ids)
+        if not ingredient_ids_list:
+            return []
+
+        stmt = select(RecipeIngredient).where(RecipeIngredient.id.in_(ingredient_ids_list))
+        result = await self.session.scalars(stmt)
+        return result.all()
 
     async def get_all_for_recipe(self, recipe_id: int, skip: int = 0, limit: int = 100) -> Sequence[RecipeIngredient]:
         stmt = select(RecipeIngredient).where(RecipeIngredient.recipe_id == recipe_id).offset(skip).limit(limit)

@@ -72,21 +72,45 @@ class ShoppingListItemRepository(ShoppingListItemRepositoryProtocol):
         return await self.get_by_id(result)
 
     async def bulk_create(self, user_id: int, items: list[dict[str, Any]]) -> Sequence[ShoppingListItem]:
-        items_with_recipe_ids = []
+        if not items:
+            return []
+        items_without_recipe_ids: list[dict[str, str | int | Select | None]] = []
+        items_with_recipe_ids: list[dict[str, str | int | Select | None]] = []
         for item in items:
             recipe_ingredient_id = item.get("recipe_ingredient_id")
             if not recipe_ingredient_id:
-                items_with_recipe_ids.append(item)
+                items_without_recipe_ids.append(
+                    {
+                        "user_id": user_id,
+                        "recipe_id": None,
+                        "recipe_ingredient_id": None,
+                        "is_from_recipe": False,
+                        **item,
+                    }
+                )
                 continue
 
             recipe_id_by_ingredient = select(RecipeIngredient.recipe_id).where(
                 RecipeIngredient.id == recipe_ingredient_id
             )
-            items_with_recipe_ids.append({"user_id": user_id, **item, "recipe_id": recipe_id_by_ingredient})
+            items_with_recipe_ids.append(
+                {"user_id": user_id, "recipe_id": recipe_id_by_ingredient, "is_from_recipe": True, **item}
+            )
+        result_ids: list[int] = []
+        stmt_without_recipe_ids = (
+            insert(ShoppingListItem).values(items_without_recipe_ids).returning(ShoppingListItem.id)
+        )
 
-        stmt = insert(ShoppingListItem).values(items_with_recipe_ids).returning(ShoppingListItem.id)
-        result = await self.session.scalars(stmt)
-        return await self.get_by_ids(result)
+        if items_without_recipe_ids:
+            result_without_recipe_ids = await self.session.scalars(stmt_without_recipe_ids)
+            if result_without_recipe_ids:
+                result_ids.extend([*result_without_recipe_ids])
+        if items_with_recipe_ids:
+            stmt_with_recipe_ids = insert(ShoppingListItem).values(items_with_recipe_ids).returning(ShoppingListItem.id)
+            result_with_recipe_ids = await self.session.scalars(stmt_with_recipe_ids)
+            if result_with_recipe_ids:
+                result_ids.extend([*result_with_recipe_ids])
+        return await self.get_by_ids(result_ids)
 
     async def update(self, user_id: int, item_id: int, **fields: Any) -> ShoppingListItem | None:
         stmt = (

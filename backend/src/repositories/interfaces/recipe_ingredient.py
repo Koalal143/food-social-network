@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import Protocol
 
 from src.models.recipe_ingredient import RecipeIngredient
@@ -6,6 +6,8 @@ from src.models.recipe_ingredient import RecipeIngredient
 
 class RecipeIngredientRepositoryProtocol(Protocol):
     async def get_by_id(self, ingredient_id: int) -> RecipeIngredient | None: ...
+
+    async def get_by_ids(self, ingredient_ids: Iterable[int]) -> Sequence[RecipeIngredient]: ...
 
     async def get_all_for_recipe(
         self, recipe_id: int, skip: int = 0, limit: int = 100
