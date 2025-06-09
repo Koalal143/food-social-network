@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Annotated
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
@@ -20,7 +21,7 @@ from src.services.shopping_list_item import ShoppingListItemService
 router = APIRouter(route_class=DishkaRoute, prefix="/shopping-list", tags=["Shopping List"])
 
 
-@router.get("", summary="Get user shopping list")
+@router.get("", summary="Get user shopping list", response_model=list[ShoppingListItemRead])
 async def get_shopping_list(
     current_user: CurrentUserDependency,
     service: FromDishka[ShoppingListItemService],
@@ -29,7 +30,7 @@ async def get_shopping_list(
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     *,
     only_not_purchased: bool = False,
-) -> list[ShoppingListItemRead]:
+) -> Sequence[ShoppingListItemRead]:
     count, items = await service.get_all_by_user(
         user_id=current_user.id,
         skip=skip,
@@ -53,13 +54,18 @@ async def create_shopping_list_item(
         return result
 
 
-@router.post("/bulk", summary="Bulk create shopping list items", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/bulk",
+    summary="Bulk create shopping list items",
+    status_code=status.HTTP_201_CREATED,
+    response_model=list[ShoppingListItemRead],
+)
 async def bulk_create_shopping_list_items(
     bulk_data: ShoppingListItemBulkCreate,
     current_user: CurrentUserDependency,
     service: FromDishka[ShoppingListItemService],
     uow: FromDishka[SQLAlchemyUnitOfWork],
-) -> list[ShoppingListItemRead]:
+) -> Sequence[ShoppingListItemRead]:
     async with uow:
         try:
             result = await service.bulk_create(user_id=current_user.id, bulk_data=bulk_data)
