@@ -71,7 +71,6 @@ export default function CookiesPage() {
       description: "Запоминают ваши предпочтения и настройки",
       cookies: [
         { name: "anonymous_user_id", purpose: "Идентификация для рекомендаций", duration: "1 год" },
-        { name: "user_preferences", purpose: "Пользовательские настройки", duration: "1 год" },
         { name: "frontend_consent_accepted", purpose: "Состояние согласия на куки", duration: "1 год" }
       ]
     },
@@ -80,7 +79,7 @@ export default function CookiesPage() {
       title: "Аналитические куки",
       description: "Помогают улучшить работу сайта (только с вашего согласия)",
       cookies: [
-        { name: "analytics_consent", purpose: "Согласие на аналитику", duration: "1 год" }
+        { name: "is_analytics_allowed", purpose: "Согласие на аналитику", duration: "1 год" }
       ]
     }
   ];

@@ -192,7 +192,6 @@ export default function PolicyPage() {
                 <li><strong>Необходимые cookie</strong> — обеспечивают базовую функциональность сайта, включая аутентификацию пользователей и безопасность сессий. Эти cookie не могут быть отключены.</li>
                 <li><strong>Функциональные cookie</strong> — запоминают ваши предпочтения и настройки для улучшения пользовательского опыта.</li>
                 <li><strong>Аналитические cookie</strong> — помогают нам понимать, как пользователи взаимодействуют с сайтом, для улучшения его работы. Используются только с вашего согласия.</li>
-                <li><strong>Cookie рекомендательной системы</strong> — сохраняют информацию о ваших предпочтениях в рецептах для персонализации рекомендаций.</li>
               </ul>
 
               <p><strong>11.4.</strong> Конкретные cookie, используемые на сайте:</p>
@@ -225,14 +224,9 @@ export default function PolicyPage() {
                       <td className="px-2 sm:px-4 py-2 border-b">Идентификация анонимных пользователей для рекомендаций</td>
                       <td className="px-2 sm:px-4 py-2 border-b">1 год</td>
                     </tr>
+
                     <tr>
-                      <td className="px-2 sm:px-4 py-2 border-b font-mono text-xs sm:text-sm">user_preferences</td>
-                      <td className="px-2 sm:px-4 py-2 border-b">Функциональные</td>
-                      <td className="px-2 sm:px-4 py-2 border-b">Сохранение пользовательских настроек</td>
-                      <td className="px-2 sm:px-4 py-2 border-b">1 год</td>
-                    </tr>
-                    <tr>
-                      <td className="px-2 sm:px-4 py-2 border-b font-mono text-xs sm:text-sm">analytics_consent</td>
+                      <td className="px-2 sm:px-4 py-2 border-b font-mono text-xs sm:text-sm">is_analytics_allowed</td>
                       <td className="px-2 sm:px-4 py-2 border-b">Аналитические</td>
                       <td className="px-2 sm:px-4 py-2 border-b">Согласие на использование аналитики</td>
                       <td className="px-2 sm:px-4 py-2 border-b">1 год</td>

@@ -38,9 +38,7 @@ export default function RecommendationsPolicyPage() {
               
               <p><strong>3.2.</strong> <u>Векторные представления</u> — рецепты преобразуются в числовые векторы с помощью технологий машинного обучения для анализа схожести.</p>
               
-              <p><strong>3.3.</strong> <u>Коллаборативная фильтрация</u> — анализ поведения похожих пользователей для формирования рекомендаций.</p>
-              
-              <p><strong>3.4.</strong> <u>Контентная фильтрация</u> — анализ характеристик рецептов (ингредиенты, теги, сложность) для поиска похожего контента.</p>
+              <p><strong>3.3.</strong> <u>Контентная фильтрация</u> — анализ характеристик рецептов (ингредиенты, теги, сложность) для поиска похожего контента.</p>
             </div>
           </section>
 
@@ -60,8 +58,8 @@ export default function RecommendationsPolicyPage() {
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="px-2 sm:px-4 py-2 border-b font-medium">Лайки и дизлайки</td>
-                      <td className="px-2 sm:px-4 py-2 border-b">Реакции пользователей на рецепты</td>
+                      <td className="px-2 sm:px-4 py-2 border-b font-medium">Избранные рецепты</td>
+                      <td className="px-2 sm:px-4 py-2 border-b">Рецепты, добавленные пользователем в избранное</td>
                       <td className="px-2 sm:px-4 py-2 border-b">Определение предпочтений пользователя</td>
                     </tr>
                     <tr>
@@ -74,11 +72,7 @@ export default function RecommendationsPolicyPage() {
                       <td className="px-2 sm:px-4 py-2 border-b">История поиска пользователя</td>
                       <td className="px-2 sm:px-4 py-2 border-b">Понимание текущих потребностей</td>
                     </tr>
-                    <tr>
-                      <td className="px-2 sm:px-4 py-2 border-b font-medium">Время взаимодействия</td>
-                      <td className="px-2 sm:px-4 py-2 border-b">Время просмотра рецептов</td>
-                      <td className="px-2 sm:px-4 py-2 border-b">Оценка заинтересованности</td>
-                    </tr>
+
                     <tr>
                       <td className="px-2 sm:px-4 py-2 border-b font-medium">Характеристики рецептов</td>
                       <td className="px-2 sm:px-4 py-2 border-b">Ингредиенты, теги, сложность, время приготовления</td>
@@ -99,13 +93,7 @@ export default function RecommendationsPolicyPage() {
               
               <p><strong>5.2.</strong> <u>Эмбеддинги GigaChat</u> — рецепты преобразуются в векторные представления с помощью языковой модели GigaChat.</p>
               
-              <p><strong>5.3.</strong> <u>Параметры алгоритма MMR</u>:</p>
-              <ul className="list-disc pl-4 sm:pl-6 space-y-1">
-                <li>λ (лямбда) = 0.7 — баланс между релевантностью и разнообразием</li>
-                <li>Максимальное количество рекомендаций за запрос: 50</li>
-                <li>Минимальный порог схожести: 0.3</li>
-                <li>Обновление модели: каждые 24 часа</li>
-              </ul>
+
               </div>
           </section>
 
@@ -115,7 +103,7 @@ export default function RecommendationsPolicyPage() {
               <p><strong>6.1.</strong> Пользователи имеют право:</p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-2">
                 <li>Получать информацию о принципах работы рекомендательной системы</li>
-                <li>Влиять на рекомендации через лайки, дизлайки и добавление в избранное</li>
+                <li>Влиять на рекомендации через добавление рецептов в избранное</li>
                 <li>Очистить историю взаимодействий для сброса персонализации</li>
                 <li>Отключить персонализированные рекомендации (будут показываться популярные рецепты)</li>
                 <li>Запросить объяснение, почему был рекомендован конкретный рецепт</li>
@@ -153,7 +141,7 @@ export default function RecommendationsPolicyPage() {
               
               <p><strong>8.2.</strong> Пользователи могут получить объяснение рекомендаций в виде:</p>
               <ul className="list-disc pl-4 sm:pl-6 space-y-1">
-                <li>"Рекомендовано на основе ваших лайков рецептов с тегом 'десерты'"</li>
+                <li>"Рекомендовано на основе ваших избранных рецептов с тегом 'десерты'"</li>
                 <li>"Похоже на рецепты, которые вы добавляли в избранное"</li>
                 <li>"Популярно среди пользователей с похожими интересами"</li>
               </ul>
@@ -180,7 +168,7 @@ export default function RecommendationsPolicyPage() {
                 <li>Тема письма: "Рекомендательные системы"</li>
               </ul>
               
-              <p><strong>10.2.</strong> Дата последнего обновления: {new Date().toLocaleDateString('ru-RU')}</p>
+              <p><strong>10.2.</strong> Дата последнего обновления: 15.01.2025</p>
             </div>
           </section>
         </div>

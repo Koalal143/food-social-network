@@ -20,7 +20,8 @@ class ShoppingListService {
 
         return await ShoppingListOffline.executeWithFallback(
             async () => {
-                const { items } = await ShoppingListAPI.getShoppingList({ limit: 1000 })
+                const limit = parseInt(process.env.NEXT_PUBLIC_SHOPPING_LIST_LIMIT) || 1000
+                const { items } = await ShoppingListAPI.getShoppingList({ limit })
                 return this.transformAPIItemsToLocal(items)
             },
             () => this.getShoppingListFromStorage()
@@ -359,7 +360,8 @@ class ShoppingListService {
 
         return await ShoppingListOffline.executeWithFallback(
             async () => {
-                const { items } = await ShoppingListAPI.getShoppingList({ limit: 1000 })
+                const limit = parseInt(process.env.NEXT_PUBLIC_SHOPPING_LIST_LIMIT) || 1000
+                const { items } = await ShoppingListAPI.getShoppingList({ limit })
                 const purchasedItems = items.filter(item => item.is_purchased)
 
                 if (purchasedItems.length > 0) {
@@ -402,7 +404,8 @@ class ShoppingListService {
 
         return await ShoppingListOffline.executeWithFallback(
             async () => {
-                const { items: existingItems } = await ShoppingListAPI.getShoppingList({ limit: 1000 })
+                const limit = parseInt(process.env.NEXT_PUBLIC_SHOPPING_LIST_LIMIT) || 1000
+                const { items: existingItems } = await ShoppingListAPI.getShoppingList({ limit })
                 const existingItem = existingItems.find(item =>
                     item.name.toLowerCase() === validatedIngredient.name.toLowerCase() && !item.is_purchased
                 )

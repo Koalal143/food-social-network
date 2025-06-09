@@ -177,7 +177,7 @@ export class CookieManager {
             'access_token',
             'refresh_token',
             'anonymous_id',
-            'analytics_allowed',
+            'is_analytics_allowed',
             'cookie_consent_accepted',
             'frontend_consent_accepted',
             'consent_timestamp'
