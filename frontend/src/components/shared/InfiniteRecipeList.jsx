@@ -1,34 +1,10 @@
 "use client";
-import { useRef, useEffect } from "react";
 import RecipeCard from "@/components/shared/RecipeCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 export default function InfiniteRecipesList({ recipes, loading, hasMore, onLoadMore, source='feed', editable=false }) {
-    const observerRef = useRef(null);
-    const loadMoreRef = useRef(null);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-        (entries) => {
-            if (entries[0].isIntersecting && hasMore && !loading) {
-                onLoadMore();
-            }
-        },
-        { threshold: 0.1, rootMargin: '100px' }
-        )
-
-        if (loadMoreRef.current && hasMore) {
-            observer.observe(loadMoreRef.current);
-        }
-
-        observerRef.current = observer;
-
-        return () => {
-            if (observerRef.current && loadMoreRef.current) {
-                observerRef.current.unobserve(loadMoreRef.current);
-            }
-        };
-    }, [loading, hasMore, onLoadMore]);
+    const { loadMoreRef } = useInfiniteScroll(onLoadMore, hasMore, loading);
 
     return (
         <div className="space-y-6">
