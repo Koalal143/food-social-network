@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Container from '@/components/layout/Container'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -14,12 +14,12 @@ import {
     Trash2,
     CheckCircle,
     Circle,
-    Package,
-    RotateCcw,
     AlertCircle
 } from 'lucide-react'
 import ShoppingListService from '@/services/shopping-list.service'
 import { handleApiError } from '@/utils/errorHandler'
+import IngredientActualityWarning from '@/components/shopping-list/IngredientActualityWarning'
+import AddManualIngredientDialog from '@/components/shopping-list/AddManualIngredientDialog'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -37,32 +37,33 @@ export default function ShoppingListPage() {
     const [items, setItems] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
     const [filteredItems, setFilteredItems] = useState([])
-    const [statistics, setStatistics] = useState({})
     const [loading, setLoading] = useState(true)
 
-    // Загрузка данных
     useEffect(() => {
         loadShoppingList()
+
+        ShoppingListService.setupAutoSync()
     }, [])
 
-    // Фильтрация при изменении поискового запроса
     useEffect(() => {
-        if (searchQuery.trim()) {
-            setFilteredItems(ShoppingListService.searchItems(searchQuery))
-        } else {
-            setFilteredItems(items)
+        const filterItems = async () => {
+            if (searchQuery.trim()) {
+                const filtered = await ShoppingListService.searchItems(searchQuery)
+                setFilteredItems(filtered)
+            } else {
+                setFilteredItems(items)
+            }
         }
+        filterItems()
     }, [searchQuery, items])
 
-    const loadShoppingList = () => {
+    const loadShoppingList = async () => {
         try {
             setLoading(true)
-            const list = ShoppingListService.getShoppingList()
-            const stats = ShoppingListService.getStatistics()
-            
+            const list = await ShoppingListService.getShoppingList()
             setItems(list)
-            setStatistics(stats)
         } catch (error) {
+            console.error('Error loading shopping list:', error)
             const { message, type } = handleApiError(error)
             toast({
                 variant: type,
@@ -76,9 +77,9 @@ export default function ShoppingListPage() {
 
     const handleTogglePurchased = async (itemId) => {
         try {
-            const updatedItem = ShoppingListService.togglePurchased(itemId)
-            loadShoppingList() // Перезагружаем список для обновления статистики
-            
+            const updatedItem = await ShoppingListService.togglePurchased(itemId)
+            await loadShoppingList() 
+
             toast({
                 variant: "default",
                 title: updatedItem.purchased ? "Отмечено как купленное" : "Отмечено как не купленное",
@@ -96,9 +97,9 @@ export default function ShoppingListPage() {
 
     const handleRemoveItem = async (itemId) => {
         try {
-            ShoppingListService.removeItem(itemId)
-            loadShoppingList()
-            
+            await ShoppingListService.removeItem(itemId)
+            await loadShoppingList()
+
             toast({
                 variant: "default",
                 title: "Элемент удален",
@@ -116,9 +117,9 @@ export default function ShoppingListPage() {
 
     const handleClearPurchased = async () => {
         try {
-            ShoppingListService.clearPurchased()
-            loadShoppingList()
-            
+            await ShoppingListService.clearPurchased()
+            await loadShoppingList()
+
             toast({
                 variant: "default",
                 title: "Купленные элементы удалены",
@@ -136,9 +137,9 @@ export default function ShoppingListPage() {
 
     const handleClearAll = async () => {
         try {
-            ShoppingListService.clearAll()
-            loadShoppingList()
-            
+            await ShoppingListService.clearAll()
+            await loadShoppingList()
+
             toast({
                 variant: "default",
                 title: "Список очищен",
@@ -187,101 +188,65 @@ export default function ShoppingListPage() {
                         </p>
                     </div>
                     
-                    {items.length > 0 && (
-                        <div className="flex gap-2">
-                            {statistics.purchased > 0 && (
+                    <div className="flex gap-2">
+                        {/* Кнопка добавления ингредиента */}
+                        <AddManualIngredientDialog onIngredientAdded={loadShoppingList} />
+
+                        {items.length > 0 && (
+                            <>
+                                {items.some(item => item.purchased) && (
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="outline" size="sm">
+                                                <CheckCircle className="w-4 h-4 mr-2" />
+                                                Очистить купленные
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Удалить купленные элементы?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Это действие удалит все отмеченные как купленные элементы из списка.
+                                                    Отменить это действие будет невозможно.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Отмена</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleClearPurchased}>
+                                                    Удалить купленные
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                )}
+
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button variant="outline" size="sm">
-                                            <CheckCircle className="w-4 h-4 mr-2" />
-                                            Очистить купленные
+                                        <Button variant="destructive" size="sm">
+                                            <Trash2 className="w-4 h-4 mr-2" />
+                                            Очистить все
                                         </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
-                                            <AlertDialogTitle>Удалить купленные элементы?</AlertDialogTitle>
+                                            <AlertDialogTitle>Очистить весь список?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                Это действие удалит все отмеченные как купленные элементы из списка. 
+                                                Это действие удалит все элементы из списка покупок.
                                                 Отменить это действие будет невозможно.
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Отмена</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleClearPurchased}>
-                                                Удалить купленные
+                                            <AlertDialogAction onClick={handleClearAll} className="bg-red-600 hover:bg-red-700">
+                                                Очистить все
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
-                            )}
-                            
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="sm">
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Очистить все
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Очистить весь список?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Это действие удалит все элементы из списка покупок. 
-                                            Отменить это действие будет невозможно.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Отмена</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleClearAll} className="bg-red-600 hover:bg-red-700">
-                                            Очистить все
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </div>
-                    )}
-                </div>
-
-                {/* Статистика */}
-                {items.length > 0 && (
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-2">
-                                    <Package className="w-5 h-5 text-blue-500" />
-                                    <div>
-                                        <p className="text-2xl font-bold">{statistics.total}</p>
-                                        <p className="text-xs text-muted-foreground">Всего элементов</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle className="w-5 h-5 text-green-500" />
-                                    <div>
-                                        <p className="text-2xl font-bold">{statistics.purchased}</p>
-                                        <p className="text-xs text-muted-foreground">Куплено</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        
-                        <Card>
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-2">
-                                    <Circle className="w-5 h-5 text-orange-500" />
-                                    <div>
-                                        <p className="text-2xl font-bold">{statistics.remaining}</p>
-                                        <p className="text-xs text-muted-foreground">Осталось купить</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                            </>
+                        )}
                     </div>
-                )}
+                </div>
 
                 {/* Поиск */}
                 {items.length > 0 && (
@@ -377,6 +342,7 @@ export default function ShoppingListPage() {
                         )}
                     </div>
                 )}
+
             </div>
         </Container>
     )
@@ -386,8 +352,8 @@ export default function ShoppingListPage() {
 function ShoppingListItem({ item, onTogglePurchased, onRemove }) {
     return (
         <div className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-            item.purchased 
-                ? 'bg-green-50 border-green-200 opacity-75' 
+            item.purchased
+                ? 'bg-green-50 border-green-200 opacity-75'
                 : 'bg-background border-border hover:bg-muted/50'
         }`}>
             <Checkbox
@@ -395,21 +361,27 @@ function ShoppingListItem({ item, onTogglePurchased, onRemove }) {
                 onCheckedChange={() => onTogglePurchased(item.id)}
                 className="flex-shrink-0"
             />
-            
+
             <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                    <span className={`font-medium text-sm ${
-                        item.purchased ? 'line-through text-muted-foreground' : ''
-                    }`}>
-                        {item.name}
-                    </span>
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className={`font-medium text-sm ${
+                            item.purchased ? 'line-through text-muted-foreground' : ''
+                        }`}>
+                            {item.name}
+                        </span>
+
+                        {/* Предупреждение об актуальности */}
+                        <IngredientActualityWarning item={item} />
+                    </div>
+
                     {item.quantity && (
-                        <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
+                        <span className="text-xs text-muted-foreground flex-shrink-0">
                             {item.quantity}
                         </span>
                     )}
                 </div>
-                
+
                 {item.recipes && item.recipes.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
                         {item.recipes.map((recipe, index) => (
@@ -420,7 +392,7 @@ function ShoppingListItem({ item, onTogglePurchased, onRemove }) {
                     </div>
                 )}
             </div>
-            
+
             <Button
                 variant="ghost"
                 size="sm"
