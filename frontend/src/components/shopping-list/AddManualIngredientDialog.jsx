@@ -118,23 +118,24 @@ export default function AddManualIngredientDialog({ onIngredientAdded }) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Добавить ингредиент
+                <Button variant="outline" size="sm" className="flex items-center gap-2 w-full sm:w-auto h-10 md:h-9 touch-manipulation">
+                    <Plus className="w-4 h-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Добавить ингредиент</span>
+                    <span className="sm:hidden">Добавить</span>
                 </Button>
             </DialogTrigger>
-            
-            <DialogContent className="sm:max-w-md">
+
+            <DialogContent className="mx-4 max-w-md sm:max-w-md w-[calc(100vw-2rem)] sm:w-full">
                 <DialogHeader>
-                    <DialogTitle>Добавить ингредиент</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-lg md:text-xl">Добавить ингредиент</DialogTitle>
+                    <DialogDescription className="text-sm md:text-base">
                         Добавьте ингредиент в список покупок вручную
                     </DialogDescription>
                 </DialogHeader>
-                
-                <form onSubmit={handleSubmit} className="space-y-4">
+
+                <form onSubmit={handleSubmit} className="space-y-4 md:space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="ingredient-name">
+                        <Label htmlFor="ingredient-name" className="text-sm md:text-sm font-medium">
                             Название ингредиента <span className="text-red-500">*</span>
                         </Label>
                         <Input
@@ -142,9 +143,10 @@ export default function AddManualIngredientDialog({ onIngredientAdded }) {
                             placeholder="Например: Молоко"
                             value={formData.name}
                             onChange={(e) => handleInputChange('name', e.target.value)}
-                            className={errors.name ? 'border-red-500' : ''}
+                            className={`h-10 md:h-9 text-base md:text-sm touch-manipulation ${errors.name ? 'border-red-500' : ''}`}
                             maxLength={135}
                             disabled={loading}
+                            autoComplete="off"
                         />
                         {errors.name && (
                             <p className="text-sm text-red-500">{errors.name}</p>
@@ -152,33 +154,38 @@ export default function AddManualIngredientDialog({ onIngredientAdded }) {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="ingredient-quantity">Количество</Label>
+                        <Label htmlFor="ingredient-quantity" className="text-sm md:text-sm font-medium">
+                            Количество
+                        </Label>
                         <Input
                             id="ingredient-quantity"
                             placeholder="Например: 1 литр"
                             value={formData.quantity}
                             onChange={(e) => handleInputChange('quantity', e.target.value)}
-                            className={errors.quantity ? 'border-red-500' : ''}
+                            className={`h-10 md:h-9 text-base md:text-sm touch-manipulation ${errors.quantity ? 'border-red-500' : ''}`}
                             maxLength={50}
                             disabled={loading}
+                            autoComplete="off"
                         />
                         {errors.quantity && (
                             <p className="text-sm text-red-500">{errors.quantity}</p>
                         )}
                     </div>
 
-                    <DialogFooter className="gap-2">
+                    <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={handleClose}
                             disabled={loading}
+                            className="w-full sm:w-auto h-10 md:h-9 touch-manipulation"
                         >
                             Отмена
                         </Button>
                         <Button
                             type="submit"
                             disabled={loading || !formData.name.trim()}
+                            className="w-full sm:w-auto h-10 md:h-9 touch-manipulation"
                         >
                             {loading ? 'Добавление...' : 'Добавить'}
                         </Button>
