@@ -30,7 +30,7 @@ class MockRecommendationsAdapter(RecommendationsAdapterProtocol):
     async def delete_recipe(self, recipe_id: int) -> None:
         pass
 
-    async def update_recipe(self, author_id: int, recipe_id: int, title: str, tags: str) -> None:
+    async def update_recipe(self, author_id: int, recipe_id: int, title: str, tags: str, *, is_published: bool) -> None:
         pass
 
     async def add_feedback(self, user_id: int, recipe_id: int, feedback_type: FeedbackTypeEnum) -> None:
