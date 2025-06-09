@@ -46,6 +46,11 @@ export default class AuthService {
         return token;
     }
 
+    static isAuthenticated() {
+        const accessToken = this.getAccessToken();
+        return !!accessToken;
+    }
+
     static setTokens(accessToken, refreshToken) {
         // Теперь cookies - основное хранилище
         CookieManager.setAuthTokens(accessToken, refreshToken);

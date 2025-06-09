@@ -39,6 +39,19 @@ export default function RootLayout({ children }) {
                         <Toaster />
                     </MainProvider>
                 </ErrorBoundary>
+
+                {/* Защита от ошибок расширений браузера */}
+                <script dangerouslySetInnerHTML={{
+                    __html: `
+                        window.addEventListener('error', function(e) {
+                            if (e.message && e.message.includes('applyDebugConsole')) {
+                                e.preventDefault();
+                                console.warn('Игнорируем ошибку расширения браузера:', e.message);
+                                return false;
+                            }
+                        });
+                    `
+                }} />
             </body>
         </html>
     );
