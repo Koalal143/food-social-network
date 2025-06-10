@@ -1,23 +1,21 @@
 "use client"
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { RecipeCardSkeletonGrid, RecommendationsSkeleton, ProfileSkeleton } from '../ui/skeletons'
 import Container from '../layout/Container'
+import AuthRequiredCard from './AuthRequiredCard'
+import { Bot, User, ShoppingBag } from 'lucide-react'
 
-export default function ProtectedRoute({ children, skeleton = 'default' }) {
+export default function ProtectedRoute({
+    children,
+    skeleton = 'default',
+    authIcon,
+    authTitle,
+    authDescription
+}) {
     const { user, loading } = useAuth()
-    const router = useRouter()
-
-    useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login')
-        }
-    }, [user, loading, router])
 
     if (loading) {
-        // Показываем соответствующий скелетон в зависимости от страницы
         if (skeleton === 'recommendations') {
             return (
                 <Container className="py-8">
@@ -34,7 +32,6 @@ export default function ProtectedRoute({ children, skeleton = 'default' }) {
             )
         }
 
-        // Дефолтный скелетон для других страниц
         return (
             <Container className="py-6">
                 <div className="space-y-6">
@@ -45,7 +42,43 @@ export default function ProtectedRoute({ children, skeleton = 'default' }) {
     }
 
     if (!user) {
-        return null
+        const getAuthConfig = () => {
+            if (authIcon && authDescription) {
+                return {
+                    icon: authIcon,
+                    description: authDescription
+                }
+            }
+
+            switch (skeleton) {
+                case 'recommendations':
+                    return {
+                        icon: Bot,
+                        description: 'Для получения персональных рекомендаций необходимо войти в систему'
+                    }
+                case 'profile':
+                    return {
+                        icon: User,
+                        description: 'Для просмотра профиля необходимо войти в систему'
+                    }
+                default:
+                    return {
+                        icon: ShoppingBag,
+                        description: 'Для доступа к этой странице необходимо войти в систему'
+                    }
+            }
+        }
+
+        const { icon, description } = getAuthConfig()
+
+        return (
+            <Container>
+                <AuthRequiredCard
+                    icon={icon}
+                    description={description}
+                />
+            </Container>
+        )
     }
 
     return children
