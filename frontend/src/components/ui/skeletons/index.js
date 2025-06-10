@@ -8,3 +8,4 @@ export { default as RecipeDetailSkeleton } from './RecipeDetailSkeleton';
 export { default as AdminDashboardSkeleton } from './AdminDashboardSkeleton';
 export { default as RecommendationsSkeleton, RecommendationsEmptySkeleton, RecipeSwipeCardSkeleton } from './RecommendationsSkeleton';
 export { default as HeaderSkeleton, HeaderGroupSkeleton, PageHeaderSkeleton, SectionHeaderSkeleton, CardHeaderSkeleton } from './HeaderSkeleton';
+export { default as ShoppingListSkeleton, ShoppingListLoadingSkeleton, ShoppingListAuthSkeleton, ShoppingListItemSkeleton, ShoppingListSectionSkeleton, ShoppingListEmptySkeleton, ShoppingListHeaderSkeleton } from './ShoppingListSkeleton';

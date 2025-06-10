@@ -3,7 +3,7 @@
 import { Search, X } from "lucide-react"
 import { Input } from "../input"
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearch } from "@/context/SearchContext"
 
 export default function SearchInput({ setShowMobileSearch }) {
@@ -11,9 +11,15 @@ export default function SearchInput({ setShowMobileSearch }) {
     const searchParams = useSearchParams()
     const [query, setQuery] = useState(searchParams.get('q') || '')
     const { performSearch, clearSearchResults } = useSearch()
+    const isUserTypingRef = useRef(false)
+    const inputRef = useRef(null)
 
+    // Синхронизируем с URL только если пользователь не печатает
     useEffect(() => {
-      setQuery(searchParams.get('q') || '')
+      if (!isUserTypingRef.current) {
+        const urlQuery = searchParams.get('q') || ''
+        setQuery(urlQuery)
+      }
     }, [searchParams])
 
     // Обработчик события истории браузера (кнопка "Назад")
@@ -33,6 +39,7 @@ export default function SearchInput({ setShowMobileSearch }) {
 
     const handleSearch = () => {
         if (query.trim()) {
+            isUserTypingRef.current = false
             performSearch(query.trim())
             router.push(`/search?q=${encodeURIComponent(query.trim())}`)
         }
@@ -48,12 +55,23 @@ export default function SearchInput({ setShowMobileSearch }) {
 
     const clearSearch = (e) => {
         e.stopPropagation() // Предотвращаем всплытие события
+        isUserTypingRef.current = false
         setQuery('')
         clearSearchResults()
         if (setShowMobileSearch) {
             setShowMobileSearch(false)
         }
         router.push('/search')
+    }
+
+    const handleInputChange = (e) => {
+        isUserTypingRef.current = true
+        setQuery(e.target.value)
+
+        // Сбрасываем флаг через небольшую задержку после окончания ввода
+        setTimeout(() => {
+            isUserTypingRef.current = false
+        }, 500)
     }
 
     const handleKeyDown = (e) => {
@@ -69,11 +87,12 @@ export default function SearchInput({ setShowMobileSearch }) {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
+                ref={inputRef}
                 type="search"
                 placeholder="Поиск рецептов..."
                 className="pl-10 w-full bg-white border-none text-foreground"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 autoFocus={!!setShowMobileSearch} // Автофокус на мобильных устройствах
               />
