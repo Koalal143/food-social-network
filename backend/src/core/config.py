@@ -75,6 +75,12 @@ class TestsConfig(BaseModel):
     use_real_recs_microservice: bool = False
 
 
+class SuperuserConfig(BaseModel):
+    username: str
+    email: str
+    password: str
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -94,6 +100,7 @@ class Settings(BaseSettings):
     elasticsearch: ElasticSearchConfig
     nats: NatsConfig = NatsConfig()
     tests: TestsConfig = TestsConfig()
+    superuser: SuperuserConfig
     mode: Literal["dev", "test", "prod"] = Field(default="prod", description="Application mode")
 
 
