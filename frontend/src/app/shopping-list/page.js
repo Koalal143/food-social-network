@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Container from '@/components/layout/Container'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,10 +15,14 @@ import {
     Trash2,
     CheckCircle,
     Circle,
-    AlertCircle
+    AlertCircle,
+    LogIn,
+    UserPlus
 } from 'lucide-react'
 import ShoppingListService from '@/services/shopping-list.service'
+import AuthService from '@/services/auth.service'
 import { handleApiError } from '@/utils/errorHandler'
+import { AuthError } from '@/utils/errors'
 import IngredientActualityWarning from '@/components/shopping-list/IngredientActualityWarning'
 import AddManualIngredientDialog from '@/components/shopping-list/AddManualIngredientDialog'
 import {
@@ -34,15 +39,27 @@ import {
 
 export default function ShoppingListPage() {
     const { toast } = useToast()
+    const router = useRouter()
     const [items, setItems] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
     const [filteredItems, setFilteredItems] = useState([])
     const [loading, setLoading] = useState(true)
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
 
+    // Проверка авторизации при загрузке компонента
     useEffect(() => {
-        loadShoppingList()
+        const checkAuth = () => {
+            const authenticated = AuthService.isAuthenticated()
+            setIsAuthenticated(authenticated)
 
-        ShoppingListService.setupAutoSync()
+            if (authenticated) {
+                loadShoppingList()
+            } else {
+                setLoading(false)
+            }
+        }
+
+        checkAuth()
     }, [])
 
     useEffect(() => {
@@ -64,12 +81,22 @@ export default function ShoppingListPage() {
             setItems(list)
         } catch (error) {
             console.error('Error loading shopping list:', error)
-            const { message, type } = handleApiError(error)
-            toast({
-                variant: type,
-                title: "Ошибка загрузки",
-                description: message,
-            })
+
+            if (error instanceof AuthError) {
+                setIsAuthenticated(false)
+                toast({
+                    variant: "destructive",
+                    title: "Требуется авторизация",
+                    description: "Для работы со списком покупок необходимо войти в систему",
+                })
+            } else {
+                const { message, type } = handleApiError(error)
+                toast({
+                    variant: type,
+                    title: "Ошибка загрузки",
+                    description: message,
+                })
+            }
         } finally {
             setLoading(false)
         }
@@ -167,6 +194,86 @@ export default function ShoppingListPage() {
                             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                             <p className="text-muted-foreground">Загрузка списка покупок...</p>
                         </div>
+                    </div>
+                </div>
+            </Container>
+        )
+    }
+
+    // Показать экран авторизации для неавторизованных пользователей
+    if (!isAuthenticated) {
+        return (
+            <Container>
+                <div className="py-8">
+                    <div className="flex items-center justify-center min-h-[400px]">
+                        <Card className="w-full max-w-md">
+                            <CardContent className="py-8 px-6">
+                                <div className="text-center">
+                                    <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                                    <h3 className="text-xl font-semibold mb-2">Требуется авторизация</h3>
+                                    <p className="text-muted-foreground mb-6">
+                                        Для работы со списком покупок необходимо войти в систему
+                                    </p>
+                                    <div className="flex flex-col gap-3">
+                                        <Button
+                                            onClick={() => router.push('/auth/login')}
+                                            className="w-full"
+                                        >
+                                            <LogIn className="w-4 h-4 mr-2" />
+                                            Войти в систему
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => router.push('/auth/register')}
+                                            className="w-full"
+                                        >
+                                            <UserPlus className="w-4 h-4 mr-2" />
+                                            Создать аккаунт
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </Container>
+        )
+    }
+
+    // Показать экран авторизации для неавторизованных пользователей
+    if (!isAuthenticated) {
+        return (
+            <Container>
+                <div className="py-8">
+                    <div className="flex items-center justify-center min-h-[400px]">
+                        <Card className="w-full max-w-md">
+                            <CardContent className="py-8 px-6">
+                                <div className="text-center">
+                                    <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                                    <h3 className="text-xl font-semibold mb-2">Требуется авторизация</h3>
+                                    <p className="text-muted-foreground mb-6">
+                                        Для работы со списком покупок необходимо войти в систему
+                                    </p>
+                                    <div className="flex flex-col gap-3">
+                                        <Button
+                                            onClick={() => router.push('/auth/login')}
+                                            className="w-full"
+                                        >
+                                            <LogIn className="w-4 h-4 mr-2" />
+                                            Войти в систему
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => router.push('/auth/register')}
+                                            className="w-full"
+                                        >
+                                            <UserPlus className="w-4 h-4 mr-2" />
+                                            Создать аккаунт
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </Container>
