@@ -12,18 +12,21 @@ class ShoppingListAPI {
      * @returns {Promise<{items: Array, total: number}>}
      */
     static async getShoppingList({ skip = 0, limit = 100, only_not_purchased = false } = {}) {
+        // Убеждаемся, что limit не превышает максимальное значение backend API
+        const validLimit = Math.min(Math.max(limit, 1), 100)
         const params = new URLSearchParams({
             skip: skip.toString(),
-            limit: limit.toString(),
+            limit: validLimit.toString(),
             only_not_purchased: only_not_purchased.toString()
         })
 
-        const response = await fetch(`${API_BASE_URL}/api/v1/shopping-list?${params}`, {
+        const response = await fetch(`${API_BASE_URL}/v1/shopping-list?${params}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.getAuthToken()}`
-            }
+            },
+            credentials: 'include'
         })
 
         if (!response.ok) {
@@ -45,13 +48,14 @@ class ShoppingListAPI {
      * @returns {Promise<Object>}
      */
     static async createItem(itemData) {
-        const response = await fetch(`${API_BASE_URL}/api/v1/shopping-list`, {
+        const response = await fetch(`${API_BASE_URL}/v1/shopping-list`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.getAuthToken()}`
             },
-            body: JSON.stringify(itemData)
+            body: JSON.stringify(itemData),
+            credentials: 'include'
         })
 
         if (!response.ok) {
@@ -67,13 +71,14 @@ class ShoppingListAPI {
      * @returns {Promise<Array>}
      */
     static async bulkCreateItems(items) {
-        const response = await fetch(`${API_BASE_URL}/api/v1/shopping-list/bulk`, {
+        const response = await fetch(`${API_BASE_URL}/v1/shopping-list/bulk`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.getAuthToken()}`
             },
-            body: JSON.stringify({ items })
+            body: JSON.stringify({ items }),
+            credentials: 'include'
         })
 
         if (!response.ok) {
@@ -89,12 +94,13 @@ class ShoppingListAPI {
      * @returns {Promise<Object>}
      */
     static async getItem(itemId) {
-        const response = await fetch(`${API_BASE_URL}/api/v1/shopping-list/${itemId}`, {
+        const response = await fetch(`${API_BASE_URL}/v1/shopping-list/${itemId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.getAuthToken()}`
-            }
+            },
+            credentials: 'include'
         })
 
         if (!response.ok) {
@@ -111,13 +117,14 @@ class ShoppingListAPI {
      * @returns {Promise<Object>}
      */
     static async updateItem(itemId, updateData) {
-        const response = await fetch(`${API_BASE_URL}/api/v1/shopping-list/${itemId}`, {
+        const response = await fetch(`${API_BASE_URL}/v1/shopping-list/${itemId}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.getAuthToken()}`
             },
-            body: JSON.stringify(updateData)
+            body: JSON.stringify(updateData),
+            credentials: 'include'
         })
 
         if (!response.ok) {
@@ -133,12 +140,13 @@ class ShoppingListAPI {
      * @returns {Promise<Object>}
      */
     static async toggleItemPurchased(itemId) {
-        const response = await fetch(`${API_BASE_URL}/api/v1/shopping-list/${itemId}/toggle`, {
+        const response = await fetch(`${API_BASE_URL}/v1/shopping-list/${itemId}/toggle`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.getAuthToken()}`
-            }
+            },
+            credentials: 'include'
         })
 
         if (!response.ok) {
@@ -154,11 +162,12 @@ class ShoppingListAPI {
      * @returns {Promise<void>}
      */
     static async deleteItem(itemId) {
-        const response = await fetch(`${API_BASE_URL}/api/v1/shopping-list/${itemId}`, {
+        const response = await fetch(`${API_BASE_URL}/v1/shopping-list/${itemId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${this.getAuthToken()}`
-            }
+            },
+            credentials: 'include'
         })
 
         if (!response.ok) {
@@ -183,11 +192,12 @@ class ShoppingListAPI {
             params.append('item_ids', id.toString())
         })
 
-        const response = await fetch(`${API_BASE_URL}/api/v1/shopping-list/bulk?${params}`, {
+        const response = await fetch(`${API_BASE_URL}/v1/shopping-list/bulk?${params}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${this.getAuthToken()}`
-            }
+            },
+            credentials: 'include'
             // Убираем body - данные теперь передаются через query-параметры
         })
 
@@ -201,11 +211,12 @@ class ShoppingListAPI {
      * @returns {Promise<void>}
      */
     static async clearShoppingList() {
-        const response = await fetch(`${API_BASE_URL}/api/v1/shopping-list`, {
+        const response = await fetch(`${API_BASE_URL}/v1/shopping-list`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${this.getAuthToken()}`
-            }
+            },
+            credentials: 'include'
         })
 
         if (!response.ok) {
@@ -214,12 +225,31 @@ class ShoppingListAPI {
     }
 
     /**
-     * Получить токен авторизации
+     * Получить токен авторизации (используем тот же метод, что и AuthService)
      * @returns {string|null}
      */
     static getAuthToken() {
         if (typeof window !== 'undefined') {
-            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token')
+            // Импортируем AuthService динамически для избежания циклических зависимостей
+            try {
+                // Сначала пытаемся получить токен из cookies
+                const cookieToken = document.cookie
+                    .split('; ')
+                    .find(row => row.startsWith('access_token='))
+                    ?.split('=')[1];
+
+                if (cookieToken) {
+                    return cookieToken;
+                }
+
+                // Fallback на localStorage для совместимости
+                return localStorage.getItem('access_token') ||
+                       localStorage.getItem('auth_token') ||
+                       sessionStorage.getItem('auth_token');
+            } catch (error) {
+                console.warn('Ошибка при получении токена:', error);
+                return null;
+            }
         }
         return null
     }
