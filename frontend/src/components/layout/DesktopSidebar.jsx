@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Star, User, Bot, PanelLeftClose, PanelLeft, Cookie, FileText, ShoppingCart } from "lucide-react";
+import { Home, Star, User, Bot, PanelLeftClose, PanelLeft, Cookie, FileText, ShoppingBag } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
@@ -47,7 +47,7 @@ export default function DesktopSidebar() {
                             className={`w-full h-11 ${isCollapsed ? 'justify-center px-0' : 'justify-start px-3'} ${isActive('/shopping-list') ? 'bg-accent' : ''} hover:bg-accent/80 rounded-lg`}
                             title={isCollapsed ? 'Список покупок' : ''}
                         >
-                            <ShoppingCart className={`h-4 w-4 ${isCollapsed ? '' : 'mr-3'}`} />
+                            <ShoppingBag className={`h-4 w-4 ${isCollapsed ? '' : 'mr-3'}`} />
                             {!isCollapsed && <span className="text-sm font-medium">Список покупок</span>}
                         </Button>
                     </Link>
