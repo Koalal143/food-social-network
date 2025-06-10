@@ -1,67 +1,32 @@
 
-
 import ShoppingListAPI from './api/shopping-list.api.js'
-import ShoppingListMigration from './utils/shopping-list-migration.js'
-import ShoppingListOffline from './utils/shopping-list-offline.js'
+import { AuthError } from '@/utils/errors'
 
 class ShoppingListService {
     /**
-     * Получить весь список покупок
-     * @param {Object} options - опции запроса
-     * @param {boolean} options.forceLocal - принудительно использовать localStorage
+     * Проверить авторизацию пользователя
+     * @throws {AuthError} если пользователь не авторизован
+     */
+    static ensureAuthenticated() {
+        if (!ShoppingListAPI.isAuthenticated()) {
+            throw new AuthError('Для работы со списком покупок необходимо войти в систему')
+        }
+    }
+
+    /**
+     * Получить весь список покупок (только для авторизованных пользователей)
      * @returns {Promise<Array>}
      */
-    static async getShoppingList(options = {}) {
-        await this.performMigrationIfNeeded()
+    static async getShoppingList() {
+        this.ensureAuthenticated()
 
-        if (options.forceLocal || !ShoppingListAPI.isAuthenticated()) {
-            return this.getShoppingListFromStorage()
-        }
-
-        return await ShoppingListOffline.executeWithFallback(
-            async () => {
-                const limit = parseInt(process.env.NEXT_PUBLIC_SHOPPING_LIST_LIMIT) || 1000
-                const { items } = await ShoppingListAPI.getShoppingList({ limit })
-                return this.transformAPIItemsToLocal(items)
-            },
-            () => this.getShoppingListFromStorage()
-        )
+        // Backend API поддерживает максимум 100 элементов за раз
+        const limit = Math.min(parseInt(process.env.NEXT_PUBLIC_SHOPPING_LIST_LIMIT) || 100, 100)
+        const { items } = await ShoppingListAPI.getShoppingList({ limit })
+        return this.transformAPIItemsToLocal(items)
     }
 
-    /**
-     * Получить список покупок из localStorage
-     */
-    static getShoppingListFromStorage() {
-        return ShoppingListOffline.getLocalStorageData()
-    }
 
-    /**
-     * Сохранить список покупок в localStorage
-     */
-    static saveShoppingListToStorage(items) {
-        return ShoppingListOffline.saveLocalStorageData(items)
-    }
-
-    /**
-     * Выполнить миграцию данных при необходимости
-     */
-    static async performMigrationIfNeeded() {
-        if (ShoppingListMigration.needsMigration()) {
-            try {
-                const result = await ShoppingListMigration.migrateToBackend()
-                if (result.success && result.migratedCount > 0) {
-                    console.log(`Успешно мигрировано ${result.migratedCount} элементов`)
-                    // Очищаем localStorage после успешной миграции
-                    ShoppingListMigration.clearLocalStorageData()
-                }
-                if (result.errors.length > 0) {
-                    console.warn('Ошибки при миграции:', result.errors)
-                }
-            } catch (error) {
-                console.error('Ошибка при миграции:', error)
-            }
-        }
-    }
 
     /**
      * Преобразовать элементы API в формат localStorage
@@ -100,17 +65,13 @@ class ShoppingListService {
 
 
     /**
-     * Добавить ингредиенты в список покупок
+     * Добавить ингредиенты в список покупок (только для авторизованных пользователей)
      * @param {Array} ingredients - массив ингредиентов {name, quantity}
      * @param {string} recipeTitle - название рецепта
      * @param {number|null} recipeId - ID рецепта (опционально)
      */
     static async addIngredients(ingredients, recipeTitle, recipeId = null) {
-        if (!ShoppingListAPI.isAuthenticated()) {
-            return await this.addIngredientsToStorage(ingredients, recipeTitle, recipeId)
-        }
-
-
+        this.ensureAuthenticated()
 
         const apiItems = ingredients.map(ingredient => ({
             name: ingredient.name,
@@ -118,87 +79,11 @@ class ShoppingListService {
             recipe_ingredient_id: ingredient.recipe_ingredient_id || null
         }))
 
-        return await ShoppingListOffline.executeWithFallback(
-            async () => {
-                const createdItems = await ShoppingListAPI.bulkCreateItems(apiItems)
-                return this.transformAPIItemsToLocal(createdItems)
-            },
-            () => this.addIngredientsToStorage(ingredients, recipeTitle, recipeId),
-            {
-                type: 'bulk_create',
-                data: { ingredients, recipeTitle, recipeId }
-            }
-        )
+        const createdItems = await ShoppingListAPI.bulkCreateItems(apiItems)
+        return this.transformAPIItemsToLocal(createdItems)
     }
 
-    /**
-     * Добавить ингредиенты в localStorage (fallback)
-     */
-    static async addIngredientsToStorage(ingredients, recipeTitle, recipeId = null) {
-        try {
-            const currentList = this.getShoppingListFromStorage()
-            const timestamp = new Date().toISOString()
 
-            const newItems = ingredients.map((ingredient, index) => {
-                const validatedIngredient = this.validateIngredient(ingredient)
-
-                const existingItemIndex = currentList.findIndex(item =>
-                    item.name.toLowerCase() === validatedIngredient.name.toLowerCase() && !item.purchased
-                )
-
-                if (existingItemIndex !== -1) {
-                    const existingItem = currentList[existingItemIndex]
-                    const updatedQuantity = this.combineQuantities(existingItem.quantity, validatedIngredient.quantity)
-
-                    currentList[existingItemIndex] = {
-                        ...existingItem,
-                        quantity: updatedQuantity,
-                        recipes: [...(existingItem.recipes || []), recipeTitle].filter((recipe, index, arr) =>
-                            arr.indexOf(recipe) === index 
-                        ),
-                        updatedAt: timestamp,
-                        ...(recipeId && {
-                            recipe: {
-                                id: recipeId,
-                                title: recipeTitle
-                            },
-                            is_actual: true 
-                        })
-                    }
-
-                    return null 
-                } else {
-                    return {
-                        id: `${Date.now()}_${index}`,
-                        name: validatedIngredient.name,
-                        quantity: validatedIngredient.quantity || '',
-                        purchased: false,
-                        recipes: [recipeTitle],
-                        addedAt: timestamp,
-                        updatedAt: timestamp,
-                        recipe: recipeId ? {
-                            id: recipeId,
-                            title: recipeTitle
-                        } : null,
-                        is_actual: recipeId ? true : true 
-                    }
-                }
-            }).filter(Boolean) 
-
-            const updatedList = [...currentList, ...newItems]
-
-            this.saveShoppingListToStorage(updatedList)
-
-            return {
-                added: newItems.length,
-                updated: ingredients.length - newItems.length,
-                total: updatedList.length
-            }
-        } catch (error) {
-            console.error('Ошибка при добавлении ингредиентов в localStorage:', error)
-            throw new Error('Не удалось добавить ингредиенты в список покупок')
-        }
-    }
 
     
     static validateIngredient(ingredient) {
@@ -243,360 +128,121 @@ class ShoppingListService {
         return `${existingTrimmed}, ${newTrimmed}`
     }
 
-    
+    /**
+     * Переключить статус покупки элемента (только для авторизованных пользователей)
+     * @param {number} itemId - ID элемента
+     * @returns {Promise<Object>}
+     */
     static async togglePurchased(itemId) {
-        if (!ShoppingListAPI.isAuthenticated() || ShoppingListOffline.isTempId(itemId)) {
-            return await this.togglePurchasedStorage(itemId)
-        }
+        this.ensureAuthenticated()
 
-        return await ShoppingListOffline.executeWithFallback(
-            async () => {
-                const updatedItem = await ShoppingListAPI.toggleItemPurchased(itemId)
-                return this.transformAPIItemsToLocal([updatedItem])[0]
-            },
-            () => this.togglePurchasedStorage(itemId),
-            {
-                type: 'toggle_purchased',
-                data: { itemId }
-            }
-        )
-    }
-
-    
-    static async togglePurchasedStorage(itemId) {
-        try {
-            const currentList = this.getShoppingListFromStorage()
-
-            const itemIndex = currentList.findIndex(item => item.id === itemId)
-
-            if (itemIndex === -1) {
-                console.error('Элемент не найден в localStorage:', {
-                    searchId: itemId,
-                    availableIds: currentList.map(item => ({ id: item.id }))
-                })
-                throw new Error('Элемент не найден')
-            }
-
-            currentList[itemIndex].purchased = !currentList[itemIndex].purchased
-            currentList[itemIndex].updatedAt = new Date().toISOString()
-
-            this.saveShoppingListToStorage(currentList)
-
-            return currentList[itemIndex]
-        } catch (error) {
-            console.error('Ошибка при изменении статуса покупки в localStorage:', error)
-            throw new Error('Не удалось обновить статус элемента')
-        }
-    }
-
-    
-    static async removeItem(itemId) {
-        if (!ShoppingListAPI.isAuthenticated() || ShoppingListOffline.isTempId(itemId)) {
-            return await this.removeItemStorage(itemId)
-        }
-
-        return await ShoppingListOffline.executeWithFallback(
-            async () => {
-                await ShoppingListAPI.deleteItem(itemId)
-                return await this.getShoppingList()
-            },
-            () => this.removeItemStorage(itemId),
-            {
-                type: 'delete_item',
-                data: { itemId }
-            }
-        )
-    }
-
-   
-    static async removeItemStorage(itemId) {
-        try {
-            const currentList = this.getShoppingListFromStorage()
-            const filteredList = currentList.filter(item => item.id !== itemId)
-
-            this.saveShoppingListToStorage(filteredList)
-            return filteredList
-        } catch (error) {
-            console.error('Ошибка при удалении элемента из localStorage:', error)
-            throw new Error('Не удалось удалить элемент')
-        }
-    }
-
-  
-    static async clearAll() {
-        if (!ShoppingListAPI.isAuthenticated()) {
-            return await this.clearAllStorage()
-        }
-
-        return await ShoppingListOffline.executeWithFallback(
-            async () => {
-                await ShoppingListAPI.clearShoppingList()
-                return []
-            },
-            () => this.clearAllStorage(),
-            {
-                type: 'clear_all',
-                data: {}
-            }
-        )
-    }
-
-    
-    static async clearAllStorage() {
-        try {
-            this.saveShoppingListToStorage([])
-            return true
-        } catch (error) {
-            console.error('Ошибка при очистке списка в localStorage:', error)
-            throw new Error('Не удалось очистить список покупок')
-        }
-    }
-
-  
-    static async clearPurchased() {
-        if (!ShoppingListAPI.isAuthenticated()) {
-            return await this.clearPurchasedStorage()
-        }
-
-        return await ShoppingListOffline.executeWithFallback(
-            async () => {
-                const limit = parseInt(process.env.NEXT_PUBLIC_SHOPPING_LIST_LIMIT) || 1000
-                const { items } = await ShoppingListAPI.getShoppingList({ limit })
-                const purchasedItems = items.filter(item => item.is_purchased)
-
-                if (purchasedItems.length > 0) {
-                    const purchasedIds = purchasedItems.map(item => item.id)
-                    await ShoppingListAPI.bulkDeleteItems(purchasedIds)
-                }
-
-                const remainingItems = items.filter(item => !item.is_purchased)
-                return this.transformAPIItemsToLocal(remainingItems)
-            },
-            () => this.clearPurchasedStorage(),
-            {
-                type: 'clear_purchased',
-                data: {}
-            }
-        )
-    }
-
-   
-    static async clearPurchasedStorage() {
-        try {
-            const currentList = this.getShoppingListFromStorage()
-            const unpurchasedItems = currentList.filter(item => !item.purchased)
-
-            this.saveShoppingListToStorage(unpurchasedItems)
-            return unpurchasedItems
-        } catch (error) {
-            console.error('Ошибка при очистке купленных элементов в localStorage:', error)
-            throw new Error('Не удалось очистить купленные элементы')
-        }
-    }
-
-    
-    static async addManualIngredient(name, quantity = '') {
-        const validatedIngredient = this.validateIngredient({ name, quantity })
-
-        if (!ShoppingListAPI.isAuthenticated()) {
-            return await this.addManualIngredientStorage(validatedIngredient.name, validatedIngredient.quantity)
-        }
-
-        return await ShoppingListOffline.executeWithFallback(
-            async () => {
-                const limit = parseInt(process.env.NEXT_PUBLIC_SHOPPING_LIST_LIMIT) || 1000
-                const { items: existingItems } = await ShoppingListAPI.getShoppingList({ limit })
-                const existingItem = existingItems.find(item =>
-                    item.name.toLowerCase() === validatedIngredient.name.toLowerCase() && !item.is_purchased
-                )
-
-                if (existingItem) {
-                    const updatedQuantity = this.combineQuantities(existingItem.quantity, validatedIngredient.quantity)
-                    const updatedItem = await ShoppingListAPI.updateItem(existingItem.id, {
-                        quantity: updatedQuantity
-                    })
-                    return this.transformAPIItemsToLocal([updatedItem])[0]
-                } else {
-                    const newItem = await ShoppingListAPI.createItem({
-                        name: validatedIngredient.name,
-                        quantity: validatedIngredient.quantity,
-                        recipe_ingredient_id: null
-                    })
-                    return this.transformAPIItemsToLocal([newItem])[0]
-                }
-            },
-            () => this.addManualIngredientStorage(validatedIngredient.name, validatedIngredient.quantity),
-            {
-                type: 'add_manual_ingredient',
-                data: { name: validatedIngredient.name, quantity: validatedIngredient.quantity }
-            }
-        )
-    }
-
-   
-    static async addManualIngredientStorage(name, quantity = '') {
-        try {
-            const validatedIngredient = this.validateIngredient({ name, quantity })
-            const currentList = this.getShoppingListFromStorage()
-            const timestamp = new Date().toISOString()
-
-            const existingItemIndex = currentList.findIndex(item =>
-                item.name.toLowerCase() === validatedIngredient.name.toLowerCase() && !item.purchased
-            )
-
-            if (existingItemIndex !== -1) {
-                const existingItem = currentList[existingItemIndex]
-                const updatedQuantity = this.combineQuantities(existingItem.quantity, validatedIngredient.quantity)
-
-                currentList[existingItemIndex] = {
-                    ...existingItem,
-                    quantity: updatedQuantity,
-                    updatedAt: timestamp,
-                    is_actual: true
-                }
-
-                this.saveShoppingListToStorage(currentList)
-                return currentList[existingItemIndex]
-            } else {
-                const newItem = {
-                    id: ShoppingListOffline.generateTempId(),
-                    name: validatedIngredient.name,
-                    quantity: validatedIngredient.quantity,
-                    purchased: false,
-                    recipes: [],
-                    addedAt: timestamp,
-                    updatedAt: timestamp,
-                    recipe: null,
-                    is_actual: true
-                }
-
-                const updatedList = [...currentList, newItem]
-                this.saveShoppingListToStorage(updatedList)
-                return newItem
-            }
-        } catch (error) {
-            console.error('Ошибка при добавлении ингредиента вручную:', error)
-            throw error
-        }
-    }
-
-   
-    static async searchItems(query) {
-        try {
-            const list = await this.getShoppingList()
-            if (!query || !query.trim()) return list
-
-            const lowercaseQuery = query.toLowerCase().trim()
-            return list.filter(item => {
-                const nameMatch = item.name && item.name.toLowerCase().includes(lowercaseQuery)
-
-                const recipeMatch = item.recipes && Array.isArray(item.recipes) &&
-                    item.recipes.some(recipe =>
-                        recipe && recipe.toLowerCase().includes(lowercaseQuery)
-                    )
-
-                return nameMatch || recipeMatch
-            })
-        } catch (error) {
-            console.error('Ошибка при поиске:', error)
-            return []
-        }
+        const updatedItem = await ShoppingListAPI.toggleItemPurchased(itemId)
+        return this.transformAPIItemsToLocal([updatedItem])[0]
     }
 
     /**
-     * Синхронизировать offline операции с сервером
-     * @returns {Promise<Object>}
+     * Удалить элемент из списка покупок (только для авторизованных пользователей)
+     * @param {number} itemId - ID элемента
+     * @returns {Promise<Array>}
      */
-    static async syncOfflineOperations() {
-        if (!ShoppingListAPI.isAuthenticated()) {
-            return { success: false, error: 'Пользователь не авторизован' }
+    static async removeItem(itemId) {
+        this.ensureAuthenticated()
+
+        await ShoppingListAPI.deleteItem(itemId)
+        return await this.getShoppingList()
+    }
+
+    /**
+     * Очистить весь список покупок (только для авторизованных пользователей)
+     * @returns {Promise<Array>}
+     */
+    static async clearAll() {
+        this.ensureAuthenticated()
+
+        await ShoppingListAPI.clearShoppingList()
+        return []
+    }
+
+    /**
+     * Очистить купленные элементы (только для авторизованных пользователей)
+     * @returns {Promise<Array>}
+     */
+    static async clearPurchased() {
+        this.ensureAuthenticated()
+
+        const limit = Math.min(parseInt(process.env.NEXT_PUBLIC_SHOPPING_LIST_LIMIT) || 100, 100)
+        const { items } = await ShoppingListAPI.getShoppingList({ limit })
+        const purchasedItems = items.filter(item => item.is_purchased)
+
+        if (purchasedItems.length > 0) {
+            const purchasedIds = purchasedItems.map(item => item.id)
+            await ShoppingListAPI.bulkDeleteItems(purchasedIds)
         }
 
-        return await ShoppingListOffline.syncOfflineOperations(async (operation) => {
-            switch (operation.type) {
-                case 'add_manual_ingredient':
-                    return await this.addManualIngredient(operation.data.name, operation.data.quantity)
+        const remainingItems = items.filter(item => !item.is_purchased)
+        return this.transformAPIItemsToLocal(remainingItems)
+    }
 
-                case 'toggle_purchased':
-                    return await ShoppingListAPI.toggleItemPurchased(operation.data.itemId)
+    /**
+     * Добавить ингредиент вручную (только для авторизованных пользователей)
+     * @param {string} name - название ингредиента
+     * @param {string} quantity - количество
+     * @returns {Promise<Object>}
+     */
+    static async addManualIngredient(name, quantity = '') {
+        this.ensureAuthenticated()
 
-                case 'delete_item':
-                    return await ShoppingListAPI.deleteItem(operation.data.itemId)
+        const validatedIngredient = this.validateIngredient({ name, quantity })
 
-                case 'clear_all':
-                    return await ShoppingListAPI.clearShoppingList()
+        const limit = Math.min(parseInt(process.env.NEXT_PUBLIC_SHOPPING_LIST_LIMIT) || 100, 100)
+        const { items: existingItems } = await ShoppingListAPI.getShoppingList({ limit })
+        const existingItem = existingItems.find(item =>
+            item.name.toLowerCase() === validatedIngredient.name.toLowerCase() && !item.is_purchased
+        )
 
-                case 'clear_purchased':
-                    return await this.clearPurchased()
+        if (existingItem) {
+            const updatedQuantity = this.combineQuantities(existingItem.quantity, validatedIngredient.quantity)
+            const updatedItem = await ShoppingListAPI.updateItem(existingItem.id, {
+                quantity: updatedQuantity
+            })
+            return this.transformAPIItemsToLocal([updatedItem])[0]
+        } else {
+            const newItem = await ShoppingListAPI.createItem({
+                name: validatedIngredient.name,
+                quantity: validatedIngredient.quantity,
+                recipe_ingredient_id: null
+            })
+            return this.transformAPIItemsToLocal([newItem])[0]
+        }
+    }
 
-                case 'bulk_create':
-                    return await this.addIngredients(
-                        operation.data.ingredients,
-                        operation.data.recipeTitle,
-                        operation.data.recipeId
-                    )
 
-                default:
-                    throw new Error(`Неизвестный тип операции: ${operation.type}`)
-            }
+
+    /**
+     * Поиск элементов в списке покупок (только для авторизованных пользователей)
+     * @param {string} query - поисковый запрос
+     * @returns {Promise<Array>}
+     */
+    static async searchItems(query) {
+        this.ensureAuthenticated()
+
+        const list = await this.getShoppingList()
+        if (!query || !query.trim()) return list
+
+        const lowercaseQuery = query.toLowerCase().trim()
+        return list.filter(item => {
+            const nameMatch = item.name && item.name.toLowerCase().includes(lowercaseQuery)
+
+            const recipeMatch = item.recipes && Array.isArray(item.recipes) &&
+                item.recipes.some(recipe =>
+                    recipe && recipe.toLowerCase().includes(lowercaseQuery)
+                )
+
+            return nameMatch || recipeMatch
         })
     }
 
-    /**
-     * Получить статистику offline режима
-     * @returns {Object}
-     */
-    static getOfflineStats() {
-        return ShoppingListOffline.getOfflineStats()
-    }
 
-    /**
-     * Настроить автоматическую синхронизацию при восстановлении сети
-     */
-    static setupAutoSync() {
-        ShoppingListOffline.setupNetworkListeners(
-            async () => {
-                // При восстановлении сети синхронизируем offline операции
-                try {
-                    const result = await this.syncOfflineOperations()
-                    if (result.success && result.syncedCount > 0) {
-                        console.log(`Синхронизировано ${result.syncedCount} операций`)
-                    }
-                } catch (error) {
-                    console.error('Ошибка автоматической синхронизации:', error)
-                }
-            },
-            () => {
-                console.log('Переход в offline режим')
-            }
-        )
-    }
-
-    /**
-     * Принудительно обновить данные с сервера
-     * @returns {Promise<Array>}
-     */
-    static async forceRefreshFromServer() {
-        if (!ShoppingListAPI.isAuthenticated()) {
-            throw new Error('Пользователь не авторизован')
-        }
-
-        const { items } = await ShoppingListAPI.getShoppingList({ limit: 1000 })
-        const localItems = this.transformAPIItemsToLocal(items)
-
-        // Сохраняем в localStorage для offline доступа
-        this.saveShoppingListToStorage(localItems)
-
-        return localItems
-    }
-
-    /**
-     * Проверить статус миграции
-     * @returns {Object|null}
-     */
-    static getMigrationStatus() {
-        return ShoppingListMigration.getMigrationStatus()
-    }
 }
 
 export default ShoppingListService

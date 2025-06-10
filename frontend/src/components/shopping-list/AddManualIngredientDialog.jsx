@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Plus, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,7 +17,9 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import ShoppingListService from '@/services/shopping-list.service'
+import AuthService from '@/services/auth.service'
 import { handleApiError } from '@/utils/errorHandler'
+import { AuthError } from '@/utils/errors'
 
 /**
  * Диалог для добавления ингредиента вручную
@@ -24,6 +27,7 @@ import { handleApiError } from '@/utils/errorHandler'
  */
 export default function AddManualIngredientDialog({ onIngredientAdded }) {
     const { toast } = useToast()
+    const router = useRouter()
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
@@ -31,6 +35,25 @@ export default function AddManualIngredientDialog({ onIngredientAdded }) {
         quantity: ''
     })
     const [errors, setErrors] = useState({})
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+    // Проверка авторизации при открытии диалога
+    useEffect(() => {
+        if (open) {
+            const authenticated = AuthService.isAuthenticated()
+            setIsAuthenticated(authenticated)
+
+            if (!authenticated) {
+                toast({
+                    variant: "destructive",
+                    title: "Требуется авторизация",
+                    description: "Для добавления ингредиентов необходимо войти в систему",
+                })
+                setOpen(false)
+                router.push('/auth/login')
+            }
+        }
+    }, [open, toast, router])
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({
@@ -98,12 +121,23 @@ export default function AddManualIngredientDialog({ onIngredientAdded }) {
             }
 
         } catch (error) {
-            const { message, type } = handleApiError(error)
-            toast({
-                variant: type,
-                title: "Ошибка добавления",
-                description: message,
-            })
+            if (error instanceof AuthError) {
+                setIsAuthenticated(false)
+                toast({
+                    variant: "destructive",
+                    title: "Требуется авторизация",
+                    description: "Для добавления ингредиентов необходимо войти в систему",
+                })
+                setOpen(false)
+                router.push('/auth/login')
+            } else {
+                const { message, type } = handleApiError(error)
+                toast({
+                    variant: type,
+                    title: "Ошибка добавления",
+                    description: message,
+                })
+            }
         } finally {
             setLoading(false)
         }

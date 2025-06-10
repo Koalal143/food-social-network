@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
     Dialog,
     DialogContent,
@@ -12,32 +13,52 @@ import {
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
-import { ShoppingCart, Check, X, CheckSquare, Square } from 'lucide-react'
+import { ShoppingCart, Check, X, CheckSquare, Square, LogIn, UserPlus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import ShoppingListService from '@/services/shopping-list.service'
+import AuthService from '@/services/auth.service'
 import { handleApiError } from '@/utils/errorHandler'
+import { AuthError } from '@/utils/errors'
 
-export default function AddToShoppingListModal({ 
-    isOpen, 
-    onClose, 
+export default function AddToShoppingListModal({
+    isOpen,
+    onClose,
     recipe,
-    onNavigateToShoppingList 
+    onNavigateToShoppingList
 }) {
     const { toast } = useToast()
+    const router = useRouter()
     const [selectedIngredients, setSelectedIngredients] = useState({})
     const [isLoading, setIsLoading] = useState(false)
     const [showConfirmation, setShowConfirmation] = useState(false)
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+    // Проверка авторизации при открытии модального окна
+    useEffect(() => {
+        if (isOpen) {
+            const authenticated = AuthService.isAuthenticated()
+            setIsAuthenticated(authenticated)
+
+            if (!authenticated) {
+                toast({
+                    variant: "destructive",
+                    title: "Требуется авторизация",
+                    description: "Для добавления в список покупок необходимо войти в систему",
+                })
+            }
+        }
+    }, [isOpen, toast])
 
     // Инициализация выбранных ингредиентов (все выбраны по умолчанию)
     useEffect(() => {
-        if (recipe?.ingredients && isOpen) {
+        if (recipe?.ingredients && isOpen && isAuthenticated) {
             const initialSelection = {}
             recipe.ingredients.forEach((ingredient, index) => {
                 initialSelection[index] = true
             })
             setSelectedIngredients(initialSelection)
         }
-    }, [recipe, isOpen])
+    }, [recipe, isOpen, isAuthenticated])
 
     // Сброс состояния при закрытии модального окна
     useEffect(() => {
@@ -79,8 +100,18 @@ export default function AddToShoppingListModal({
     }
 
     const handleAddToShoppingList = async () => {
+        // Проверяем авторизацию перед добавлением
+        if (!isAuthenticated) {
+            toast({
+                variant: "destructive",
+                title: "Требуется авторизация",
+                description: "Для добавления в список покупок необходимо войти в систему",
+            })
+            return
+        }
+
         const selectedItems = getSelectedIngredients()
-        
+
         if (selectedItems.length === 0) {
             toast({
                 variant: "destructive",
@@ -92,24 +123,33 @@ export default function AddToShoppingListModal({
 
         try {
             setIsLoading(true)
-            
+
             // Добавляем ингредиенты в список покупок
             await ShoppingListService.addIngredients(selectedItems, recipe.title)
-            
+
             setShowConfirmation(true)
-            
+
             toast({
                 variant: "default",
                 title: "Успешно добавлено!",
                 description: `${selectedItems.length} ингредиент(ов) добавлено в список покупок`,
             })
         } catch (error) {
-            const { message, type } = handleApiError(error)
-            toast({
-                variant: type,
-                title: "Ошибка добавления",
-                description: message,
-            })
+            if (error instanceof AuthError) {
+                setIsAuthenticated(false)
+                toast({
+                    variant: "destructive",
+                    title: "Требуется авторизация",
+                    description: "Для добавления в список покупок необходимо войти в систему",
+                })
+            } else {
+                const { message, type } = handleApiError(error)
+                toast({
+                    variant: type,
+                    title: "Ошибка добавления",
+                    description: message,
+                })
+            }
         } finally {
             setIsLoading(false)
         }
@@ -133,7 +173,47 @@ export default function AddToShoppingListModal({
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-hidden flex flex-col">
-                {!showConfirmation ? (
+                {!isAuthenticated ? (
+                    // Экран авторизации для неавторизованных пользователей
+                    <>
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                                <ShoppingCart className="w-5 h-5" />
+                                Требуется авторизация
+                            </DialogTitle>
+                            <DialogDescription>
+                                Для добавления ингредиентов в список покупок необходимо войти в систему
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="py-6">
+                            <div className="text-center space-y-4">
+                                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+                                    <ShoppingCart className="w-8 h-8 text-muted-foreground" />
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                    Войдите в систему, чтобы сохранять ингредиенты в список покупок
+                                </p>
+                            </div>
+                        </div>
+
+                        <DialogFooter className="flex gap-2">
+                            <Button variant="outline" onClick={onClose} className="flex-1">
+                                Отмена
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    onClose()
+                                    router.push('/auth/login')
+                                }}
+                                className="flex-1"
+                            >
+                                <LogIn className="w-4 h-4 mr-2" />
+                                Войти в систему
+                            </Button>
+                        </DialogFooter>
+                    </>
+                ) : !showConfirmation ? (
                     <>
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
