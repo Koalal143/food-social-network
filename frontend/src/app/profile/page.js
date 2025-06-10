@@ -13,7 +13,6 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import AuthService from '@/services/auth.service'
-// import { ProfileSkeleton } from '@/components/ui/skeletons' // Теперь используется в ProtectedRoute
 
 const RECIPES_PER_PAGE = 9;
 
@@ -61,17 +60,6 @@ export default function ProfilePage() {
         }
     }, [user])
 
-    useEffect(() => {
-        const loadInitialFavorites = async () => {
-            try {
-                await getFavorites(0, RECIPES_PER_PAGE)
-            } catch (err) {
-                console.error("Ошибка при загрузке избранных:", err)
-            }
-        }
-        loadInitialFavorites()
-    }, [])
-
     const handleUpdateProfile = async (values) => {
         try {
             const formattedData = {
@@ -96,7 +84,7 @@ export default function ProfilePage() {
     }
 
     const loadMoreFavorites = useCallback(() => {
-        if (favoritesLoadingRef.current || !favoritesHasMore) return
+        if (!user?.id || favoritesLoadingRef.current || !favoritesHasMore) return
 
         if (favoritesDebounceTimerRef.current) {
             clearTimeout(favoritesDebounceTimerRef.current)
@@ -110,12 +98,12 @@ export default function ProfilePage() {
                 setFavoritesOffset(offset + result.favorites.length)
                 setFavoritesHasMore((offset + result.favorites.length) < result.totalCount)
             } catch (err) {
-                // обработка ошибки
+                console.error("Ошибка при загрузке дополнительных избранных:", err)
             } finally {
                 favoritesLoadingRef.current = false
             }
         }, 300)
-    }, [favorites, favoritesHasMore, getFavorites])
+    }, [user?.id, favorites, favoritesHasMore, getFavorites])
 
     const loadMoreUserRecipes = useCallback(() => {
         if (debounceTimerRef.current) {
@@ -135,7 +123,6 @@ export default function ProfilePage() {
                     const uniqueNewRecipes = newRecipes.filter(r => !existingIds.has(r.id))
                     const newRecipesList = [...prev, ...uniqueNewRecipes]
 
-                    // Обновляем hasMore на основе нового количества рецептов
                     setRecipesHasMore(newRecipesList.length < (result.totalCount || 0) && newRecipes.length > 0)
 
                     return newRecipesList
@@ -150,15 +137,6 @@ export default function ProfilePage() {
             }
         }, 300)
     }, [offset, recipesHasMore, userRecipes.length, totalCount])
-
-    // Скелетон теперь показывается в ProtectedRoute
-    // if (authLoading || isInitialLoading) {
-    //     return (
-    //         <Container className="py-8">
-    //             <ProfileSkeleton />
-    //         </Container>
-    //     )
-    // }
 
     return (
         <ProtectedRoute skeleton="profile">
