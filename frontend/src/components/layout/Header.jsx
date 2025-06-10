@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useRouter } from 'next/navigation'
-import { LogOut, User, PlusCircle, Search, X, Shield, Cookie, FileText, ShoppingCart } from 'lucide-react'
+import { LogOut, User, PlusCircle, Search, X, Shield, Cookie, FileText, ShoppingBag } from 'lucide-react'
 import Container from './Container'
 import SearchInput from '../ui/search/SearchInput'
 import { useState } from 'react'
@@ -80,11 +80,11 @@ export default function Header() {
                                         variant="ghost"
                                         size="sm"
                                         asChild
-                                        className="p-1"
+                                        className="md:hidden p-1"
                                         title="Список покупок"
                                     >
                                         <Link href="/shopping-list">
-                                            <ShoppingCart className="h-5 w-5 text-gray-700" />
+                                            <ShoppingBag className="h-5 w-5 text-gray-700" />
                                         </Link>
                                     </Button>
 

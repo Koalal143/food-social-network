@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+
 import Container from '@/components/layout/Container'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,14 +10,12 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import {
-    ShoppingCart,
+    ShoppingBag,
     Search,
     Trash2,
     CheckCircle,
     Circle,
-    AlertCircle,
-    LogIn,
-    UserPlus
+    AlertCircle
 } from 'lucide-react'
 import ShoppingListService from '@/services/shopping-list.service'
 import AuthService from '@/services/auth.service'
@@ -25,6 +23,8 @@ import { handleApiError } from '@/utils/errorHandler'
 import { AuthError } from '@/utils/errors'
 import IngredientActualityWarning from '@/components/shopping-list/IngredientActualityWarning'
 import AddManualIngredientDialog from '@/components/shopping-list/AddManualIngredientDialog'
+import { ShoppingListLoadingSkeleton } from '@/components/ui/skeletons'
+import AuthRequiredCard from '@/components/auth/AuthRequiredCard'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -39,12 +39,14 @@ import {
 
 export default function ShoppingListPage() {
     const { toast } = useToast()
-    const router = useRouter()
+
+
     const [items, setItems] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
     const [filteredItems, setFilteredItems] = useState([])
     const [loading, setLoading] = useState(true)
     const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [operationLoading, setOperationLoading] = useState({})
 
     // Проверка авторизации при загрузке компонента
     useEffect(() => {
@@ -104,14 +106,9 @@ export default function ShoppingListPage() {
 
     const handleTogglePurchased = async (itemId) => {
         try {
-            const updatedItem = await ShoppingListService.togglePurchased(itemId)
-            await loadShoppingList() 
-
-            toast({
-                variant: "default",
-                title: updatedItem.purchased ? "Отмечено как купленное" : "Отмечено как не купленное",
-                description: updatedItem.name,
-            })
+            setOperationLoading(prev => ({ ...prev, [`toggle_${itemId}`]: true }))
+            await ShoppingListService.togglePurchased(itemId)
+            await loadShoppingList()
         } catch (error) {
             const { message, type } = handleApiError(error)
             toast({
@@ -119,19 +116,16 @@ export default function ShoppingListPage() {
                 title: "Ошибка",
                 description: message,
             })
+        } finally {
+            setOperationLoading(prev => ({ ...prev, [`toggle_${itemId}`]: false }))
         }
     }
 
     const handleRemoveItem = async (itemId) => {
         try {
+            setOperationLoading(prev => ({ ...prev, [`remove_${itemId}`]: true }))
             await ShoppingListService.removeItem(itemId)
             await loadShoppingList()
-
-            toast({
-                variant: "default",
-                title: "Элемент удален",
-                description: "Ингредиент удален из списка покупок",
-            })
         } catch (error) {
             const { message, type } = handleApiError(error)
             toast({
@@ -139,6 +133,8 @@ export default function ShoppingListPage() {
                 title: "Ошибка удаления",
                 description: message,
             })
+        } finally {
+            setOperationLoading(prev => ({ ...prev, [`remove_${itemId}`]: false }))
         }
     }
 
@@ -188,14 +184,7 @@ export default function ShoppingListPage() {
     if (loading) {
         return (
             <Container>
-                <div className="py-8">
-                    <div className="flex items-center justify-center min-h-[400px]">
-                        <div className="text-center">
-                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                            <p className="text-muted-foreground">Загрузка списка покупок...</p>
-                        </div>
-                    </div>
-                </div>
+                <ShoppingListLoadingSkeleton />
             </Container>
         )
     }
@@ -204,78 +193,10 @@ export default function ShoppingListPage() {
     if (!isAuthenticated) {
         return (
             <Container>
-                <div className="py-8">
-                    <div className="flex items-center justify-center min-h-[400px]">
-                        <Card className="w-full max-w-md">
-                            <CardContent className="py-8 px-6">
-                                <div className="text-center">
-                                    <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                                    <h3 className="text-xl font-semibold mb-2">Требуется авторизация</h3>
-                                    <p className="text-muted-foreground mb-6">
-                                        Для работы со списком покупок необходимо войти в систему
-                                    </p>
-                                    <div className="flex flex-col gap-3">
-                                        <Button
-                                            onClick={() => router.push('/auth/login')}
-                                            className="w-full"
-                                        >
-                                            <LogIn className="w-4 h-4 mr-2" />
-                                            Войти в систему
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => router.push('/auth/register')}
-                                            className="w-full"
-                                        >
-                                            <UserPlus className="w-4 h-4 mr-2" />
-                                            Создать аккаунт
-                                        </Button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            </Container>
-        )
-    }
-
-    // Показать экран авторизации для неавторизованных пользователей
-    if (!isAuthenticated) {
-        return (
-            <Container>
-                <div className="py-8">
-                    <div className="flex items-center justify-center min-h-[400px]">
-                        <Card className="w-full max-w-md">
-                            <CardContent className="py-8 px-6">
-                                <div className="text-center">
-                                    <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                                    <h3 className="text-xl font-semibold mb-2">Требуется авторизация</h3>
-                                    <p className="text-muted-foreground mb-6">
-                                        Для работы со списком покупок необходимо войти в систему
-                                    </p>
-                                    <div className="flex flex-col gap-3">
-                                        <Button
-                                            onClick={() => router.push('/auth/login')}
-                                            className="w-full"
-                                        >
-                                            <LogIn className="w-4 h-4 mr-2" />
-                                            Войти в систему
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => router.push('/auth/register')}
-                                            className="w-full"
-                                        >
-                                            <UserPlus className="w-4 h-4 mr-2" />
-                                            Создать аккаунт
-                                        </Button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
+                <AuthRequiredCard
+                    icon={ShoppingBag}
+                    description="Для работы со списком покупок необходимо войти в систему"
+                />
             </Container>
         )
     }
@@ -287,7 +208,7 @@ export default function ShoppingListPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="min-w-0">
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2 md:gap-3">
-                            <ShoppingCart className="w-6 h-6 md:w-8 md:h-8 flex-shrink-0" />
+                            <ShoppingBag className="w-6 h-6 md:w-8 md:h-8 flex-shrink-0" />
                             <span className="truncate">Список покупок</span>
                         </h1>
                         <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
@@ -373,10 +294,10 @@ export default function ShoppingListPage() {
 
                 {/* Список покупок */}
                 {items.length === 0 ? (
-                    <Card>
+                    <Card className="bg-white border border-gray-200 rounded-2xl shadow-sm">
                         <CardContent className="py-8 md:py-12 px-4 md:px-6">
                             <div className="text-center">
-                                <ShoppingCart className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                                <ShoppingBag className="w-12 h-12 md:w-16 md:h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
                                 <h3 className="text-base md:text-lg font-medium mb-2">Список покупок пуст</h3>
                                 <p className="text-muted-foreground mb-4 md:mb-6 text-sm md:text-base">
                                     Добавьте ингредиенты из рецептов, чтобы создать список покупок
@@ -391,7 +312,7 @@ export default function ShoppingListPage() {
                     <div className="space-y-4 md:space-y-6">
                         {/* Не купленные элементы */}
                         {unpurchasedItems.length > 0 && (
-                            <Card>
+                            <Card className="bg-white border border-gray-200 rounded-2xl shadow-sm">
                                 <CardHeader className="pb-3 md:pb-6">
                                     <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                                         <Circle className="w-4 h-4 md:w-5 md:h-5 text-orange-500 flex-shrink-0" />
@@ -406,6 +327,8 @@ export default function ShoppingListPage() {
                                                 item={item}
                                                 onTogglePurchased={handleTogglePurchased}
                                                 onRemove={handleRemoveItem}
+                                                isToggleLoading={operationLoading[`toggle_${item.id}`]}
+                                                isRemoveLoading={operationLoading[`remove_${item.id}`]}
                                             />
                                         ))}
                                     </div>
@@ -415,7 +338,7 @@ export default function ShoppingListPage() {
 
                         {/* Купленные элементы */}
                         {purchasedItems.length > 0 && (
-                            <Card>
+                            <Card className="bg-white border border-gray-200 rounded-2xl shadow-sm">
                                 <CardHeader className="pb-3 md:pb-6">
                                     <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                                         <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-green-500 flex-shrink-0" />
@@ -430,6 +353,8 @@ export default function ShoppingListPage() {
                                                 item={item}
                                                 onTogglePurchased={handleTogglePurchased}
                                                 onRemove={handleRemoveItem}
+                                                isToggleLoading={operationLoading[`toggle_${item.id}`]}
+                                                isRemoveLoading={operationLoading[`remove_${item.id}`]}
                                             />
                                         ))}
                                     </div>
@@ -438,7 +363,7 @@ export default function ShoppingListPage() {
                         )}
 
                         {filteredItems.length === 0 && searchQuery && (
-                            <Card>
+                            <Card className="bg-white border border-gray-200 rounded-2xl shadow-sm">
                                 <CardContent className="py-6 md:py-8 px-4 md:px-6">
                                     <div className="text-center">
                                         <AlertCircle className="w-10 h-10 md:w-12 md:h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
@@ -459,7 +384,7 @@ export default function ShoppingListPage() {
 }
 
 // Компонент элемента списка покупок
-function ShoppingListItem({ item, onTogglePurchased, onRemove }) {
+function ShoppingListItem({ item, onTogglePurchased, onRemove, isToggleLoading = false, isRemoveLoading = false }) {
     return (
         <div className={`flex items-start gap-3 p-3 md:p-3 rounded-lg border transition-colors touch-manipulation ${
             item.purchased
@@ -468,11 +393,16 @@ function ShoppingListItem({ item, onTogglePurchased, onRemove }) {
         }`}>
             {/* Чекбокс с увеличенной областью касания */}
             <div className="flex-shrink-0 pt-0.5">
-                <Checkbox
-                    checked={item.purchased}
-                    onCheckedChange={() => onTogglePurchased(item.id)}
-                    className="w-5 h-5 md:w-4 md:h-4 touch-manipulation"
-                />
+                {isToggleLoading ? (
+                    <div className="w-5 h-5 md:w-4 md:h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                ) : (
+                    <Checkbox
+                        checked={item.purchased}
+                        onCheckedChange={() => onTogglePurchased(item.id)}
+                        className="w-5 h-5 md:w-4 md:h-4 touch-manipulation"
+                        disabled={isToggleLoading}
+                    />
+                )}
             </div>
 
             <div className="flex-1 min-w-0">
@@ -494,9 +424,14 @@ function ShoppingListItem({ item, onTogglePurchased, onRemove }) {
                         variant="ghost"
                         size="sm"
                         onClick={() => onRemove(item.id)}
-                        className="flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50 active:bg-red-100 p-2 md:p-1 h-8 w-8 md:h-6 md:w-6 touch-manipulation"
+                        disabled={isRemoveLoading || isToggleLoading}
+                        className="flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50 active:bg-red-100 p-2 md:p-1 h-8 w-8 md:h-6 md:w-6 touch-manipulation disabled:opacity-50"
                     >
-                        <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
+                        {isRemoveLoading ? (
+                            <div className="w-4 h-4 md:w-3.5 md:h-3.5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <Trash2 className="w-4 h-4 md:w-3.5 md:h-3.5" />
+                        )}
                     </Button>
                 </div>
 

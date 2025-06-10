@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
-import { ShoppingCart, Check, X, CheckSquare, Square, LogIn, UserPlus } from 'lucide-react'
+import { ShoppingBag, Check, CheckSquare, Square, LogIn } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import ShoppingListService from '@/services/shopping-list.service'
 import AuthService from '@/services/auth.service'
@@ -33,34 +33,23 @@ export default function AddToShoppingListModal({
     const [showConfirmation, setShowConfirmation] = useState(false)
     const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-    // Проверка авторизации при открытии модального окна
     useEffect(() => {
         if (isOpen) {
             const authenticated = AuthService.isAuthenticated()
             setIsAuthenticated(authenticated)
-
-            if (!authenticated) {
-                toast({
-                    variant: "destructive",
-                    title: "Требуется авторизация",
-                    description: "Для добавления в список покупок необходимо войти в систему",
-                })
-            }
         }
-    }, [isOpen, toast])
+    }, [isOpen])
 
-    // Инициализация выбранных ингредиентов (все выбраны по умолчанию)
     useEffect(() => {
         if (recipe?.ingredients && isOpen && isAuthenticated) {
             const initialSelection = {}
-            recipe.ingredients.forEach((ingredient, index) => {
+            recipe.ingredients.forEach((_, index) => {
                 initialSelection[index] = true
             })
             setSelectedIngredients(initialSelection)
         }
     }, [recipe, isOpen, isAuthenticated])
 
-    // Сброс состояния при закрытии модального окна
     useEffect(() => {
         if (!isOpen) {
             setShowConfirmation(false)
@@ -100,48 +89,29 @@ export default function AddToShoppingListModal({
     }
 
     const handleAddToShoppingList = async () => {
-        // Проверяем авторизацию перед добавлением
         if (!isAuthenticated) {
-            toast({
-                variant: "destructive",
-                title: "Требуется авторизация",
-                description: "Для добавления в список покупок необходимо войти в систему",
-            })
             return
         }
 
         const selectedItems = getSelectedIngredients()
 
         if (selectedItems.length === 0) {
-            toast({
-                variant: "destructive",
-                title: "Ошибка",
-                description: "Выберите хотя бы один ингредиент",
-            })
             return
         }
 
         try {
             setIsLoading(true)
-
-            // Добавляем ингредиенты в список покупок
             await ShoppingListService.addIngredients(selectedItems, recipe.title)
-
             setShowConfirmation(true)
 
             toast({
                 variant: "default",
-                title: "Успешно добавлено!",
+                title: "Ингредиенты добавлены",
                 description: `${selectedItems.length} ингредиент(ов) добавлено в список покупок`,
             })
         } catch (error) {
             if (error instanceof AuthError) {
                 setIsAuthenticated(false)
-                toast({
-                    variant: "destructive",
-                    title: "Требуется авторизация",
-                    description: "Для добавления в список покупок необходимо войти в систему",
-                })
             } else {
                 const { message, type } = handleApiError(error)
                 toast({
@@ -174,11 +144,10 @@ export default function AddToShoppingListModal({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-hidden flex flex-col">
                 {!isAuthenticated ? (
-                    // Экран авторизации для неавторизованных пользователей
                     <>
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
-                                <ShoppingCart className="w-5 h-5" />
+                                <ShoppingBag className="w-5 h-5" />
                                 Требуется авторизация
                             </DialogTitle>
                             <DialogDescription>
@@ -189,7 +158,7 @@ export default function AddToShoppingListModal({
                         <div className="py-6">
                             <div className="text-center space-y-4">
                                 <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                                    <ShoppingCart className="w-8 h-8 text-muted-foreground" />
+                                    <ShoppingBag className="w-8 h-8 text-muted-foreground" />
                                 </div>
                                 <p className="text-sm text-muted-foreground">
                                     Войдите в систему, чтобы сохранять ингредиенты в список покупок
@@ -217,7 +186,7 @@ export default function AddToShoppingListModal({
                     <>
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
-                                <ShoppingCart className="w-5 h-5" />
+                                <ShoppingBag className="w-5 h-5" />
                                 Добавить в список покупок
                             </DialogTitle>
                             <DialogDescription>
@@ -226,7 +195,6 @@ export default function AddToShoppingListModal({
                         </DialogHeader>
 
                         <div className="flex-1 overflow-hidden flex flex-col">
-                            {/* Статистика и кнопки управления */}
                             <div className="flex items-center justify-between mb-4 p-3 bg-muted/50 rounded-lg">
                                 <div className="flex items-center gap-2">
                                     <Badge variant="secondary">
@@ -257,7 +225,6 @@ export default function AddToShoppingListModal({
                                 </div>
                             </div>
 
-                            {/* Список ингредиентов */}
                             <div className="flex-1 overflow-y-auto space-y-2 pr-2">
                                 {recipe.ingredients.map((ingredient, index) => (
                                     <div
@@ -307,7 +274,7 @@ export default function AddToShoppingListModal({
                                     </>
                                 ) : (
                                     <>
-                                        <ShoppingCart className="w-4 h-4 mr-2" />
+                                        <ShoppingBag className="w-4 h-4 mr-2" />
                                         Добавить ({getSelectedIngredientsCount()})
                                     </>
                                 )}
@@ -342,7 +309,7 @@ export default function AddToShoppingListModal({
                                 Остаться на рецепте
                             </Button>
                             <Button onClick={handleGoToShoppingList} className="flex-1">
-                                <ShoppingCart className="w-4 h-4 mr-2" />
+                                <ShoppingBag className="w-4 h-4 mr-2" />
                                 Перейти к списку
                             </Button>
                         </DialogFooter>

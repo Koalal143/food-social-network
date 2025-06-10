@@ -9,7 +9,7 @@ import { RecipeDetailSkeleton } from "@/components/ui/skeletons";
 import Image from "next/image";
 import AuthorCard from "@/components/ui/recipe-page/AuthorCard";
 import AnimatedActionButtons from "@/components/ui/recipe-page/AnimatedActionButtons";
-import { Share2, Trash2, ShoppingCart } from "lucide-react";
+import { Share2, Trash2, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CopyLinkButton from "@/components/ui/CopyLinkButton";
 import RecipeInfoCards from "@/components/ui/recipe-page/RecipeInfoCards";
@@ -241,8 +241,8 @@ export default function RecipePage({ params }) {
                                     onClick={handleOpenShoppingListModal}
                                     className="flex items-center gap-2"
                                 >
-                                    <ShoppingCart className="w-4 h-4" />
-                                    Добавить в список покупок
+                                    <ShoppingBag className="w-4 h-4" />
+                                    В список покупок
                                 </Button>
                             </div>
                             <RecipeIngridients recipe={recipe} />
