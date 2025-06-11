@@ -11,9 +11,10 @@ services:
     environment:
       - NODE_ENV=development
       - NEXT_TELEMETRY_DISABLED=1
-      # Добавьте здесь ваши dev переменные окружения
-      # - FRONTEND__API_URL=http://localhost:8000
-      # - FRONTEND__RECSYS_URL=http://localhost:8001
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_INTERNAL_API_URL=http://backend:8000
+      - NEXT_PUBLIC_S3_STORAGE_URL=http://localhost:9000/static/
+      - NEXT_PUBLIC_APP_MODE=development
     volumes:
       # Монтируем исходный код для hot reload
       - .:/app
