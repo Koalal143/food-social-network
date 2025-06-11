@@ -1,0 +1,1 @@
+# Recipes integration tests module
