@@ -80,6 +80,17 @@ class UserService:
         user = cast("User", await self.user_repository.get_with_profile(user.id))
         return await self._to_user_model(user)
 
+    async def create_superuser(self, *, username: str, email: str, hashed_password: str) -> UserRead:
+        user = await self.user_repository.create_superuser(
+            username=username,
+            email=email,
+            hashed_password=hashed_password,
+        )
+        await self.user_profile_repository.create(user_id=user.id)
+
+        user = cast("User", await self.user_repository.get_with_profile(user.id))
+        return await self._to_user_model(user)
+
     async def authenticate(self, *, email: str | None, username: str | None, password: str) -> UserRead:
         try:
             if email:
