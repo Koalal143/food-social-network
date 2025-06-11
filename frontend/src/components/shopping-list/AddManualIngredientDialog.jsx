@@ -100,17 +100,11 @@ export default function AddManualIngredientDialog({ onIngredientAdded }) {
 
         try {
             setLoading(true)
-            
+
             const addedItem = await ShoppingListService.addManualIngredient(
                 formData.name.trim(),
                 formData.quantity.trim()
             )
-
-            toast({
-                variant: "default",
-                title: "Ингредиент добавлен",
-                description: `"${addedItem.name}" добавлен в список покупок`,
-            })
 
             setFormData({ name: '', quantity: '' })
             setErrors({})

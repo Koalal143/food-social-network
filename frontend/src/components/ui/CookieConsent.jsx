@@ -10,8 +10,6 @@ import { ERROR_MESSAGES } from "@/constants/errors";
 import { useAuth } from "@/context/AuthContext";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
 
-const LOCALSTORAGE_KEY = "cookie_consent_accepted";
-
 export default function CookieConsent() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,17 +18,14 @@ export default function CookieConsent() {
   const { hasConsent, isLoading: consentLoading, setConsent } = useCookieConsent();
 
   useEffect(() => {
-    // Не показываем диалог пока идет загрузка состояния согласия
     if (consentLoading) return;
 
     if (!isAuth) {
-      // Показываем диалог только если нет согласия
       if (!hasConsent) {
         setOpen(true);
       }
     } else {
       setOpen(false);
-      // Для авторизованных пользователей автоматически устанавливаем согласие
       if (!hasConsent) {
         setConsent(true);
       }
@@ -41,7 +36,6 @@ export default function CookieConsent() {
     setLoading(true);
     try {
         await ConsentService.sendConsent(isAllowed);
-        // Используем хук для сохранения согласия
         setConsent(isAllowed);
         setOpen(false);
     } catch (e) {
@@ -58,7 +52,7 @@ export default function CookieConsent() {
   if (!open ) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 z-[200] pointer-events-none">
+    <div className="fixed bottom-6 right-6 z-[200] pointer-events-none">
         <div className="pointer-events-auto">
             <Card className="bg-white/90 border border-muted shadow-lg rounded-xl px-4 py-3 w-[320px] flex flex-col items-center">
             <div className="flex flex-col items-center w-full">
@@ -69,7 +63,7 @@ export default function CookieConsent() {
                 <p className="mb-2">
                     Сайт применяет cookie для анализа посещений. Подтвердите согласие на их использование.
                 </p>
-                <Link href="/cookies" className="text-blue-600 hover:text-blue-800 underline">
+                <Link href="/docs/cookies" className="text-blue-600 hover:text-blue-800 underline">
                     Управление куки-файлами
                 </Link>
             </CardContent>

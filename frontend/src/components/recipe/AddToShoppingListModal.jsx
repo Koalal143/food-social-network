@@ -103,12 +103,6 @@ export default function AddToShoppingListModal({
             setIsLoading(true)
             await ShoppingListService.addIngredients(selectedItems, recipe.title)
             setShowConfirmation(true)
-
-            toast({
-                variant: "default",
-                title: "Ингредиенты добавлены",
-                description: `${selectedItems.length} ингредиент(ов) добавлено в список покупок`,
-            })
         } catch (error) {
             if (error instanceof AuthError) {
                 setIsAuthenticated(false)

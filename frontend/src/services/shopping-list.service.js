@@ -66,7 +66,7 @@ class ShoppingListService {
 
     /**
      * Добавить ингредиенты в список покупок (только для авторизованных пользователей)
-     * @param {Array} ingredients - массив ингредиентов {name, quantity}
+     * @param {Array} ingredients - массив ингредиентов {name, quantity, id}
      * @param {string} recipeTitle - название рецепта
      * @param {number|null} recipeId - ID рецепта (опционально)
      */
@@ -76,7 +76,7 @@ class ShoppingListService {
         const apiItems = ingredients.map(ingredient => ({
             name: ingredient.name,
             quantity: ingredient.quantity || null,
-            recipe_ingredient_id: ingredient.recipe_ingredient_id || null
+            recipe_ingredient_id: ingredient.id || null
         }))
 
         const createdItems = await ShoppingListAPI.bulkCreateItems(apiItems)

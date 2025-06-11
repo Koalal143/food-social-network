@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 import Container from '@/components/layout/Container'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,7 +16,8 @@ import {
     Trash2,
     CheckCircle,
     Circle,
-    AlertCircle
+    AlertCircle,
+    ExternalLink
 } from 'lucide-react'
 import ShoppingListService from '@/services/shopping-list.service'
 import AuthService from '@/services/auth.service'
@@ -407,16 +409,49 @@ function ShoppingListItem({ item, onTogglePurchased, onRemove, isToggleLoading =
 
             <div className="flex-1 min-w-0">
                 {/* Основная информация */}
-                <div className="flex items-start justify-between gap-2 mb-1">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className={`font-medium text-base md:text-sm leading-tight ${
-                            item.purchased ? 'line-through text-muted-foreground' : ''
-                        }`}>
-                            {item.name}
-                        </span>
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0 space-y-1">
+                        {/* Название ингредиента */}
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className={`font-medium text-base md:text-sm leading-tight ${
+                                item.purchased ? 'line-through text-muted-foreground' : ''
+                            }`}>
+                                {item.name}
+                            </span>
+                            <IngredientActualityWarning item={item} />
+                        </div>
 
-                        {/* Предупреждение об актуальности */}
-                        <IngredientActualityWarning item={item} />
+                        {/* Количество ингредиента */}
+                        {item.quantity && (
+                            <div className="flex items-center gap-1">
+                                <span className="text-sm md:text-xs text-muted-foreground font-medium">
+                                    Количество:
+                                </span>
+                                <span className={`text-sm md:text-xs font-medium ${
+                                    item.purchased ? 'text-muted-foreground' : 'text-foreground'
+                                }`}>
+                                    {item.quantity}
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Ссылка на рецепт */}
+                        {item.recipe && (
+                            <div className="flex items-center gap-1 flex-wrap">
+                                <span className="text-xs text-muted-foreground">
+                                    Из рецепта:
+                                </span>
+                                <Link href={`/recipes/${item.recipe.id}`}>
+                                    <Badge
+                                        variant="secondary"
+                                        className="text-xs px-2 py-0.5 h-auto cursor-pointer hover:bg-secondary/80 transition-colors flex items-center gap-1"
+                                    >
+                                        <span>{item.recipe.title}</span>
+                                        <ExternalLink className="w-2.5 h-2.5 flex-shrink-0" />
+                                    </Badge>
+                                </Link>
+                            </div>
+                        )}
                     </div>
 
                     {/* Кнопка удаления с увеличенной областью касания */}
@@ -434,30 +469,6 @@ function ShoppingListItem({ item, onTogglePurchased, onRemove, isToggleLoading =
                         )}
                     </Button>
                 </div>
-
-                {/* Количество */}
-                {item.quantity && (
-                    <div className="mb-2">
-                        <span className="text-sm md:text-xs text-muted-foreground">
-                            {item.quantity}
-                        </span>
-                    </div>
-                )}
-
-                {/* Рецепты */}
-                {item.recipes && item.recipes.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                        {item.recipes.map((recipe, index) => (
-                            <Badge
-                                key={index}
-                                variant="secondary"
-                                className="text-xs md:text-xs px-2 py-0.5 h-auto"
-                            >
-                                {recipe}
-                            </Badge>
-                        ))}
-                    </div>
-                )}
             </div>
         </div>
     )
