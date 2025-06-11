@@ -8,6 +8,7 @@ from src.models.recipe import Recipe
 from src.models.recipe_impression import RecipeImpression
 from src.models.recipe_ingredient import RecipeIngredient
 from src.models.recipe_instructions import RecipeInstruction
+from src.models.recipe_report import RecipeReport
 from src.models.recipe_tag import RecipeTag
 from src.models.search_query import SearchQuery
 from src.models.shopping_list_item import ShoppingListItem
@@ -26,6 +27,7 @@ __all__ = [
     "RecipeImpression",
     "RecipeIngredient",
     "RecipeInstruction",
+    "RecipeReport",
     "RecipeTag",
     "RefreshToken",
     "SearchQuery",

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.enums.user_role import UserRoleEnum
 from src.models.base import Base
 
 if TYPE_CHECKING:
@@ -25,6 +26,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(default=True)
     is_superuser: Mapped[bool] = mapped_column(default=False)
+    role: Mapped[UserRoleEnum] = mapped_column(default=UserRoleEnum.USER)
     last_login: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
@@ -35,3 +37,12 @@ class User(Base):
     disliked_recipes: Mapped[list["DislikedRecipe"]] = relationship(back_populates="user")
     search_queries: Mapped[list["SearchQuery"]] = relationship(back_populates="user")
     shopping_list_items: Mapped[list["ShoppingListItem"]] = relationship(back_populates="user")
+
+    def has_role(self, role: UserRoleEnum) -> bool:
+        return self.role == role
+
+    def is_admin_or_higher(self) -> bool:
+        return self.role in (UserRoleEnum.ADMIN, UserRoleEnum.SUPERUSER)
+
+    def can_manage_recipes(self) -> bool:
+        return self.role == UserRoleEnum.SUPERUSER
