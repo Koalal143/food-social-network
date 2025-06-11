@@ -163,7 +163,7 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Быстрые действия */}
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -194,7 +194,7 @@ export default function AdminDashboard() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <Link href="/system-management-panel/complaints">
+                                <Link href="/system-management-panel/reports">
                                     <Button className="w-full">
                                         Перейти к жалобам
                                     </Button>
@@ -224,25 +224,6 @@ export default function AdminDashboard() {
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Shield className="w-5 h-5" />
-                                    Заблокированные домены
-                                </CardTitle>
-                                <CardDescription>
-                                    Управление заблокированными доменами
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Link href="/system-management-panel/banned-domains">
-                                    <Button className="w-full" variant="outline">
-                                        Управление доменами
-                                    </Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
                                     <ChefHat className="w-5 h-5" />
                                     Управление рецептами
                                 </CardTitle>
@@ -258,64 +239,6 @@ export default function AdminDashboard() {
                                 </Link>
                             </CardContent>
                         </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <BarChart3 className="w-5 h-5" />
-                                    Тестирование
-                                </CardTitle>
-                                <CardDescription>
-                                    Тестовые функции и диагностика
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Link href="/system-management-panel/test">
-                                    <Button className="w-full" variant="outline">
-                                        Тестирование
-                                    </Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <BarChart3 className="w-5 h-5" />
-                                    Тестирование улучшений
-                                </CardTitle>
-                                <CardDescription>
-                                    Проверка работоспособности новых функций
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Link href="/system-management-panel/test-improvements">
-                                    <Button className="w-full" variant="outline">
-                                        Запустить тесты
-                                    </Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <FileText className="w-5 h-5" />
-                                    Информация
-                                </CardTitle>
-                                <CardDescription>
-                                    Системная информация и настройки
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Link href="/system-management-panel/info">
-                                    <Button className="w-full" variant="outline">
-                                        Просмотр информации
-                                    </Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
-
                     </div>
 
                     {/* Последняя активность */}

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-// Используем скрытый роут для админки для безопасности
 const ADMIN_SECRET_PATH = '/system-management-panel';
 const adminRoutes = [
   ADMIN_SECRET_PATH,
@@ -13,10 +12,9 @@ const adminRoutes = [
   `${ADMIN_SECRET_PATH}/info`,
   `${ADMIN_SECRET_PATH}/test-improvements`
 ];
-const BASE_API = process.env.FRONTEND__API__URL;
+const BASE_API = process.env.NEXT_PUBLIC_INTERNAL_API_URL;
 
 async function return404Page(req) {
-  // Создаем rewrite на страницу not-found, которая автоматически возвращает статус 404
   const url = req.nextUrl.clone();
   url.pathname = '/not-found';
   return NextResponse.rewrite(url);
@@ -25,18 +23,17 @@ async function return404Page(req) {
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
 
-  // Проверяем, является ли запрос админским роутом
   if (adminRoutes.some((route) => pathname.startsWith(route))) {
-    // Получаем токен из cookies
+    console.log(`[MIDDLEWARE] Admin route accessed: ${pathname}`);
     const accessTokenCookie = req.cookies.get('access_token');
 
     if (!accessTokenCookie) {
-      // Если нет токена, показываем обычную страницу 404
+      console.log('[MIDDLEWARE] No access token found');
       return return404Page(req);
     }
 
     try {
-      // Проверяем токен и права пользователя через API бэкенда
+      console.log(`[MIDDLEWARE] Making request to: ${BASE_API}/v1/users/me`);
       const response = await fetch(`${BASE_API}/v1/users/me`, {
         headers: {
           'Authorization': `Bearer ${accessTokenCookie.value}`,
@@ -44,24 +41,25 @@ export async function middleware(req) {
         }
       });
 
+      console.log(`[MIDDLEWARE] Response status: ${response.status}`);
       if (!response.ok) {
-        // Если токен недействителен, показываем обычную страницу 404
+        console.log('[MIDDLEWARE] Response not ok');
         return return404Page(req);
       }
 
       const userData = await response.json();
+      console.log('[MIDDLEWARE] User data:', userData);
+      console.log('[MIDDLEWARE] is_superuser:', userData?.is_superuser);
 
-      // Проверяем, является ли пользователь суперпользователем
       if (!userData?.is_superuser) {
-        // Если не суперпользователь, показываем обычную страницу 404
+        console.log('[MIDDLEWARE] User is not superuser');
         return return404Page(req);
       }
 
-      // Если все проверки пройдены (токен валиден + пользователь суперпользователь), разрешаем доступ
+      console.log('[MIDDLEWARE] Access granted');
       return NextResponse.next();
     } catch (error) {
-      console.error('Ошибка при проверке пользователя в middleware:', error);
-      // В случае ошибки показываем обычную страницу 404
+      console.log('[MIDDLEWARE] Error:', error);
       return return404Page(req);
     }
   }
