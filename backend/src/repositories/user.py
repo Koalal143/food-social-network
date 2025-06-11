@@ -51,6 +51,7 @@ class UserRepository(UserRepositoryProtocol):
                 email=email,
                 hashed_password=hashed_password,
                 is_superuser=True,
+                role=UserRoleEnum.SUPERUSER,
             )
             .on_conflict_do_nothing()
             .returning(User)
