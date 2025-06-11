@@ -7,7 +7,7 @@ from src.exceptions.recipe_report import (
 )
 from src.models.user import User
 from src.repositories.interfaces import RecipeReportRepositoryProtocol, RecipeRepositoryProtocol
-from src.schemas.recipe_report import RecipeReportRead, RecipeReportStats
+from src.schemas.recipe_report import RecipeReportRead
 
 
 class RecipeReportService:
@@ -103,7 +103,3 @@ class RecipeReportService:
             raise RecipeReportNotFoundError(msg)
 
         await self.recipe_report_repository.delete(report_id)
-
-    async def get_reports_stats(self) -> RecipeReportStats:
-        stats_data = await self.recipe_report_repository.get_stats()
-        return RecipeReportStats.model_validate(stats_data)
