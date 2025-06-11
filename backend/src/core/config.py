@@ -1,8 +1,10 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from src.schemas.user import Nickname, Password
 
 PATH = Path(__file__).parent.parent.parent
 
@@ -76,9 +78,9 @@ class TestsConfig(BaseModel):
 
 
 class SuperuserConfig(BaseModel):
-    username: str
-    email: str
-    password: str
+    username: Nickname
+    email: EmailStr
+    password: Password
 
 
 class Settings(BaseSettings):
