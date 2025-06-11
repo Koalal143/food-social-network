@@ -441,7 +441,7 @@ function ShoppingListItem({ item, onTogglePurchased, onRemove, isToggleLoading =
                                 <span className="text-xs text-muted-foreground">
                                     Из рецепта:
                                 </span>
-                                <Link href={`/recipes/${item.recipe.id}`}>
+                                <Link href={`/recipe/${item.recipe.slug}`}>
                                     <Badge
                                         variant="secondary"
                                         className="text-xs px-2 py-0.5 h-auto cursor-pointer hover:bg-secondary/80 transition-colors flex items-center gap-1"

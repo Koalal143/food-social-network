@@ -125,7 +125,7 @@ export default function Header() {
                                             </DropdownMenuItem>
                                             {user?.is_superuser && (
                                                 <DropdownMenuItem asChild>
-                                                    <Link href="/admin" className="flex items-center">
+                                                    <Link href="/system-management-panel" className="flex items-center">
                                                         <Shield className="mr-2 h-4 w-4" />
                                                         Админ-панель
                                                     </Link>

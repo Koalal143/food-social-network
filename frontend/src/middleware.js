@@ -6,7 +6,12 @@ const adminRoutes = [
   ADMIN_SECRET_PATH,
   `${ADMIN_SECRET_PATH}/users`,
   `${ADMIN_SECRET_PATH}/recipes`,
-  `${ADMIN_SECRET_PATH}/test`
+  `${ADMIN_SECRET_PATH}/test`,
+  `${ADMIN_SECRET_PATH}/complaints`,
+  `${ADMIN_SECRET_PATH}/banned-domains`,
+  `${ADMIN_SECRET_PATH}/banned-emails`,
+  `${ADMIN_SECRET_PATH}/info`,
+  `${ADMIN_SECRET_PATH}/test-improvements`
 ];
 const BASE_API = process.env.FRONTEND__API__URL;
 

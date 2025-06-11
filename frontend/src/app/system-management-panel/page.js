@@ -1,27 +1,25 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import AdminRoute from '@/components/auth/AdminRoute'
 import Container from '@/components/layout/Container'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+    ChefHat,
+    Users,
+    BarChart3,
+    Shield,
+    FileText,
+    Calendar
+} from 'lucide-react'
+import Link from 'next/link'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
 import { handleApiError } from '@/utils/errorHandler'
 import AdminService from '@/services/admin.service'
-import RecipesService from '@/services/recipes.service'
-import {
-    Users,
-    ChefHat,
-    TrendingUp,
-    Calendar,
-    Settings,
-    BarChart3,
-    Shield
-} from 'lucide-react'
-import Link from 'next/link'
-import { AdminDashboardSkeleton } from '@/components/ui/skeletons'
 
 export default function AdminDashboard() {
     const { user } = useAuth()
@@ -33,8 +31,6 @@ export default function AdminDashboard() {
         const fetchStatistics = async () => {
             try {
                 setLoading(true)
-
-                // Получаем статистику на основе существующих endpoints
                 const stats = await AdminService.getStatistics()
                 setStatistics(stats)
             } catch (error) {
@@ -49,16 +45,17 @@ export default function AdminDashboard() {
             }
         }
 
-        fetchStatistics()
-    }, [toast])
+        if (user?.is_superuser) {
+            fetchStatistics()
+        }
+    }, [user, toast])
 
-    
     if (loading) {
         return (
             <AdminRoute>
-                <Container>
-                    <AdminDashboardSkeleton />
-                </Container>
+                <div className="flex items-center justify-center min-h-screen">
+                    <LoadingSpinner />
+                </div>
             </AdminRoute>
         )
     }
@@ -99,6 +96,9 @@ export default function AdminDashboard() {
                                 <p className="text-xs text-muted-foreground">
                                     Опубликованных рецептов
                                 </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Данные из основного API
+                                </p>
                             </CardContent>
                         </Card>
 
@@ -111,7 +111,7 @@ export default function AdminDashboard() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">
-                                    {statistics?.total_users || 0}
+                                    {statistics?.total_users || '—'}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
                                     Зарегистрированных пользователей
@@ -124,14 +124,17 @@ export default function AdminDashboard() {
                                 <CardTitle className="text-sm font-medium">
                                     Активность
                                 </CardTitle>
-                                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                                <BarChart3 className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">
-                                    {statistics?.active_users || 0}
+                                    {statistics?.banned_emails_count || 0}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Активных пользователей
+                                    Заблокированных доменов
+                                </p>
+                                <p className="text-xs text-red-600 mt-1">
+                                    Email блокировки активны
                                 </p>
                             </CardContent>
                         </Card>
@@ -144,35 +147,23 @@ export default function AdminDashboard() {
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">0</div>
+                                <div className="text-2xl font-bold">
+                                    {statistics?.new_recipes_today || 0}
+                                </div>
                                 <p className="text-xs text-muted-foreground">
-                                    Новых рецептов
+                                    Новых рецептов сегодня
+                                </p>
+                                <p className="text-xs text-green-600 mt-1">
+                                    {statistics?.new_recipes_today > 0 ? 'Есть активность' : 'Пока нет новых'}
                                 </p>
                             </CardContent>
                         </Card>
+
+
                     </div>
 
                     {/* Быстрые действия */}
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <ChefHat className="w-5 h-5" />
-                                    Управление рецептами
-                                </CardTitle>
-                                <CardDescription>
-                                    Просмотр, редактирование и удаление рецептов
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Link href="/system-management-panel/recipes">
-                                    <Button className="w-full">
-                                        Перейти к рецептам
-                                    </Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
-
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -187,6 +178,82 @@ export default function AdminDashboard() {
                                 <Link href="/system-management-panel/users">
                                     <Button className="w-full">
                                         Перейти к пользователям
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="w-5 h-5" />
+                                    Управление жалобами
+                                </CardTitle>
+                                <CardDescription>
+                                    Просмотр и обработка жалоб на рецепты и пользователей
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href="/system-management-panel/complaints">
+                                    <Button className="w-full">
+                                        Перейти к жалобам
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Shield className="w-5 h-5" />
+                                    Заблокированные Email
+                                </CardTitle>
+                                <CardDescription>
+                                    Управление заблокированными доменами email адресов
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href="/system-management-panel/banned-emails">
+                                    <Button className="w-full" variant="outline">
+                                        Управление блокировками
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Shield className="w-5 h-5" />
+                                    Заблокированные домены
+                                </CardTitle>
+                                <CardDescription>
+                                    Управление заблокированными доменами
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href="/system-management-panel/banned-domains">
+                                    <Button className="w-full" variant="outline">
+                                        Управление доменами
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <ChefHat className="w-5 h-5" />
+                                    Управление рецептами
+                                </CardTitle>
+                                <CardDescription>
+                                    Просмотр и управление рецептами
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href="/system-management-panel/recipes">
+                                    <Button className="w-full">
+                                        Перейти к рецептам
                                     </Button>
                                 </Link>
                             </CardContent>
@@ -210,6 +277,45 @@ export default function AdminDashboard() {
                                 </Link>
                             </CardContent>
                         </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <BarChart3 className="w-5 h-5" />
+                                    Тестирование улучшений
+                                </CardTitle>
+                                <CardDescription>
+                                    Проверка работоспособности новых функций
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href="/system-management-panel/test-improvements">
+                                    <Button className="w-full" variant="outline">
+                                        Запустить тесты
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="w-5 h-5" />
+                                    Информация
+                                </CardTitle>
+                                <CardDescription>
+                                    Системная информация и настройки
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Link href="/system-management-panel/info">
+                                    <Button className="w-full" variant="outline">
+                                        Просмотр информации
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+
                     </div>
 
                     {/* Последняя активность */}
@@ -222,7 +328,7 @@ export default function AdminDashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-center py-8 text-muted-foreground">
-                                <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
                                 <p>Данные об активности будут доступны позже</p>
                             </div>
                         </CardContent>
@@ -231,4 +337,4 @@ export default function AdminDashboard() {
             </Container>
         </AdminRoute>
     )
-}
+} 

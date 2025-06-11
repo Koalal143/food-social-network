@@ -181,7 +181,7 @@ export default function BannedEmailsPage() {
                     {/* Заголовок */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <Link href="/admin">
+                            <Link href="/system-management-panel">
                                 <Button variant="outline" size="sm">
                                     <ArrowLeft className="w-4 h-4 mr-2" />
                                     Назад
