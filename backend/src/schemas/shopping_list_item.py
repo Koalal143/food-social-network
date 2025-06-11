@@ -18,6 +18,7 @@ class ShoppingListItemCreate(ShoppingListItemBase):
 class ShoppingListRecipe(BaseSchema):
     id: int
     title: str
+    slug: str
 
 
 class ShoppingListItemRead(ShoppingListItemBase, BaseReadSchema):
