@@ -20,7 +20,7 @@ class RecipeImageRepository(RecipeImageRepositoryProtocol):
             conditions=[
                 {"acl": "private"},
                 ["starts-with", "$Content-Type", "image/"],
-                ["content-length-range", 1, 5 * 1024 * 1024],
+                ["content-length-range", 1, 8 * 5 * 1024 * 1024],
             ],
             expires_in=300,
         )
