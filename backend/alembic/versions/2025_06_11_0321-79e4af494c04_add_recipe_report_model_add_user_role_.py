@@ -67,8 +67,14 @@ def upgrade() -> None:
     user_role_enum.create(op.get_bind())
     op.add_column("users", sa.Column("role", user_role_enum, nullable=True))
     op.execute(
-        "UPDATE users SET role = (CASE WHEN is_superuser THEN 'SUPERUSER'::userroleenum ELSE 'USER'::userroleenum END "
-        "WHERE role IS NULL"
+        """
+        UPDATE users
+        SET role = CASE
+            WHEN is_superuser THEN CAST('SUPERUSER' AS userroleenum)
+            ELSE CAST('USER' AS userroleenum)
+        END
+        WHERE role IS NULL
+        """
     )
 
     op.alter_column("users", "role", nullable=False)
