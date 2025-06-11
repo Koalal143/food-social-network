@@ -299,26 +299,29 @@ export default function AdminUsersPage() {
                                 </div>
                             )}
 
-                            {/* Пагинация */}
                             {totalPages > 1 && (
-                                <div className="flex justify-center gap-2 mt-6">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                                        disabled={currentPage === 0}
-                                    >
-                                        Предыдущая
-                                    </Button>
-                                    <span className="flex items-center px-4 text-sm text-muted-foreground">
-                                        {currentPage + 1} из {totalPages}
-                                    </span>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                                        disabled={currentPage >= totalPages - 1}
-                                    >
-                                        Следующая
-                                    </Button>
+                                <div className="flex items-center justify-between mt-6">
+                                    <div className="text-sm text-muted-foreground">
+                                        Показано {users.length} из {totalCount} пользователей
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                                            disabled={currentPage === 0}
+                                        >
+                                            Назад
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+                                            disabled={currentPage >= totalPages - 1}
+                                        >
+                                            Далее
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
                         </CardContent>

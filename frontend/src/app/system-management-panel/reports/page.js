@@ -18,7 +18,8 @@ import {
     CheckCircle,
     XCircle,
     Ban,
-    MoreHorizontal
+    MoreHorizontal,
+    ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -47,140 +48,141 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 
-import ComplaintService from '@/services/complaint.service'
+import ReportsService from '@/services/reports.service'
+import { REPORT_REASON_LABELS, REPORT_STATUS_LABELS, REPORT_STATUSES } from '@/lib/schemas/report.schema'
 
-const ITEMS_PER_PAGE = 10
+const ITEMS_PER_PAGE = 20
 
-export default function AdminComplaintsPage() {
-    const [complaints, setComplaints] = useState([])
+export default function AdminReportsPage() {
+    const [reports, setReports] = useState([])
     const [loading, setLoading] = useState(true)
     const [totalCount, setTotalCount] = useState(0)
     const [currentPage, setCurrentPage] = useState(0)
     const [searchQuery, setSearchQuery] = useState('')
-    const [filteredComplaints, setFilteredComplaints] = useState([])
-    const [filterStatus, setFilterStatus] = useState('all') // 'all', 'pending', 'resolved', 'rejected'
+    const [statusFilter, setStatusFilter] = useState('')
+    const [statistics, setStatistics] = useState(null)
 
     // Состояние для обработки жалоб
     const [actionDialogOpen, setActionDialogOpen] = useState(false)
-    const [complaintToAction, setComplaintToAction] = useState(null)
-    const [actionType, setActionType] = useState(null) // 'resolve', 'reject', 'ban_user', 'ban_recipe'
-    const [processingAction, setProcessingAction] = useState(false)
+    const [selectedReport, setSelectedReport] = useState(null)
+    const [actionType, setActionType] = useState('')
+    const [updating, setUpdating] = useState(false)
 
     const { toast } = useToast()
 
-    // Заглушка для получения жалоб
-    const fetchComplaints = useCallback(async (page = 0) => {
-        setLoading(true)
+    const fetchReports = useCallback(async (page = 0, status = '') => {
         try {
+            setLoading(true)
             const offset = page * ITEMS_PER_PAGE
-            const response = await ComplaintService.getAllComplaints(offset, ITEMS_PER_PAGE, searchQuery, filterStatus)
-            setComplaints(response.data || [])
+
+            const response = await ReportsService.getAllReports(
+                offset,
+                ITEMS_PER_PAGE,
+                status || null
+            )
+
+            setReports(response.data || [])
             setTotalCount(response.totalCount || 0)
         } catch (error) {
             const { message, type } = handleApiError(error)
             toast({
                 variant: type,
-                title: "Ошибка загрузки жалоб",
+                title: "Ошибка загрузки репортов",
                 description: message,
             })
         } finally {
             setLoading(false)
         }
-    }, [searchQuery, filterStatus, toast])
+    }, [toast])
+
+    const fetchStatistics = useCallback(async () => {
+        try {
+            const stats = await ReportsService.getReportsStats()
+            setStatistics(stats)
+        } catch (error) {
+            const { message, type } = handleApiError(error)
+            toast({
+                variant: type,
+                title: "Ошибка загрузки статистики",
+                description: message,
+            })
+        }
+    }, [toast])
 
     useEffect(() => {
-        fetchComplaints(currentPage)
-    }, [fetchComplaints, currentPage])
+        fetchReports(currentPage, statusFilter)
+        fetchStatistics()
+    }, [fetchReports, fetchStatistics, currentPage, statusFilter])
 
-    useEffect(() => {
-        setCurrentPage(0) // Сброс страницы при изменении запроса или фильтра
-    }, [searchQuery, filterStatus])
+    const handleStatusFilterChange = (value) => {
+        setStatusFilter(value === 'all' ? '' : value)
+        setCurrentPage(0)
+    }
 
-
-    const handleActionClick = (complaint, type) => {
-        setComplaintToAction(complaint)
-        setActionType(type)
+    const handleAction = (report, action) => {
+        setSelectedReport(report)
+        setActionType(action)
         setActionDialogOpen(true)
     }
 
-    const handleConfirmAction = async () => {
-        if (!complaintToAction || !actionType) return
+    const handleActionConfirm = async () => {
+        if (!selectedReport) return
 
-        setProcessingAction(true)
         try {
-            let title = "";
-            let description = "";
-            if (actionType === 'resolve') {
-                await ComplaintService.resolveComplaint(complaintToAction.id);
-                title = "Жалоба разрешена";
-                description = `Жалоба #${complaintToAction.id} успешно разрешена.`;
-            } else if (actionType === 'reject') {
-                await ComplaintService.rejectComplaint(complaintToAction.id);
-                title = "Жалоба отклонена";
-                description = `Жалоба #${complaintToAction.id} успешно отклонена.`;
-            } else if (actionType === 'ban_user') {
-                // В реальном приложении здесь должен быть вызов UserService.toggleUserStatus
-                // и затем ComplaintService.resolveComplaint
-                // Для демонстрации пока используем заглушку из ComplaintService
-                await ComplaintService.banUserAndResolveComplaint(complaintToAction.target_id, complaintToAction.id);
-                title = "Пользователь заблокирован";
-                description = `Пользователь "${complaintToAction.target_name}" заблокирован, жалоба #${complaintToAction.id} разрешена.`;
-            } else if (actionType === 'ban_recipe') {
-                // В реальном приложении здесь должен быть вызов RecipeService.banRecipe
-                // и затем ComplaintService.resolveComplaint
-                // Для демонстрации пока используем заглушку из ComplaintService
-                await ComplaintService.banRecipeAndResolveComplaint(complaintToAction.target_id, complaintToAction.id);
-                title = "Рецепт заблокирован";
-                description = `Рецепт "${complaintToAction.target_name}" заблокирован, жалоба #${complaintToAction.id} разрешена.`;
+            setUpdating(true)
+
+            await ReportsService.updateReport(
+                selectedReport.id,
+                actionType,
+                null
+            )
+
+            const actionLabels = {
+                [REPORT_STATUSES.REVIEWED]: "рассмотрен",
+                [REPORT_STATUSES.RESOLVED]: "решен",
+                [REPORT_STATUSES.DISMISSED]: "отклонен"
             }
 
             toast({
-                title: title,
-                description: description,
-            });
-            await fetchComplaints(currentPage);
+                title: "Статус обновлен",
+                description: `Репорт был ${actionLabels[actionType]}.`,
+            })
+
+            await fetchReports(currentPage, statusFilter)
+            await fetchStatistics()
         } catch (error) {
-            const { message, type } = handleApiError(error);
+            const { message, type } = handleApiError(error)
             toast({
                 variant: type,
-                title: "Ошибка действия с жалобой",
+                title: "Ошибка обновления статуса",
                 description: message,
-            });
+            })
         } finally {
-            setProcessingAction(false);
-            setActionDialogOpen(false);
-            setComplaintToAction(null);
-            setActionType(null);
+            setUpdating(false)
+            setActionDialogOpen(false)
+            setSelectedReport(null)
+            setActionType('')
+        }
+    }
+
+    const getStatusBadgeVariant = (status) => {
+        switch (status) {
+            case REPORT_STATUSES.PENDING:
+                return "secondary"
+            case REPORT_STATUSES.REVIEWED:
+                return "default"
+            case REPORT_STATUSES.RESOLVED:
+                return "default"
+            case REPORT_STATUSES.DISMISSED:
+                return "outline"
+            default:
+                return "secondary"
         }
     }
 
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
-    const getStatusBadge = (status) => {
-        switch (status) {
-            case 'pending':
-                return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">В ожидании</Badge>
-            case 'resolved':
-                return <Badge variant="success">Разрешена</Badge>
-            case 'rejected':
-                return <Badge variant="destructive">Отклонена</Badge>
-            default:
-                return null
-        }
-    }
-
-    const getComplaintTypeIcon = (type) => {
-        switch (type) {
-            case 'recipe':
-                return <ChefHat className="w-4 h-4 text-gray-600" />
-            case 'user':
-                return <User className="w-4 h-4 text-gray-600" />
-            default:
-                return <FileText className="w-4 h-4 text-gray-600" />
-        }
-    }
-
-    if (loading) {
+    if (loading && reports.length === 0) {
         return (
             <AdminRoute>
                 <div className="flex items-center justify-center min-h-screen">
@@ -193,208 +195,260 @@ export default function AdminComplaintsPage() {
     return (
         <AdminRoute>
             <Container>
-                <div className="py-8 space-y-6">
-                    {/* Заголовок и навигация */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <Link href="/system-management-panel">
-                                <Button variant="ghost" size="sm">
-                                    <ArrowLeft className="w-4 h-4 mr-2" />
-                                    Назад к панели
-                                </Button>
-                            </Link>
-                            <div>
-                                <h1 className="text-3xl font-bold tracking-tight">
-                                    Управление жалобами
-                                </h1>
-                                <p className="text-muted-foreground">
-                                    Всего жалоб: {totalCount}
-                                </p>
-                            </div>
+                <div className="py-8 space-y-8">
+                    <div className="flex items-center gap-4">
+                        <Link href="/system-management-panel">
+                            <Button variant="ghost" size="icon">
+                                <ArrowLeft className="w-4 h-4" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">
+                                Управление жалобами
+                            </h1>
+                            <p className="text-muted-foreground">
+                                Просмотр и обработка жалоб пользователей
+                            </p>
                         </div>
                     </div>
 
-                    {/* Фильтры и поиск */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Search className="w-5 h-5" />
-                                Поиск и фильтрация жалоб
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-col md:flex-row gap-4">
-                                <Input
-                                    placeholder="Поиск по содержанию, автору или цели..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="flex-1"
-                                />
-                                <div className="w-full md:w-48">
-                                    <Select onValueChange={setFilterStatus} value={filterStatus}>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Фильтр по статусу" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">Все статусы</SelectItem>
-                                            <SelectItem value="pending">В ожидании</SelectItem>
-                                            <SelectItem value="resolved">Разрешенные</SelectItem>
-                                            <SelectItem value="rejected">Отклоненные</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {statistics && (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">
+                                        Всего жалоб
+                                    </CardTitle>
+                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{statistics.total_reports}</div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">
+                                        На рассмотрении
+                                    </CardTitle>
+                                    <FileText className="h-4 w-4 text-yellow-600" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold text-yellow-600">{statistics.pending_reports}</div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">
+                                        Решено
+                                    </CardTitle>
+                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold text-green-600">{statistics.resolved_reports}</div>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">
+                                        Отклонено
+                                    </CardTitle>
+                                    <XCircle className="h-4 w-4 text-gray-600" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold text-gray-600">{statistics.dismissed_reports}</div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
 
-                    {/* Список жалоб */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Список жалоб</CardTitle>
+                            <CardTitle>Жалобы</CardTitle>
+                            <CardDescription>
+                                Список всех жалоб с возможностью фильтрации и управления
+                            </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            {complaints.length === 0 && !searchQuery && filterStatus === 'all' ? (
+                        <CardContent className="space-y-4">
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <Select value={statusFilter || 'all'} onValueChange={handleStatusFilterChange}>
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Фильтр по статусу" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Все статусы</SelectItem>
+                                        {Object.entries(REPORT_STATUS_LABELS).map(([value, label]) => (
+                                            <SelectItem key={value} value={value}>
+                                                {label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {loading ? (
+                                <div className="flex justify-center py-8">
+                                    <LoadingSpinner />
+                                </div>
+                            ) : reports.length === 0 ? (
                                 <div className="text-center py-8 text-muted-foreground">
                                     <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                                    <p>Жалобы отсутствуют.</p>
-                                </div>
-                            ) : complaints.length === 0 && (searchQuery || filterStatus !== 'all') ? (
-                                <div className="text-center py-8 text-muted-foreground">
-                                    <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                                    <p>По вашему запросу жалобы не найдены.</p>
+                                    <p>Жалобы не найдены</p>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
-                                    {complaints.map((complaint) => (
+                                <div className="space-y-4">
+                                    {reports.map((report) => (
                                         <div
-                                            key={complaint.id}
-                                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                                            key={report.id}
+                                            className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                                         >
-                                            <div className="flex items-start gap-3 flex-grow">
-                                                {getComplaintTypeIcon(complaint.type)}
-                                                <div className="flex-grow">
-                                                    <p className="font-semibold">
-                                                        Жалоба на {complaint.type === 'recipe' ? `рецепт "${complaint.target_name}"` : `пользователя "${complaint.target_name}"`}
-                                                    </p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        От пользователя: {complaint.reporter_username}
-                                                    </p>
-                                                    <p className="text-sm mt-1">
-                                                        Причина: <span className="text-gray-700 font-medium">{complaint.reason}</span>
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground mt-1">
-                                                        Подана: {new Date(complaint.created_at).toLocaleString()}
-                                                    </p>
+                                            <div className="flex items-center gap-4 flex-1">
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-medium">#{report.id}</span>
+                                                        <Badge variant={getStatusBadgeVariant(report.status)}>
+                                                            {REPORT_STATUS_LABELS[report.status]}
+                                                        </Badge>
+                                                        <Badge variant="outline">
+                                                            {REPORT_REASON_LABELS[report.reason]}
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+                                                        <Link
+                                                            href={`/recipe/${report.recipe.slug}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-1 text-primary hover:text-primary/80 hover:underline transition-colors font-medium"
+                                                        >
+                                                            <ChefHat className="w-3 h-3" />
+                                                            Рецепт #{report.recipe.id}
+                                                            <ExternalLink className="w-3 h-3" />
+                                                        </Link>
+                                                        <span className="text-muted-foreground/60">•</span>
+                                                        {report.reporter_user?.username ? (
+                                                            <Link
+                                                                href={`/profile/${report.reporter_user.username}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center gap-1 text-primary hover:text-primary/80 hover:underline transition-colors font-medium"
+                                                            >
+                                                                <User className="w-3 h-3" />
+                                                                @{report.reporter_user.username}
+                                                                <ExternalLink className="w-3 h-3" />
+                                                            </Link>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 text-muted-foreground/80">
+                                                                <User className="w-3 h-3" />
+                                                                Неизвестен
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {report.description && (
+                                                        <div className="text-sm text-muted-foreground max-w-md truncate">
+                                                            {report.description}
+                                                        </div>
+                                                    )}
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {new Date(report.created_at).toLocaleString('ru-RU')}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                {getStatusBadge(complaint.status)}
-                                                {complaint.status === 'pending' && (
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <span className="sr-only">Открыть меню</span>
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => handleActionClick(complaint, 'resolve')}>
-                                                                <CheckCircle className="mr-2 h-4 w-4" />
-                                                                Разрешить
+
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <MoreHorizontal className="w-4 h-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {report.status === REPORT_STATUSES.PENDING && (
+                                                        <>
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleAction(report, REPORT_STATUSES.REVIEWED)}
+                                                            >
+                                                                <CheckCircle className="w-4 h-4 mr-2" />
+                                                                Рассмотрено
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleActionClick(complaint, 'reject')}>
-                                                                <XCircle className="mr-2 h-4 w-4" />
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleAction(report, REPORT_STATUSES.RESOLVED)}
+                                                            >
+                                                                <CheckCircle className="w-4 h-4 mr-2" />
+                                                                Решено
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleAction(report, REPORT_STATUSES.DISMISSED)}
+                                                            >
+                                                                <XCircle className="w-4 h-4 mr-2" />
                                                                 Отклонить
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            {complaint.type === 'user' && (
-                                                                <DropdownMenuItem onClick={() => handleActionClick(complaint, 'ban_user')}>
-                                                                    <Ban className="mr-2 h-4 w-4 text-red-600" />
-                                                                    Заблокировать пользователя
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            {complaint.type === 'recipe' && (
-                                                                <DropdownMenuItem onClick={() => handleActionClick(complaint, 'ban_recipe')}>
-                                                                    <Ban className="mr-2 h-4 w-4 text-red-600" />
-                                                                    Заблокировать рецепт
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                )}
-                                            </div>
+                                                        </>
+                                                    )}
+                                                    {report.status !== REPORT_STATUSES.PENDING && (
+                                                        <DropdownMenuItem
+                                                            onClick={() => handleAction(report, REPORT_STATUSES.PENDING)}
+                                                        >
+                                                            <FileText className="w-4 h-4 mr-2" />
+                                                            Вернуть на рассмотрение
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
                                     ))}
                                 </div>
                             )}
 
-                            {/* Пагинация */}
-                            {!searchQuery && totalPages > 1 && (
-                                <div className="flex items-center justify-between mt-6">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                                        disabled={currentPage === 0}
-                                    >
-                                        Предыдущая
-                                    </Button>
-                                    <span className="text-sm text-muted-foreground">
-                                        Страница {currentPage + 1} из {totalPages}
-                                    </span>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                                        disabled={currentPage >= totalPages - 1}
-                                    >
-                                        Следующая
-                                    </Button>
+                            {totalPages > 1 && (
+                                <div className="flex items-center justify-between">
+                                    <div className="text-sm text-muted-foreground">
+                                        Показано {reports.length} из {totalCount} жалоб
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                                            disabled={currentPage === 0}
+                                        >
+                                            Назад
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+                                            disabled={currentPage >= totalPages - 1}
+                                        >
+                                            Далее
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
                         </CardContent>
                     </Card>
                 </div>
-            </Container>
 
-            {/* Диалог подтверждения действия с жалобой */}
-            <AlertDialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2">
-                            {actionType === 'resolve' && <CheckCircle className="w-5 h-5 text-green-500" />}
-                            {actionType === 'reject' && <XCircle className="w-5 h-5 text-red-500" />}
-                            {actionType === 'ban_user' && <Ban className="w-5 h-5 text-red-500" />}
-                            {actionType === 'ban_recipe' && <Ban className="w-5 h-5 text-red-500" />}
-                            {actionType === 'resolve' && "Разрешить жалобу?"}
-                            {actionType === 'reject' && "Отклонить жалобу?"}
-                            {actionType === 'ban_user' && "Заблокировать пользователя?"}
-                            {actionType === 'ban_recipe' && "Заблокировать рецепт?"}
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {actionType === 'resolve' && `Вы уверены, что хотите разрешить жалобу #${complaintToAction?.id} на "${complaintToAction?.target_name}"?`}
-                            {actionType === 'reject' && `Вы уверены, что хотите отклонить жалобу #${complaintToAction?.id} на "${complaintToAction?.target_name}"?`}
-                            {actionType === 'ban_user' && `Вы уверены, что хотите заблокировать пользователя "${complaintToAction?.target_name}" и разрешить жалобу #${complaintToAction?.id}?`}
-                            {actionType === 'ban_recipe' && `Вы уверены, что хотите заблокировать рецепт "${complaintToAction?.target_name}" и разрешить жалобу #${complaintToAction?.id}?`}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Отмена</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleConfirmAction}
-                            disabled={processingAction}
-                            className={actionType === 'reject' || actionType === 'ban_user' || actionType === 'ban_recipe' ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
-                        >
-                            {processingAction ? (
-                                <>
-                                    <LoadingSpinner className="w-4 h-4 mr-2" />
-                                    Обработка...
-                                </>
-                            ) : (
-                                <>Подтвердить</>
-                            )}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                <AlertDialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                Изменить статус жалобы?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Вы уверены, что хотите изменить статус жалобы #{selectedReport?.id} на
+                                "{REPORT_STATUS_LABELS[actionType]}"?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Отмена</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={handleActionConfirm}
+                                disabled={updating}
+                            >
+                                {updating ? "Изменение..." : "Подтвердить"}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </Container>
         </AdminRoute>
     )
 } 

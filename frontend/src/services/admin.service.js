@@ -2,6 +2,7 @@ import { BASE_API } from '@/constants/backend-urls';
 import AuthService from './auth.service';
 import RecipesService from './recipes.service';
 import BannedEmailService from './banned-email.service';
+import ReportsService from './reports.service';
 import { tokenManager } from '@/utils/tokenManager';
 import { AuthError, NetworkError, NotFoundError, ValidationError } from '@/utils/errors';
 import { ERROR_MESSAGES } from '@/constants/errors';
@@ -77,9 +78,9 @@ class AdminService {
             const today = new Date();
             const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-            // Получаем достаточно рецептов для анализа (последние 100)
-            // В реальном приложении можно увеличить лимит или использовать пагинацию
-            const recipesResponse = await RecipesService.getPaginatedRecipes(0, 100);
+            // Получаем достаточно рецептов для анализа (максимум 50 - лимит backend)
+            // В реальном приложении можно использовать пагинацию для получения всех рецептов
+            const recipesResponse = await RecipesService.getPaginatedRecipes(0, 50);
 
             if (!recipesResponse.data || !Array.isArray(recipesResponse.data)) {
                 return 0;
@@ -157,6 +158,41 @@ class AdminService {
         // Используем существующий endpoint для удаления рецептов
         // Бэкенд уже проверяет права: владелец рецепта ИЛИ суперпользователь
         return await RecipesService.deleteRecipe(recipeId);
+    }
+
+    /**
+     * Получить все репорты с пагинацией и фильтрацией
+     */
+    static async getAllReports(offset = 0, limit = 20, status = null) {
+        return await ReportsService.getAllReports(offset, limit, status);
+    }
+
+    /**
+     * Получить статистику репортов
+     */
+    static async getReportsStats() {
+        return await ReportsService.getReportsStats();
+    }
+
+    /**
+     * Обновить статус репорта
+     */
+    static async updateReport(reportId, status, adminNotes = null) {
+        return await ReportsService.updateReport(reportId, status, adminNotes);
+    }
+
+    /**
+     * Получить репорт по ID
+     */
+    static async getReportById(reportId) {
+        return await ReportsService.getReportById(reportId);
+    }
+
+    /**
+     * Удалить репорт (только для суперпользователей)
+     */
+    static async deleteReport(reportId) {
+        return await ReportsService.deleteReport(reportId);
     }
 }
 

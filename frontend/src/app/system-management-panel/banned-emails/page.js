@@ -162,6 +162,8 @@ export default function BannedEmailsPage() {
         setIsDeleteDialogOpen(true)
     }
 
+    const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
+
     if (loading && bannedEmails.length === 0) {
         return (
             <AdminRoute>
@@ -299,6 +301,32 @@ export default function BannedEmailsPage() {
                                             </Button>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+
+                            {totalPages > 1 && (
+                                <div className="flex items-center justify-between mt-6">
+                                    <div className="text-sm text-muted-foreground">
+                                        Показано {bannedEmails.length} из {totalCount} доменов
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                                            disabled={currentPage === 0}
+                                        >
+                                            Назад
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+                                            disabled={currentPage >= totalPages - 1}
+                                        >
+                                            Далее
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
                         </CardContent>

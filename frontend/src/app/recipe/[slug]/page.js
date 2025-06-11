@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useDislikes } from "@/context/DislikesContext";
 import Container from "@/components/layout/Container";
@@ -12,6 +12,7 @@ import AnimatedActionButtons from "@/components/ui/recipe-page/AnimatedActionBut
 import { Share2, Trash2, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CopyLinkButton from "@/components/ui/CopyLinkButton";
+import ReportButton from "@/components/reports/ReportButton";
 import RecipeInfoCards from "@/components/ui/recipe-page/RecipeInfoCards";
 import RecipeIngridients from "@/components/ui/recipe-page/RecipeIngridients";
 import RecipeInstruction from "@/components/ui/recipe-page/RecipeInstruction";
@@ -23,7 +24,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useSearchParams, useRouter } from "next/navigation";
 import DeleteRecipeDialog from "@/components/shared/recipeActions/DeleteRecipeDialog";
 
-export default function RecipePage({ params }) {
+function RecipePageContent({ params }) {
     const { getRecipeBySlug, error, loading } = useRecipes();
     const { addFavorite, removeFavorite } = useFavorites();
     const { addToDisliked, removeFromDisliked } = useDislikes();
@@ -189,6 +190,15 @@ export default function RecipePage({ params }) {
                                     </Button>
                                 }
                             />
+                            {!canDeleteRecipe() && isAuth && (
+                                <ReportButton
+                                    recipeId={recipe.id}
+                                    recipeName={recipe.title}
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 bg-white/90 dark:bg-background/90 backdrop-blur rounded-full hover:bg-white dark:hover:bg-background shadow-md hover:scale-105 transition-transform"
+                                />
+                            )}
                             {canDeleteRecipe() && (
                                 <DeleteRecipeDialog
                                     recipe={recipe}
@@ -262,5 +272,19 @@ export default function RecipePage({ params }) {
                 onNavigateToShoppingList={handleNavigateToShoppingList}
             />
         </Container>
+    );
+}
+
+export default function RecipePage({ params }) {
+    return (
+        <Suspense fallback={
+            <Container>
+                <div className="py-8">
+                    <RecipeDetailSkeleton />
+                </div>
+            </Container>
+        }>
+            <RecipePageContent params={params} />
+        </Suspense>
     );
 }
