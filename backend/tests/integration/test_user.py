@@ -40,6 +40,7 @@ class TestUserMeGetIntegration:
                 "updated_at": IsNow(iso_string=True, delta=3, tz=UTC),
                 "user_id": data["id"],
             },
+            "role": "user",
             "last_login": IsNow(iso_string=True, delta=3, tz=UTC),
             "created_at": IsNow(iso_string=True, delta=3, tz=UTC),
             "updated_at": IsNow(iso_string=True, delta=3, tz=UTC),
