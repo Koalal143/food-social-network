@@ -17,7 +17,9 @@ class ShoppingListItemRepository(ShoppingListItemRepositoryProtocol):
 
     @staticmethod
     def _get_shopping_list_item_with_recipe() -> Select:
-        return select(ShoppingListItem).options(joinedload(ShoppingListItem.recipe).load_only(Recipe.id, Recipe.title))
+        return select(ShoppingListItem).options(
+            joinedload(ShoppingListItem.recipe).load_only(Recipe.id, Recipe.title, Recipe.slug)
+        )
 
     async def get_by_id(self, item_id: int) -> ShoppingListItem | None:
         stmt = self._get_shopping_list_item_with_recipe().where(ShoppingListItem.id == item_id)

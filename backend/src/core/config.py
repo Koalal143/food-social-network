@@ -1,8 +1,10 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from src.schemas.user import Nickname, Password
 
 PATH = Path(__file__).parent.parent.parent
 
@@ -75,6 +77,12 @@ class TestsConfig(BaseModel):
     use_real_recs_microservice: bool = False
 
 
+class SuperuserConfig(BaseModel):
+    username: Nickname
+    email: EmailStr
+    password: Password
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -94,6 +102,7 @@ class Settings(BaseSettings):
     elasticsearch: ElasticSearchConfig
     nats: NatsConfig = NatsConfig()
     tests: TestsConfig = TestsConfig()
+    superuser: SuperuserConfig
     mode: Literal["dev", "test", "prod"] = Field(default="prod", description="Application mode")
 
 

@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 
 from sqlalchemy import select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -40,6 +41,22 @@ class UserRepository(UserRepositoryProtocol):
         self.session.add(user)
         await self.session.flush()
         return user
+
+    async def create_superuser(self, username: str, email: str, hashed_password: str) -> User:
+        stmt = (
+            insert(User)
+            .values(
+                username=username,
+                email=email,
+                hashed_password=hashed_password,
+                is_superuser=True,
+            )
+            .on_conflict_do_nothing()
+            .returning(User)
+        )
+        result = await self.session.execute(stmt)
+        await self.session.flush()
+        return result.scalar_one()
 
     async def update_last_login(self, user_id: int, last_login: datetime | None) -> None:
         await self.session.execute(
