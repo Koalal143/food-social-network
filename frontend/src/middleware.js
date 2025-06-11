@@ -8,7 +8,7 @@ const adminRoutes = [
   `${ADMIN_SECRET_PATH}/recipes`,
   `${ADMIN_SECRET_PATH}/test`
 ];
-const BASE_API = 'http://localhost:8000';
+const BASE_API = process.env.FRONTEND__API__URL;
 
 async function return404Page(req) {
   // Создаем rewrite на страницу not-found, которая автоматически возвращает статус 404

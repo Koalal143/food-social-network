@@ -18,6 +18,10 @@ services:
     build: ./frontend
     ports:
       - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NEXT_PUBLIC_API_URL=$FRONTEND__API__URL
     depends_on:
       - backend
     networks:
