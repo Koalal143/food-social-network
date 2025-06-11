@@ -130,7 +130,7 @@ async def get_recipe_by_slug(
 
 
 @router.get(
-    "/",
+    "",
     summary="Get list of recipes",
     description=(
         "Returns a list of recipes with pagination. The total count of recipes is returned in the X-Total-Count header."
