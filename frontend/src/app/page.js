@@ -40,7 +40,7 @@ export default function App() {
                     icon={ChefHat}
                     {...EmptyStateVariants.noRecipes}
                     actionText="Добавить рецепт"
-                    actionHref="/add-recipe"
+                    actionHref="/recipe/add"
                     variant="default"
                 />
             ) : (
