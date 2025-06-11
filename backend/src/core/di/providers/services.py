@@ -10,6 +10,7 @@ from src.repositories.interfaces import (
     RecipeImpressionRepositoryProtocol,
     RecipeIngredientRepositoryProtocol,
     RecipeInstructionRepositoryProtocol,
+    RecipeReportRepositoryProtocol,
     RecipeRepositoryProtocol,
     RecipeSearchRepositoryProtocol,
     RecipeTagRepositoryProtocol,
@@ -30,6 +31,7 @@ from src.services.favorite_recipe import FavoriteRecipeService
 from src.services.recipe import RecipeService
 from src.services.recipe_impression import RecipeImpressionService
 from src.services.recipe_instructions import RecipeInstructionsService
+from src.services.recipe_report import RecipeReportService
 from src.services.recommendation import RecommendationService
 from src.services.search import SearchService
 from src.services.security import SecurityService
@@ -186,6 +188,17 @@ class ServiceProvider(Provider):
             recipe_repository=recipe_repository,
             recipe_image_repository=recipe_image_repository,
             recsys_repository=recsys_repository,
+        )
+
+    @provide
+    def get_recipe_report_service(
+        self,
+        recipe_report_repository: RecipeReportRepositoryProtocol,
+        recipe_repository: RecipeRepositoryProtocol,
+    ) -> RecipeReportService:
+        return RecipeReportService(
+            recipe_report_repository=recipe_report_repository,
+            recipe_repository=recipe_repository,
         )
 
     # Admin services
