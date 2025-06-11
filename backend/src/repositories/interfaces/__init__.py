@@ -8,6 +8,7 @@ from src.repositories.interfaces.recipe_image import RecipeImageRepositoryProtoc
 from src.repositories.interfaces.recipe_impression import RecipeImpressionRepositoryProtocol
 from src.repositories.interfaces.recipe_ingredient import RecipeIngredientRepositoryProtocol
 from src.repositories.interfaces.recipe_instruction import RecipeInstructionRepositoryProtocol
+from src.repositories.interfaces.recipe_report import RecipeReportRepositoryProtocol
 from src.repositories.interfaces.recipe_search import RecipeSearchRepositoryProtocol
 from src.repositories.interfaces.recipe_tag import RecipeTagRepositoryProtocol
 from src.repositories.interfaces.recsys import RecsysRepositoryProtocol
@@ -28,6 +29,7 @@ __all__ = [
     "RecipeImpressionRepositoryProtocol",
     "RecipeIngredientRepositoryProtocol",
     "RecipeInstructionRepositoryProtocol",
+    "RecipeReportRepositoryProtocol",
     "RecipeRepositoryProtocol",
     "RecipeSearchRepositoryProtocol",
     "RecipeTagRepositoryProtocol",
