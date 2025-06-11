@@ -54,9 +54,7 @@ class TestRecipeSearch:
         await recipe_fabric(
             auth_headers=auth_headers, title="Chinese Noodles", tags=[{"name": "chinese"}, {"name": "noodles"}]
         )
-        await recipe_fabric(
-            auth_headers=auth_headers, title="French Soup", tags=[{"name": "french"}, {"name": "soup"}]
-        )
+        await recipe_fabric(auth_headers=auth_headers, title="French Soup", tags=[{"name": "french"}, {"name": "soup"}])
 
         params = {"tags": "italian"}
         response = await api_client.get("/v1/recipes/search", params=params)
@@ -296,9 +294,7 @@ class TestRecipeSearch:
     ):
         recipes = [
             await recipe_fabric(auth_headers=auth_headers, title="Italian Recipe", tags=[{"name": "italian"}]),
-            await recipe_fabric(
-                auth_headers=auth_headers, title="Vegetarian Recipe", tags=[{"name": "vegetarian"}]
-            ),
+            await recipe_fabric(auth_headers=auth_headers, title="Vegetarian Recipe", tags=[{"name": "vegetarian"}]),
         ]
         params = {"tags": ["italian", "vegetarian"]}
         response = await api_client.get("/v1/recipes/search", params=params)
