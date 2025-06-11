@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, Suspense } from 'react';
 import Container from '@/components/layout/Container';
 import { useSearchHistory } from '@/context/SearchHistoryContext';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -13,7 +13,7 @@ import SearchFilters from '@/components/ui/search/SearchFilters';
 import { SearchLoadingSkeleton } from '@/components/ui/skeletons';
 import EmptyState, { EmptyStateVariants } from '@/components/ui/EmptyState';
 
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter();
   const { searchHistory } = useSearchHistory();
   const { searchResults, searchLoading, searchError, searchQuery, performSearch, loadMore, hasMore, updateFilters, clearSearchResults, filters } = useSearch();
@@ -118,4 +118,12 @@ export default function SearchPage() {
       </div>
     </Container>
   );
-} 
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<SearchLoadingSkeleton />}>
+      <SearchPageContent />
+    </Suspense>
+  );
+}

@@ -7,6 +7,7 @@ const adminRoutes = [
   `${ADMIN_SECRET_PATH}/recipes`,
   `${ADMIN_SECRET_PATH}/test`,
   `${ADMIN_SECRET_PATH}/complaints`,
+  `${ADMIN_SECRET_PATH}/reports`,
   `${ADMIN_SECRET_PATH}/banned-domains`,
   `${ADMIN_SECRET_PATH}/banned-emails`,
   `${ADMIN_SECRET_PATH}/info`,

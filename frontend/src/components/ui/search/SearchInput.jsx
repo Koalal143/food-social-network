@@ -3,10 +3,10 @@
 import { Search, X } from "lucide-react"
 import { Input } from "../input"
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearch } from "@/context/SearchContext"
 
-export default function SearchInput({ setShowMobileSearch }) {
+function SearchInputContent({ setShowMobileSearch }) {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [query, setQuery] = useState(searchParams.get('q') || '')
@@ -119,5 +119,25 @@ export default function SearchInput({ setShowMobileSearch }) {
             )}
         </div>
       </div>
+    )
+}
+
+export default function SearchInput({ setShowMobileSearch }) {
+    return (
+        <Suspense fallback={
+            <div className="w-full">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Поиск рецептов..."
+                        className="pl-10 w-full bg-white border-none text-foreground"
+                        disabled
+                    />
+                </div>
+            </div>
+        }>
+            <SearchInputContent setShowMobileSearch={setShowMobileSearch} />
+        </Suspense>
     )
 }
