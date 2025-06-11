@@ -21,9 +21,19 @@ from src.exceptions.recipe import (
     RecipeOwnershipError,
 )
 from src.exceptions.recipe_ingredient import RecipeIngredientNotFoundError
+from src.exceptions.recipe_report import (
+    CannotReportOwnRecipeError,
+    RecipeReportAlreadyExistsError,
+    RecipeReportNotFoundError,
+)
 from src.exceptions.recipe_search import UserIdentityNotProvidedError
 from src.exceptions.shopping_list_item import ShoppingListItemNotFoundError
-from src.exceptions.user import UserEmailAlreadyExistsError, UserNicknameAlreadyExistsError, UserNotFoundError
+from src.exceptions.user import (
+    InsufficientRoleError,
+    UserEmailAlreadyExistsError,
+    UserNicknameAlreadyExistsError,
+    UserNotFoundError,
+)
 
 __all__ = [
     "AnonymousUserDoesNotExistError",
@@ -31,11 +41,13 @@ __all__ = [
     "AttachInstructionStepError",
     "BannedEmailError",
     "BaseAppError",
+    "CannotReportOwnRecipeError",
     "ConsentNotFoundError",
     "EmailDomainAlreadyBannedError",
     "ImageTooLargeError",
     "InactiveOrNotExistingUserError",
     "IncorrectCredentialsError",
+    "InsufficientRoleError",
     "InvalidJWTError",
     "InvalidTokenError",
     "JWTSignatureExpired",
@@ -49,6 +61,8 @@ __all__ = [
     "RecipeNotFoundError",
     "RecipeNotInFavoritesError",
     "RecipeOwnershipError",
+    "RecipeReportAlreadyExistsError",
+    "RecipeReportNotFoundError",
     "ShoppingListItemNotFoundError",
     "UserEmailAlreadyExistsError",
     "UserIdentityNotProvidedError",

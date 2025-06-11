@@ -11,3 +11,7 @@ class UserNicknameAlreadyExistsError(BaseAppError):
 
 class UserEmailAlreadyExistsError(BaseAppError):
     error_key = "user_email_already_exists"
+
+
+class InsufficientRoleError(BaseAppError):
+    error_key = "insufficient_role"
