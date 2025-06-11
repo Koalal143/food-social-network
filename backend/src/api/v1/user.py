@@ -2,18 +2,20 @@ from collections.abc import Sequence
 from typing import Annotated
 
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
-from fastapi import APIRouter, File, Path, Query, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Path, Query, Response, UploadFile, status
 
-from src.core.security import CurrentUserDependency, CurrentUserOrNoneDependency
+from src.core.security import CurrentUserDependency, CurrentUserOrNoneDependency, get_superuser
 from src.db.uow import SQLAlchemyUnitOfWork
 from src.exceptions import (
     AppHTTPException,
+    InsufficientRoleError,
     UserEmailAlreadyExistsError,
     UserNicknameAlreadyExistsError,
     UserNotFoundError,
 )
 from src.exceptions.image import ImageTooLargeError, WrongImageFormatError
-from src.schemas import RecipeReadShort, UserRead, UserUpdate
+from src.models.user import User
+from src.schemas import RecipeReadShort, UserRead, UserRoleUpdate, UserUpdate
 from src.services import RecipeService, UserAvatarService, UserService
 from src.utils.examples_factory import json_example_factory, json_examples_factory
 
@@ -246,3 +248,59 @@ async def get_user_recipes(
     )
     response.headers["X-Total-Count"] = str(total)
     return list(recipes)
+
+
+@router.patch(
+    "/{user_id}/role",
+    summary="Update user role",
+    description="Updates the role of a user. Only accessible by superusers.",
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "content": json_example_factory(
+                {
+                    "detail": "User not found",
+                    "error_key": "user_not_found",
+                },
+            ),
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "content": json_examples_factory(
+                {
+                    "Not a superuser": {
+                        "value": {
+                            "detail": "The user doesn't have enough privileges",
+                            "error_key": "not_enough_perms",
+                        },
+                    },
+                    "Service-level role check": {
+                        "value": {
+                            "detail": "Role management requires superuser privileges",
+                            "error_key": "insufficient_role",
+                        },
+                    },
+                },
+            ),
+        },
+    },
+)
+async def update_user_role(
+    user_id: Annotated[int, Path(description="ID of the user to update")],
+    role_update: UserRoleUpdate,
+    current_user: Annotated[User, Depends(get_superuser)],
+    uow: FromDishka[SQLAlchemyUnitOfWork],
+    user_service: FromDishka[UserService],
+) -> UserRead:
+    async with uow:
+        try:
+            user = await user_service.update_role(user_id, role_update.role, current_user)
+        except UserNotFoundError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=str(e), error_key=e.error_key
+            ) from None
+        except InsufficientRoleError as e:
+            raise AppHTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail=str(e), error_key=e.error_key
+            ) from None
+        else:
+            await uow.commit()
+            return user

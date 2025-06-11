@@ -6,6 +6,7 @@ from src.services.favorite_recipe import FavoriteRecipeService
 from src.services.recipe import RecipeService
 from src.services.recipe_impression import RecipeImpressionService
 from src.services.recipe_instructions import RecipeInstructionsService
+from src.services.recipe_report import RecipeReportService
 from src.services.search import SearchService
 from src.services.security import SecurityService
 from src.services.shopping_list_item import ShoppingListItemService
@@ -19,6 +20,7 @@ __all__ = [
     "FavoriteRecipeService",
     "RecipeImpressionService",
     "RecipeInstructionsService",
+    "RecipeReportService",
     "RecipeService",
     "RefreshTokenService",
     "SearchService",

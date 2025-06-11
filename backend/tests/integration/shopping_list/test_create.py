@@ -60,7 +60,7 @@ class TestShoppingListCreateIntegration:
             "quantity": "500g",
             "is_purchased": False,
             "is_actual": True,
-            "recipe": {"id": recipe["id"], "title": recipe["title"]},
+            "recipe": {"id": recipe["id"], "title": recipe["title"], "slug": recipe["slug"]},
             "id": IsPositiveInt,
             "created_at": IsNow(iso_string=True, delta=3, tz=UTC),
             "updated_at": IsNow(iso_string=True, delta=3, tz=UTC),

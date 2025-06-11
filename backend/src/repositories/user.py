@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from src.enums.user_role import UserRoleEnum
 from src.models.user import User
 from src.repositories.interfaces.user import UserRepositoryProtocol
 
@@ -66,4 +67,8 @@ class UserRepository(UserRepositoryProtocol):
 
     async def update_username(self, user_id: int, username: str) -> None:
         await self.session.execute(update(User).where(User.id == user_id).values(username=username))
+        await self.session.flush()
+
+    async def update_role(self, user_id: int, role: UserRoleEnum) -> None:
+        await self.session.execute(update(User).where(User.id == user_id).values(role=role))
         await self.session.flush()

@@ -62,7 +62,7 @@ class TestShoppingListGetIntegration:
             "quantity": "2 pieces",
             "is_purchased": False,
             "is_actual": True,
-            "recipe": {"id": recipe["id"], "title": recipe["title"]},
+            "recipe": {"id": recipe["id"], "title": recipe["title"], "slug": recipe["slug"]},
             "id": IsPositiveInt,
             "created_at": IsNow(iso_string=True, delta=3, tz=UTC),
             "updated_at": IsNow(iso_string=True, delta=3, tz=UTC),
@@ -211,7 +211,7 @@ class TestShoppingListGetItemIntegration:
             "quantity": "1 piece",
             "is_purchased": False,
             "is_actual": True,
-            "recipe": {"id": recipe["id"], "title": recipe["title"]},
+            "recipe": {"id": recipe["id"], "title": recipe["title"], "slug": recipe["slug"]},
             "created_at": IsNow(iso_string=True, delta=3, tz=UTC),
             "updated_at": IsNow(iso_string=True, delta=3, tz=UTC),
         }

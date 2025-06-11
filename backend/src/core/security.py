@@ -69,6 +69,30 @@ async def get_superuser(
     return current_user
 
 
+async def get_admin_or_higher(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User:
+    if not current_user.is_admin_or_higher():
+        raise AppHTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin or higher role required",
+            error_key="insufficient_role",
+        )
+    return current_user
+
+
+async def get_recipe_manager(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User:
+    if not current_user.can_manage_recipes():
+        raise AppHTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Recipe management requires superuser role",
+            error_key="insufficient_role",
+        )
+    return current_user
+
+
 @inject
 async def get_anonymous_user_or_none(
     request: Request,

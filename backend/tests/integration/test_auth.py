@@ -38,6 +38,7 @@ class TestAuthRegisterIntegration:
                 "updated_at": IsNow(iso_string=True, delta=3, tz=UTC),
                 "user_id": data["id"],
             },
+            "role": "user",
             "last_login": None,
             "created_at": IsNow(iso_string=True, delta=3, tz=UTC),
             "updated_at": IsNow(iso_string=True, delta=3, tz=UTC),

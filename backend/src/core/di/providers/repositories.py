@@ -20,6 +20,7 @@ from src.repositories.interfaces import (
     RecipeImpressionRepositoryProtocol,
     RecipeIngredientRepositoryProtocol,
     RecipeInstructionRepositoryProtocol,
+    RecipeReportRepositoryProtocol,
     RecipeRepositoryProtocol,
     RecipeSearchRepositoryProtocol,
     RecipeTagRepositoryProtocol,
@@ -36,6 +37,7 @@ from src.repositories.recipe_image import RecipeImageRepository
 from src.repositories.recipe_impression import RecipeImpressionRepository
 from src.repositories.recipe_ingredient import RecipeIngredientRepository
 from src.repositories.recipe_instruction import RecipeInstructionRepository
+from src.repositories.recipe_report import RecipeReportRepository
 from src.repositories.recipe_search import RecipeSearchRepository
 from src.repositories.recipe_tag import RecipeTagRepository
 from src.repositories.recsys_client import RecsysRepository
@@ -96,6 +98,10 @@ class RepositoryProvider(Provider):
     @provide
     def get_recipe_tag_repository(self, session: AsyncSession) -> RecipeTagRepositoryProtocol:
         return RecipeTagRepository(session)
+
+    @provide
+    def get_recipe_report_repository(self, session: AsyncSession) -> RecipeReportRepositoryProtocol:
+        return RecipeReportRepository(session)
 
     @provide
     def get_recipe_image_repository(self, s3_storage: S3Storage) -> RecipeImageRepositoryProtocol:

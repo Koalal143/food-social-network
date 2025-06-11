@@ -1,8 +1,14 @@
 from datetime import UTC, datetime
 from typing import cast
 
+from src.enums.user_role import UserRoleEnum
 from src.exceptions.auth import InactiveOrNotExistingUserError, IncorrectCredentialsError, SuspiciousEmailError
-from src.exceptions.user import UserEmailAlreadyExistsError, UserNicknameAlreadyExistsError, UserNotFoundError
+from src.exceptions.user import (
+    InsufficientRoleError,
+    UserEmailAlreadyExistsError,
+    UserNicknameAlreadyExistsError,
+    UserNotFoundError,
+)
 from src.models.user import User
 from src.repositories.interfaces import (
     BannedEmailRepositoryProtocol,
@@ -125,6 +131,20 @@ class UserService:
         if profile and profile.about is not None:
             await self.user_profile_repository.update(user_id=user_id, about=profile.about)
 
+        user = cast("User", await self.user_repository.get_with_profile(user_id))
+        return await self._to_user_model(user)
+
+    async def update_role(self, user_id: int, role: UserRoleEnum, current_user: User) -> UserRead:
+        if not current_user.can_manage_recipes():
+            msg = "Role management requires superuser privileges"
+            raise InsufficientRoleError(msg)
+
+        user = await self.user_repository.get_with_profile(user_id)
+        if not user:
+            msg = "User not found"
+            raise UserNotFoundError(msg)
+
+        await self.user_repository.update_role(user_id, role)
         user = cast("User", await self.user_repository.get_with_profile(user_id))
         return await self._to_user_model(user)
 
