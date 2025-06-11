@@ -53,7 +53,8 @@ class TestRecipeReportRetrieval:
 
         reports = response.json()
         assert len(reports) == 1
-        assert reports[0]["recipe_id"] == recipe["id"]
+        assert reports[0]["recipe"]["id"] == recipe["id"]
+        assert reports[0]["recipe"]["slug"] == recipe["slug"]
         assert reports[0]["reason"] == ReportReasonEnum.SPAM.value
         assert reports[0]["description"] == "Test report description"
         assert reports[0]["status"] == ReportStatusEnum.PENDING.value

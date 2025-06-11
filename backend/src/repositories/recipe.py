@@ -74,11 +74,7 @@ class RecipeRepository(RecipeRepositoryProtocol):
 
         return query.add_columns(impressions_subquery)
 
-    def _apply_sorting(
-        self,
-        query: Select,
-        sort_by: RecipeSortFieldEnum | None = None
-    ) -> Select:
+    def _apply_sorting(self, query: Select, sort_by: RecipeSortFieldEnum | None = None) -> Select:
         """Apply sorting to the query based on sort_by enum value.
 
         Follows Django ORM pattern where "-" prefix means descending order.
@@ -191,11 +187,7 @@ class RecipeRepository(RecipeRepositoryProtocol):
         **filters: Any,
     ) -> tuple[int, Sequence[RecipeWithExtra]]:
         _, recipes = await self._get_recipes_with_filters(
-            user_id=user_id,
-            skip=skip,
-            limit=limit,
-            sort_by=sort_by,
-            **filters
+            user_id=user_id, skip=skip, limit=limit, sort_by=sort_by, **filters
         )
 
         count = await self._get_count_with_filters(**filters)
@@ -213,12 +205,7 @@ class RecipeRepository(RecipeRepositoryProtocol):
         author_filter = Recipe.author.has(User.username == author_username)
 
         _, recipes = await self._get_recipes_with_filters(
-            user_id=user_id,
-            skip=skip,
-            limit=limit,
-            additional_filters=[author_filter],
-            sort_by=sort_by,
-            **filters
+            user_id=user_id, skip=skip, limit=limit, additional_filters=[author_filter], sort_by=sort_by, **filters
         )
 
         count = await self._get_count_with_filters(additional_filters=[author_filter], **filters)

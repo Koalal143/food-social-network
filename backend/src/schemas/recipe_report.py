@@ -3,6 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from src.enums.report_reason import ReportReasonEnum
 from src.enums.report_status import ReportStatusEnum
 from src.schemas.base import BaseReadSchema, BaseSchema
+from src.schemas.recipe import RecipeShort
 from src.schemas.user import UserReadShort
 
 
@@ -15,7 +16,7 @@ class RecipeReportCreate(BaseModel):
 
 
 class RecipeReportRead(BaseReadSchema):
-    recipe_id: int = Field(description="Recipe ID")
+    recipe: RecipeShort = Field(description="Recipe information")
     reporter_user_id: int | None = Field(None, description="ID of the user who submitted the report")
     reason: ReportReasonEnum = Field(description="Reason for the report")
     description: str | None = Field(None, description="Report description")

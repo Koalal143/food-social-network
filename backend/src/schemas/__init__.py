@@ -10,6 +10,7 @@ from src.schemas.recipe import (
     RecipeRead,
     RecipeReadFull,
     RecipeReadShort,
+    RecipeShort,
     RecipeUpdate,
 )
 from src.schemas.recipe_report import (
@@ -57,6 +58,7 @@ __all__ = [
     "RecipeReportRead",
     "RecipeReportStats",
     "RecipeReportUpdate",
+    "RecipeShort",
     "RecipeUpdate",
     "SearchQueryRead",
     "ShoppingListItemCreate",
