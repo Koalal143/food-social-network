@@ -38,7 +38,7 @@ class TestRecipeReportCreation:
 
         expected_response = {
             "id": IsPositiveInt,
-            "recipe_id": recipe["id"],
+            "recipe": {"id": recipe["id"], "slug": recipe["slug"]},
             "reporter_user_id": IsPositiveInt,
             "reason": ReportReasonEnum.SPAM.value,
             "description": "This recipe contains spam content",
@@ -83,7 +83,7 @@ class TestRecipeReportCreation:
 
         expected_response = {
             "id": IsPositiveInt,
-            "recipe_id": recipe["id"],
+            "recipe": {"id": recipe["id"], "slug": recipe["slug"]},
             "reporter_user_id": IsPositiveInt,
             "reason": ReportReasonEnum.INAPPROPRIATE_CONTENT.value,
             "description": None,

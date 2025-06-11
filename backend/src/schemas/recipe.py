@@ -89,6 +89,11 @@ class _IsPublishedMixin(BaseSchema):
     is_published: bool = Field(default=False, description="Is the recipe published or not")
 
 
+class RecipeShort(BaseSchema):
+    id: PositiveInt = Field(description="Recipe ID")
+    slug: str = Field(description="Recipe slug for URL")
+
+
 class RecipeReadShort(BaseRecipeSchema):
     id: PositiveInt
     image_url: str | None = Field(None, examples=["https://example.com/static/images/recipes/1/main.png"])

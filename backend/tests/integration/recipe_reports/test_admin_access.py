@@ -92,7 +92,8 @@ class TestRecipeReportAdminAccess:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["id"] == report["id"]
-        assert data["recipe_id"] == recipe["id"]
+        assert data["recipe"]["id"] == recipe["id"]
+        assert data["recipe"]["slug"] == recipe["slug"]
         assert data["reason"] == ReportReasonEnum.INAPPROPRIATE_CONTENT.value
         assert data["description"] == "Admin test report"
         assert data["status"] == ReportStatusEnum.PENDING.value

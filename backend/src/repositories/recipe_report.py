@@ -4,6 +4,7 @@ from sqlalchemy.orm import joinedload
 
 from src.enums.report_reason import ReportReasonEnum
 from src.enums.report_status import ReportStatusEnum
+from src.models.recipe import Recipe
 from src.models.recipe_report import RecipeReport
 from src.models.user import User
 from src.repositories.interfaces.recipe_report import RecipeReportRepositoryProtocol
@@ -18,17 +19,14 @@ class RecipeReportRepository(RecipeReportRepositoryProtocol):
         return select(RecipeReport).options(
             joinedload(RecipeReport.reporter_user).joinedload(User.profile),
             joinedload(RecipeReport.reviewed_by_user).joinedload(User.profile),
-            joinedload(RecipeReport.recipe),
+            joinedload(RecipeReport.recipe).load_only(Recipe.id, Recipe.slug),
         )
 
     async def get(self, report_id: int) -> RecipeReport | None:
         return await self.session.scalar(select(RecipeReport).where(RecipeReport.id == report_id))
 
     async def get_with_relations(self, report_id: int) -> RecipeReport | None:
-        return await self.session.scalar(
-            self._get_report_with_relations_query()
-            .where(RecipeReport.id == report_id)
-        )
+        return await self.session.scalar(self._get_report_with_relations_query().where(RecipeReport.id == report_id))
 
     async def get_by_recipe_and_reporter(self, recipe_id: int, reporter_user_id: int) -> RecipeReport | None:
         return await self.session.scalar(
@@ -105,3 +103,25 @@ class RecipeReportRepository(RecipeReportRepositoryProtocol):
     async def delete(self, report_id: int) -> None:
         await self.session.execute(delete(RecipeReport).where(RecipeReport.id == report_id))
         await self.session.flush()
+
+    async def get_stats(self) -> dict[str, int | dict[str, int]]:
+        status_query = select(RecipeReport.status, func.count(RecipeReport.id)).group_by(RecipeReport.status)
+        status_result = await self.session.execute(status_query)
+        status_counts: dict[str, int] = {}
+        if status_result:
+            status_counts = {str(status): int(count) for status, count in status_result.all()}
+
+        reason_query = select(RecipeReport.reason, func.count(RecipeReport.id)).group_by(RecipeReport.reason)
+        reason_result = await self.session.execute(reason_query)
+        reason_counts: dict[str, int] = {}
+        if reason_result:
+            reason_counts: dict[str, int] = {str(reason): int(count) for reason, count in reason_result.all()}
+
+        return {
+            "total_reports": sum(status_counts.values()),
+            "pending_reports": status_counts.get(ReportStatusEnum.PENDING, 0),
+            "reviewed_reports": status_counts.get(ReportStatusEnum.REVIEWED, 0),
+            "resolved_reports": status_counts.get(ReportStatusEnum.RESOLVED, 0),
+            "dismissed_reports": status_counts.get(ReportStatusEnum.DISMISSED, 0),
+            "reports_by_reason": reason_counts,
+        }
