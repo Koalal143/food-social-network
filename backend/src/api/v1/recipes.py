@@ -154,7 +154,7 @@ async def get_recipes(
 
 
 @router.post(
-    "/",
+    "",
     status_code=status.HTTP_201_CREATED,
     summary="Create new recipe",
     description="Creates a new recipe with ingredients, instructions, and tags. Authentication required.",
