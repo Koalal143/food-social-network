@@ -37,7 +37,7 @@ class RecipeImageRepository(RecipeImageRepositoryProtocol):
                 {"acl": "private"},
                 ["starts-with", "$Content-Type", "image/"],
                 ["starts-with", "$key", f"recipes/{recipe_id}/instructions"],
-                ["content-length-range", 1, 5 * 1024 * 1024],
+                ["content-length-range", 1, 8 * 5 * 1024 * 1024],
             ]
             presigned_url = await self.s3_storage.generate_presigned_post(
                 bucket_name=self._bucket_name,
