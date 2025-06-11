@@ -11,6 +11,7 @@ from pydantic import (
     model_validator,
 )
 
+from src.enums.user_role import UserRoleEnum
 from src.schemas.base import BaseReadSchema, BaseSchema
 
 BANNED_USERNAMES = [
@@ -92,6 +93,7 @@ class UserRead(BaseReadSchema):
     email: str
     is_active: bool
     is_superuser: bool
+    role: UserRoleEnum
     profile: UserProfileRead | None = Field(default=None)
     last_login: datetime | None
 
@@ -124,3 +126,9 @@ class UserUpdate(BaseModel):
 
     username: Nickname | None = Field(None, min_length=3, max_length=30, description="New username for the user")
     profile: UserProfileUpdate | None = Field(None, description="User profile information")
+
+
+class UserRoleUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
+
+    role: UserRoleEnum = Field(description="New role for the user")
