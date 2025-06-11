@@ -18,7 +18,6 @@ from src.schemas.recipe_report import (
     RecipeReportAdminUpdate,
     RecipeReportCreate,
     RecipeReportRead,
-    RecipeReportStats,
 )
 from src.services.recipe_report import RecipeReportService
 from src.utils.examples_factory import json_example_factory, json_examples_factory
@@ -122,18 +121,6 @@ async def get_all_reports(
     total, reports = await recipe_report_service.get_all_reports(limit, offset, status_filter)
     response.headers["X-Total-Count"] = str(total)
     return reports
-
-
-@router.get(
-    "/stats",
-    summary="Get reports statistics",
-    description="Get statistics about recipe reports. Admin access required.",
-    dependencies=[Depends(get_admin_or_higher)],
-)
-async def get_reports_stats(
-    recipe_report_service: FromDishka[RecipeReportService],
-) -> RecipeReportStats:
-    return await recipe_report_service.get_reports_stats()
 
 
 @router.get(

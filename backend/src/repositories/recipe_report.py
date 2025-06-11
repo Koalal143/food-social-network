@@ -1,4 +1,4 @@
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import Select, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -13,33 +13,33 @@ class RecipeReportRepository(RecipeReportRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
+    @staticmethod
+    def _get_report_with_relations_query() -> Select:
+        return select(RecipeReport).options(
+            joinedload(RecipeReport.reporter_user).joinedload(User.profile),
+            joinedload(RecipeReport.reviewed_by_user).joinedload(User.profile),
+            joinedload(RecipeReport.recipe),
+        )
+
     async def get(self, report_id: int) -> RecipeReport | None:
         return await self.session.scalar(select(RecipeReport).where(RecipeReport.id == report_id))
 
     async def get_with_relations(self, report_id: int) -> RecipeReport | None:
         return await self.session.scalar(
-            select(RecipeReport)
-            .options(
-                joinedload(RecipeReport.reporter_user).joinedload(User.profile),
-                joinedload(RecipeReport.reviewed_by_user).joinedload(User.profile),
-                joinedload(RecipeReport.recipe),
-            )
+            self._get_report_with_relations_query()
             .where(RecipeReport.id == report_id)
         )
 
     async def get_by_recipe_and_reporter(self, recipe_id: int, reporter_user_id: int) -> RecipeReport | None:
         return await self.session.scalar(
-            select(RecipeReport).where(
+            self._get_report_with_relations_query().where(
                 RecipeReport.recipe_id == recipe_id,
                 RecipeReport.reporter_user_id == reporter_user_id,
             )
         )
 
     async def get_all(self, limit: int, offset: int, status: ReportStatusEnum | None = None) -> list[RecipeReport]:
-        query = select(RecipeReport).options(
-            joinedload(RecipeReport.reporter_user).joinedload(User.profile),
-            joinedload(RecipeReport.reviewed_by_user).joinedload(User.profile),
-        )
+        query = self._get_report_with_relations_query()
 
         if status:
             query = query.where(RecipeReport.status == status)
@@ -50,11 +50,7 @@ class RecipeReportRepository(RecipeReportRepositoryProtocol):
 
     async def get_by_reporter(self, reporter_user_id: int, limit: int, offset: int) -> list[RecipeReport]:
         query = (
-            select(RecipeReport)
-            .options(
-                joinedload(RecipeReport.reporter_user).joinedload(User.profile),
-                joinedload(RecipeReport.reviewed_by_user).joinedload(User.profile),
-            )
+            self._get_report_with_relations_query()
             .where(RecipeReport.reporter_user_id == reporter_user_id)
             .order_by(RecipeReport.created_at.desc())
             .offset(offset)
@@ -109,23 +105,3 @@ class RecipeReportRepository(RecipeReportRepositoryProtocol):
     async def delete(self, report_id: int) -> None:
         await self.session.execute(delete(RecipeReport).where(RecipeReport.id == report_id))
         await self.session.flush()
-
-    async def get_stats(self) -> dict[str, int]:
-        # Get status counts
-        status_query = select(RecipeReport.status, func.count(RecipeReport.id)).group_by(RecipeReport.status)
-        status_result = await self.session.execute(status_query)
-        status_counts = dict(status_result.all())
-
-        # Get reason counts
-        reason_query = select(RecipeReport.reason, func.count(RecipeReport.id)).group_by(RecipeReport.reason)
-        reason_result = await self.session.execute(reason_query)
-        reason_counts = dict(reason_result.all())
-
-        return {
-            "total_reports": sum(status_counts.values()),
-            "pending_reports": status_counts.get(ReportStatusEnum.PENDING, 0),
-            "reviewed_reports": status_counts.get(ReportStatusEnum.REVIEWED, 0),
-            "resolved_reports": status_counts.get(ReportStatusEnum.RESOLVED, 0),
-            "dismissed_reports": status_counts.get(ReportStatusEnum.DISMISSED, 0),
-            "reports_by_reason": {str(k): v for k, v in reason_counts.items()},
-        }
