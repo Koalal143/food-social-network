@@ -12,6 +12,13 @@ from src.schemas.recipe import (
     RecipeReadShort,
     RecipeUpdate,
 )
+from src.schemas.recipe_report import (
+    RecipeReportAdminUpdate,
+    RecipeReportCreate,
+    RecipeReportRead,
+    RecipeReportStats,
+    RecipeReportUpdate,
+)
 from src.schemas.search_query import SearchQueryRead
 from src.schemas.shopping_list_item import ShoppingListItemCreate, ShoppingListItemRead, ShoppingListItemUpdate
 from src.schemas.token import Token, TokenPayload
@@ -22,6 +29,7 @@ from src.schemas.user import (
     UserProfileUpdate,
     UserRead,
     UserReadShort,
+    UserRoleUpdate,
     UserUpdate,
 )
 
@@ -44,6 +52,11 @@ __all__ = [
     "RecipeRead",
     "RecipeReadFull",
     "RecipeReadShort",
+    "RecipeReportAdminUpdate",
+    "RecipeReportCreate",
+    "RecipeReportRead",
+    "RecipeReportStats",
+    "RecipeReportUpdate",
     "RecipeUpdate",
     "SearchQueryRead",
     "ShoppingListItemCreate",
@@ -57,5 +70,6 @@ __all__ = [
     "UserProfileUpdate",
     "UserRead",
     "UserReadShort",
+    "UserRoleUpdate",
     "UserUpdate",
 ]
