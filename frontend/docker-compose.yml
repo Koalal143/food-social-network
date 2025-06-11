@@ -1,0 +1,23 @@
+# Docker Compose для продакшна
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      # Раскомментируйте и настройте ваши продакшн переменные окружения
+      - FRONTEND__API_URL=http://localhost:8000  # Замените на ваш API URL
+      - FRONTEND__RECSYS_URL=http://localhost:8001  # Замените на ваш RecommendationSystem URL
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

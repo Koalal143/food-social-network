@@ -1,0 +1,25 @@
+# Dockerfile для разработки
+FROM node:20-alpine
+
+# Устанавливаем необходимые системные зависимости
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Копируем файлы зависимостей
+COPY package.json package-lock.json* ./
+
+# Устанавливаем зависимости
+RUN npm ci --quiet
+
+# Копируем исходный код
+COPY . .
+
+# Устанавливаем переменные окружения для разработки
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+
+EXPOSE 3000
+
+# Запускаем в режиме разработки
+CMD ["npm", "run", "dev"]

@@ -15,7 +15,13 @@ services:
       - app_network
       - minio_network
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_INTERNAL_API_URL=${NEXT_PUBLIC_INTERNAL_API_URL}
+        - NEXT_PUBLIC_S3_STORAGE_URL=${NEXT_PUBLIC_S3_STORAGE_URL}
+        - NEXT_PUBLIC_APP_MODE=${NEXT_PUBLIC_APP_MODE}
     ports:
       - "3000:3000"
     env_file:

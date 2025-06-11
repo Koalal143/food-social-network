@@ -1,0 +1,22 @@
+# Docker Compose для разработки
+version: '3.8'
+
+services:
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+      # Добавьте здесь ваши dev переменные окружения
+      # - FRONTEND__API_URL=http://localhost:8000
+      # - FRONTEND__RECSYS_URL=http://localhost:8001
+    volumes:
+      # Монтируем исходный код для hot reload
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    restart: unless-stopped
