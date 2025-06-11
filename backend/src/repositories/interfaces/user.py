@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from typing import Protocol
 
+from src.enums.user_role import UserRoleEnum
 from src.models.user import User
 
 
@@ -23,3 +24,5 @@ class UserRepositoryProtocol(Protocol):
     async def update_last_login(self, user_id: int, last_login: datetime | None) -> None: ...
 
     async def update_username(self, user_id: int, username: str) -> None: ...
+
+    async def update_role(self, user_id: int, role: UserRoleEnum) -> None: ...
