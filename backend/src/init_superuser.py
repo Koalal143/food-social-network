@@ -3,7 +3,6 @@ import asyncio
 from src.core.config import Settings
 from src.core.di import container
 from src.db.uow import SQLAlchemyUnitOfWork
-from src.enums.user_role import UserRoleEnum
 from src.repositories.interfaces.user import UserRepositoryProtocol
 from src.services.security import SecurityService
 
@@ -23,7 +22,6 @@ async def main() -> None:
                 username=settings.superuser.username,
                 email=settings.superuser.email,
                 hashed_password=hashed_password,
-                role=UserRoleEnum.SUPERUSER,
             )
             await uow.commit()
 
