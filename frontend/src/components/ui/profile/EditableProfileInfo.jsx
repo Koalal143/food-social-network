@@ -3,6 +3,7 @@ import { Button } from '../button'
 import { Input } from '../input'
 import { Pencil, Save, X } from 'lucide-react'
 import { Textarea } from '../textarea'
+import UserRoleBadge from '@/components/ui/UserRoleBadge'
 
 export default function EditableProfileInfo({ 
     user,
@@ -75,7 +76,10 @@ export default function EditableProfileInfo({
                             onChange={handleChange('username')}
                         />
                     ) : (
-                        <p className="text-sm text-muted-foreground">{user.username}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm text-muted-foreground">{user.username}</p>
+                            <UserRoleBadge user={user} />
+                        </div>
                     )}
                 </div>
 

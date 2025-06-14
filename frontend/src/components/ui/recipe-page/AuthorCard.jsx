@@ -2,6 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ChefHat } from "lucide-react"
 import { useUser } from "@/context/UserContext"
+import UserRoleBadge from "@/components/ui/UserRoleBadge"
 
 export default function AuthorCard({ author }) {
   const { getUserByUsername, users } = useUser()
@@ -39,9 +40,12 @@ export default function AuthorCard({ author }) {
               <ChefHat className="w-3 h-3 text-primary" />
               <p className="text-xs font-medium text-muted-foreground">Автор рецепта</p>
             </div>
-            <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-              {author.username}
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                {author.username}
+              </p>
+              <UserRoleBadge user={author} />
+            </div>
             {author.profile?.about && (
               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                 {author.profile.about}

@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, ChefHat, ChevronDown, ChevronUp } from "lucide-react"
 import { useState } from "react"
+import UserRoleBadge from "@/components/ui/UserRoleBadge"
 
 export default function AuthorProfileCard({ user, totalRecipes }) {
     if (!user) return null;
@@ -42,7 +43,10 @@ export default function AuthorProfileCard({ user, totalRecipes }) {
                     {/* Информация о пользователе */}
                     <div className="flex-1 space-y-4">
                         <div className="space-y-3">
-                            <h1 className="text-2xl font-bold tracking-tight">{user.username}</h1>
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <h1 className="text-2xl font-bold tracking-tight">{user.username}</h1>
+                                <UserRoleBadge user={user} />
+                            </div>
 
                             {/* Описание */}
                             <div className="max-w-3xl">
