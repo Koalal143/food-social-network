@@ -223,19 +223,21 @@ export default function AddToShoppingListModal({
                                 {recipe.ingredients.map((ingredient, index) => (
                                     <div
                                         key={index}
-                                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer hover:bg-muted/50 ${
-                                            selectedIngredients[index] 
-                                                ? 'bg-primary/5 border-primary/20' 
+                                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                                            selectedIngredients[index]
+                                                ? 'bg-primary/5 border-primary/20'
                                                 : 'bg-background border-border'
                                         }`}
-                                        onClick={() => handleIngredientToggle(index)}
                                     >
                                         <Checkbox
                                             checked={selectedIngredients[index] || false}
                                             onCheckedChange={() => handleIngredientToggle(index)}
                                             className="flex-shrink-0"
                                         />
-                                        <div className="flex-1 min-w-0">
+                                        <div
+                                            className="flex-1 min-w-0 cursor-pointer"
+                                            onClick={() => handleIngredientToggle(index)}
+                                        >
                                             <div className="flex items-center justify-between">
                                                 <span className="font-medium text-sm truncate">
                                                     {ingredient.name}
