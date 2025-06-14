@@ -8,11 +8,9 @@ import {
     FormLabel,
     FormControl,
     FormMessage,
-    FormDescription,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
 import ValidatedInput from "../../ui/ValidatedInput";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -59,13 +57,13 @@ export default function LoginForm() {
 
     return (
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2 sm:space-y-3">
             <FormField
               control={form.control}
               name="identifier"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700 font-medium">Email или юзернейм</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium text-sm">Email или юзернейм</FormLabel>
                   <FormControl>
                     <ValidatedInput
                       placeholder="Введите email или юзернейм"
@@ -74,7 +72,7 @@ export default function LoginForm() {
                       onBlur={field.onBlur}
                       showErrors={isSubmitted}
                       validationRules={AuthValidationRules.identifier}
-                      className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors"
+                      className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm"
                     />
                   </FormControl>
                   <FormMessage />
@@ -86,7 +84,7 @@ export default function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700 font-medium">Пароль</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium text-sm">Пароль</FormLabel>
                   <FormControl>
                     <ValidatedInput
                       type={showPassword ? "text" : "password"}
@@ -96,7 +94,7 @@ export default function LoginForm() {
                       onBlur={field.onBlur}
                       showErrors={isSubmitted}
                       validationRules={AuthValidationRules.password}
-                      className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors"
+                      className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm"
                       rightElement={
                         <button
                           type="button"
@@ -118,7 +116,8 @@ export default function LoginForm() {
             />
             <Button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
+              className="w-full mt-4"
+              size="sm"
               disabled={isLoading}
             >
               {isLoading ? "Вход..." : "Войти"}

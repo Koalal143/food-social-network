@@ -1,6 +1,5 @@
 "use client"
 
-import { useToast } from "@/hooks/use-toast";
 import { useEnhancedToast } from "@/hooks/useEnhancedToast";
 import { handleApiError } from "@/utils/errorHandler";
 import { registrationSchema } from "@/lib/schemas/auth.schema";
@@ -30,7 +29,6 @@ export default function RegistrationForm() {
     const [isSubmitted, setIsSubmitted] = useState(false); // Отслеживаем попытку отправки формы
     const { register } = useAuth();
     const router = useRouter();
-    const { toast } = useToast();
     const enhancedToast = useEnhancedToast();
 
     const form = useForm({
@@ -62,13 +60,13 @@ export default function RegistrationForm() {
 
     return (
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2 sm:space-y-3">
             <FormField
               control={form.control}
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Юзернейм</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium text-sm">Юзернейм</FormLabel>
                   <FormControl>
                     <ValidatedInput
                       placeholder="Введите юзернейм"
@@ -77,6 +75,7 @@ export default function RegistrationForm() {
                       onBlur={field.onBlur}
                       showErrors={isSubmitted}
                       validationRules={AuthValidationRules.username}
+                      className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm"
                     />
                   </FormControl>
                   <FormMessage />
@@ -88,7 +87,7 @@ export default function RegistrationForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium text-sm">Email</FormLabel>
                   <FormControl>
                     <ValidatedInput
                       type="email"
@@ -98,6 +97,7 @@ export default function RegistrationForm() {
                       onBlur={field.onBlur}
                       showErrors={isSubmitted}
                       validationRules={AuthValidationRules.email}
+                      className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm"
                     />
                   </FormControl>
                   <FormMessage />
@@ -109,7 +109,7 @@ export default function RegistrationForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Пароль</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium text-sm">Пароль</FormLabel>
                   <FormControl>
                     <ValidatedInput
                       type={showPassword ? "text" : "password"}
@@ -119,7 +119,7 @@ export default function RegistrationForm() {
                       onBlur={field.onBlur}
                       showErrors={isSubmitted}
                       validationRules={AuthValidationRules.password}
-                      className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors"
+                      className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm"
                       rightElement={
                         <button
                           type="button"
@@ -135,7 +135,7 @@ export default function RegistrationForm() {
                       }
                     />
                   </FormControl>
-                  <FormDescription>
+                  <FormDescription className="text-xs">
                     Минимум 8 символов, включая заглавные и строчные буквы, цифры и специальные символы
                   </FormDescription>
                   <FormMessage />
@@ -147,7 +147,7 @@ export default function RegistrationForm() {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Подтверждение пароля</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium text-sm">Подтверждение пароля</FormLabel>
                   <FormControl>
                     <ValidatedInput
                       type={showConfirmPassword ? "text" : "password"}
@@ -157,7 +157,7 @@ export default function RegistrationForm() {
                       onBlur={field.onBlur}
                       showErrors={isSubmitted}
                       validationRules={createConfirmPasswordRules(form.watch("password"))}
-                      className="bg-white/50 border-gray-200 text-gray-900 placeholder:text-gray-400 focus:bg-white transition-colors"
+                      className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm"
                       rightElement={
                         <button
                           type="button"
@@ -179,7 +179,8 @@ export default function RegistrationForm() {
             />
             <Button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-md transition-all duration-200 shadow-sm hover:shadow-md"
+              className="w-full mt-4"
+              size="sm"
               disabled={isLoading}
             >
               {isLoading ? "Регистрация..." : "Зарегистрироваться"}
