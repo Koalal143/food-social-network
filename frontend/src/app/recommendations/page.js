@@ -16,8 +16,6 @@ export default function RecommendationsPage() {
   const {
     recipes,
     loading,
-    loadingMore,
-    isPreloading,
     error,
     moveToNextRecipe,
     getCurrentRecipe,
@@ -29,16 +27,13 @@ export default function RecommendationsPage() {
   const [tutorialStep, setTutorialStep] = useState(0);
   const [direction, setDirection] = useState(null);
 
-  // Получаем текущий рецепт
   const currentRecipe = getCurrentRecipe();
 
-  // Автоматическая загрузка рецептов при монтировании компонента
   useEffect(() => {
-    // Загружаем рецепты только если их нет и нет активной загрузки
     if (recipes.length === 0 && !loading && !error) {
       fetchRecipes();
     }
-  }, [recipes.length, loading, error]); // Убираем fetchRecipes из зависимостей
+  }, [recipes.length, loading, error]);
 
   const nextTutorialStep = () => {
     if (tutorialStep < 3) {
@@ -60,14 +55,12 @@ export default function RecommendationsPage() {
     }
     setDirection('left');
 
-    // Переходим к следующему рецепту с помощью новой логики
     await moveToNextRecipe();
   };
 
   const handleSkip = async () => {
     setDirection('up');
 
-    // Переходим к следующему рецепту с помощью новой логики
     await moveToNextRecipe();
   };
 
@@ -77,7 +70,6 @@ export default function RecommendationsPage() {
     }
     setDirection('right');
 
-    // Переходим к следующему рецепту с помощью новой логики
     await moveToNextRecipe();
   };
 
