@@ -251,6 +251,26 @@ export const getRecipeValidationRules = () => ({
 });
 
 /**
+ * Валидация файла изображения
+ */
+export const validateImageFile = (file) => {
+    if (!file) return true;
+
+    const maxSize = 5 * 1024 * 1024;
+    const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
+
+    if (file.size > maxSize) {
+        return 'Размер файла не должен превышать 5MB';
+    }
+
+    if (!allowedTypes.includes(file.type)) {
+        return 'Поддерживаются только форматы PNG, JPG, JPEG';
+    }
+
+    return true;
+};
+
+/**
  * Константы для использования в компонентах
  */
 export const RECIPE_VALIDATION_CONSTANTS = {

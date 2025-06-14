@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from '@/context/AuthContext'
-import { RecipeCardSkeletonGrid, RecommendationsSkeleton, ProfileSkeleton } from '../ui/skeletons'
+import { RecipeCardSkeletonGrid, RecommendationsSkeleton, ProfileSkeleton, RecipeFormSkeleton, HeaderSkeleton } from '../ui/skeletons'
 import Container from '../layout/Container'
 import AuthRequiredCard from './AuthRequiredCard'
 import { User, ShoppingBag, Star } from 'lucide-react'
@@ -28,6 +28,19 @@ export default function ProtectedRoute({
                 <Container className="py-8">
                     <ProfileSkeleton />
                 </Container>
+            )
+        }
+
+        if (skeleton === 'form') {
+            return (
+                <div className="py-8">
+                    <Container>
+                        <div className="max-w-3xl mx-auto space-y-8">
+                            <HeaderSkeleton level={1} width="w-1/3" />
+                            <RecipeFormSkeleton />
+                        </div>
+                    </Container>
+                </div>
             )
         }
 

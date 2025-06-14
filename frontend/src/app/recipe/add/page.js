@@ -6,7 +6,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function AddRecipePage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute skeleton="form">
       <div className="py-8">
         <Container>
           <div className="max-w-3xl mx-auto space-y-8">

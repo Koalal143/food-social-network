@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -14,19 +13,19 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash, Info } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRecipes } from '@/context/RecipeContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRouter } from 'next/navigation';
-
-// Импорты для новой валидации
+import ValidatedInput from "@/components/ui/ValidatedInput";
 import {
     getRecipeValidationRules,
     validateIngredients,
     validateInstructions,
+    validateImageFile,
     RECIPE_VALIDATION_CONSTANTS,
 } from '@/lib/validation/recipe.validation';
+import { RecipeValidationRules } from '@/lib/validation/recipeFormValidation';
 import { useRecipeTags } from '@/hooks/useRecipeTags';
 import RecipeTagsInput from './RecipeTagsInput';
 import { handleApiError } from '@/utils/errorHandler';
@@ -38,7 +37,6 @@ const AddRecipeForm = () => {
     const router = useRouter();
     const { toast } = useToast();
 
-    // Хук для управления тегами
     const {
         tags,
         tagInput,
@@ -52,13 +50,12 @@ const AddRecipeForm = () => {
         maxTagsCount,
     } = useRecipeTags();
 
-    // Состояния для превью фотографий
     const [mainPhotoPreview, setMainPhotoPreview] = useState(null);
     const [instructionPhotoPreviews, setInstructionPhotoPreviews] = useState({});
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
-    // Правила валидации
     const validationRules = getRecipeValidationRules();
-    
+
     const { control, handleSubmit, register, setValue, formState: { errors } } = useForm({
         defaultValues: {
             ingredients: [{ name: '', quantity: '' }],
@@ -141,12 +138,12 @@ const AddRecipeForm = () => {
     };
 
     const onSubmit = (data) => {
-        // Валидация тегов
+        setIsSubmitted(true);
+
         if (!validateAllTags()) {
             return;
         }
 
-        // Валидация ингредиентов
         const ingredientsValidation = validateIngredients(data.ingredients);
         if (ingredientsValidation !== true) {
             toast({
@@ -157,7 +154,6 @@ const AddRecipeForm = () => {
             return;
         }
 
-        // Валидация инструкций
         const instructionsValidation = validateInstructions(data.instructions);
         if (instructionsValidation !== true) {
             toast({
@@ -168,6 +164,17 @@ const AddRecipeForm = () => {
             return;
         }
 
+        if (data.main_photo) {
+            const fileValidation = validateImageFile(data.main_photo);
+            if (fileValidation !== true) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Ошибка валидации',
+                    description: fileValidation,
+                });
+                return;
+            }
+        }
 
         try {
             addRecipe({ ...data, tags });
@@ -187,45 +194,98 @@ const AddRecipeForm = () => {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Основная информация</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="bg-white/20 backdrop-blur-xl p-4 rounded-2xl shadow-xl border border-white/30 relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl"></div>
+                <div className="relative z-10 space-y-3">
+                    <h3 className="text-lg font-semibold text-gray-900">Основная информация</h3>
+
                     <div className="space-y-2">
-                        <Label>Название рецепта</Label>
-                        <Input
-                            {...register('title', validationRules.title)}
-                            type="text"
-                            placeholder="Введите название рецепта"
-                            maxLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MAX_LENGTH}
-                            minLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MIN_LENGTH}
+                        <Label className="text-sm font-medium text-gray-700">Название рецепта</Label>
+                        <Controller
+                            name="title"
+                            control={control}
+                            rules={validationRules.title}
+                            render={({ field }) => (
+                                <ValidatedInput
+                                    {...field}
+                                    placeholder="Введите название рецепта"
+                                    maxLength={RECIPE_VALIDATION_CONSTANTS.TITLE_MAX_LENGTH}
+                                    showErrors={isSubmitted}
+                                    validationRules={RecipeValidationRules.title}
+                                    className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm h-8"
+                                />
+                            )}
                         />
-                        {errors.title && <p className="text-destructive text-sm">{errors.title.message}</p>}
+                        {errors.title && <p className="text-destructive text-xs">{errors.title.message}</p>}
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Описание</Label>
+                        <Label className="text-sm font-medium text-gray-700">Описание</Label>
                         <Textarea
                             {...register('short_description', validationRules.short_description)}
                             rows={2}
                             placeholder="Краткое описание рецепта"
-                            minLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MIN_LENGTH}
                             maxLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MAX_LENGTH}
+                            className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm text-sm resize-none"
                         />
-                        {errors.short_description && <p className="text-destructive text-sm">{errors.short_description.message}</p>}
+                        {errors.short_description && <p className="text-destructive text-xs">{errors.short_description.message}</p>}
                     </div>
 
-                    {/* Теги */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-gray-700">Время (мин)</Label>
+                            <Controller
+                                name="cook_time_minutes"
+                                control={control}
+                                rules={validationRules.cook_time_minutes}
+                                render={({ field }) => (
+                                    <ValidatedInput
+                                        {...field}
+                                        type="number"
+                                        placeholder="60"
+                                        max={RECIPE_VALIDATION_CONSTANTS.COOK_TIME_MAX}
+                                        min={1}
+                                        showErrors={isSubmitted}
+                                        validationRules={RecipeValidationRules.cook_time_minutes}
+                                        className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm h-8"
+                                    />
+                                )}
+                            />
+                            {errors.cook_time_minutes && <p className="text-destructive text-xs">{errors.cook_time_minutes.message}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-gray-700">Сложность</Label>
+                            <Controller
+                                name="difficulty"
+                                control={control}
+                                rules={{ required: 'Сложность обязательна' }}
+                                render={({ field }) => (
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <SelectTrigger className="bg-white/60 border-white/40 text-gray-900 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm h-8">
+                                            <SelectValue placeholder="Выберите" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="EASY">Легко</SelectItem>
+                                            <SelectItem value="MEDIUM">Средне</SelectItem>
+                                            <SelectItem value="HARD">Сложно</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
+                            {errors.difficulty && <p className="text-destructive text-xs">{errors.difficulty.message}</p>}
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                            <Label>Теги</Label>
+                            <Label className="text-sm font-medium text-gray-700">Теги</Label>
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <button type="button" className="text-muted-foreground hover:text-primary">
-                                            <Info className="w-4 h-4" />
+                                        <button type="button" className="text-gray-500 hover:text-gray-700">
+                                            <Info className="w-3 h-3" />
                                         </button>
                                     </TooltipTrigger>
                                     <TooltipContent>
@@ -247,52 +307,14 @@ const AddRecipeForm = () => {
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>Время приготовления (в минутах)</Label>
-                            <Input
-                                {...register('cook_time_minutes', validationRules.cook_time_minutes)}
-                                type="number"
-                                placeholder="Например: 60"
-                                max={RECIPE_VALIDATION_CONSTANTS.COOK_TIME_MAX}
-                                min={1}
-                            />
-                            {errors.cook_time_minutes && <p className="text-destructive text-sm">{errors.cook_time_minutes.message}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                        <Label>Сложность</Label>
-                        <Controller
-                            name="difficulty"
-                            control={control}
-                            rules={{ required: 'Сложность обязательна' }}
-                            render={({ field }) => (
-                            <Select
-                                onValueChange={field.onChange}
-                                value={field.value}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Выберите сложность" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="EASY">Легко</SelectItem>
-                                    <SelectItem value="MEDIUM">Средне</SelectItem>
-                                    <SelectItem value="HARD">Сложно</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            )}
-                        />
-                        {errors.difficulty && <p className="text-destructive text-sm">{errors.difficulty.message}</p>}
-                        </div>
-                    </div>
-
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                            <Label>Фото блюда</Label>
+                            <Label className="text-sm font-medium text-gray-700">Фото блюда</Label>
                             <PhotoUploadInfo
                                 recommendedSize="1200×800px (3:2)"
                                 maxFileSize="5MB"
                                 formats="PNG, JPG, JPEG"
+                                className="hidden md:block"
                             />
                         </div>
                         <Controller
@@ -303,17 +325,25 @@ const AddRecipeForm = () => {
                                 <div className="space-y-2">
                                     <FileUploadProgress
                                         onFileSelect={async (file) => {
+                                            const validation = validateImageFile(file);
+                                            if (validation !== true) {
+                                                toast({
+                                                    variant: 'destructive',
+                                                    title: 'Ошибка',
+                                                    description: validation,
+                                                });
+                                                return;
+                                            }
                                             field.onChange(file);
                                             handleMainPhotoChange(file);
                                         }}
                                         accept="image/png,image/jpg,image/jpeg"
                                         maxSize={5 * 1024 * 1024}
                                     >
-                                        <Input
+                                        <input
                                             type="file"
                                             accept="image/png,image/jpg,image/jpeg"
-                                            placeholder="Загрузите фото блюда"
-                                            className="cursor-pointer"
+                                            className="bg-white/60 border-white/40 text-gray-900 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm h-8 w-full rounded-md border px-3 py-1 text-sm cursor-pointer file:border-0 file:bg-transparent file:text-sm file:font-medium"
                                         />
                                     </FileUploadProgress>
                                     <PhotoUploadInfo
@@ -327,7 +357,7 @@ const AddRecipeForm = () => {
                                             <img
                                                 src={mainPhotoPreview}
                                                 alt="Превью главного фото"
-                                                className="w-32 h-32 object-cover rounded-lg border"
+                                                className="w-24 h-24 object-cover rounded-lg border"
                                             />
                                             <Button
                                                 type="button"
@@ -337,81 +367,105 @@ const AddRecipeForm = () => {
                                                     field.onChange(null);
                                                     setMainPhotoPreview(null);
                                                 }}
-                                                className="absolute -top-2 -right-2 text-destructive hover:text-destructive/80 bg-background border rounded-full w-6 h-6 p-0"
+                                                className="absolute -top-1 -right-1 text-destructive hover:text-destructive/80 bg-background border rounded-full w-5 h-5 p-0 text-xs"
                                             >
-                                                &times;
+                                                ×
                                             </Button>
                                         </div>
                                     )}
                                 </div>
                             )}
                         />
-                        {errors.main_photo && <p className="text-destructive text-sm">{errors.main_photo.message}</p>}
+                        {errors.main_photo && <p className="text-destructive text-xs">{errors.main_photo.message}</p>}
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
-            <Card>
-                <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                    Ингредиенты
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                            if (ingredientFields.length < RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT) {
-                                appendIngredient({ name: '', quantity: '' });
-                            }
-                        }}
-                        disabled={ingredientFields.length >= RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT}
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Добавить ингредиент
-                    </Button>
-                </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    {ingredientFields.map((field, index) => (
-                        <div key={field.id} className="flex items-center gap-2">
-                        <Input
-                            {...register(`ingredients.${index}.name`, validationRules.ingredientName)}
-                            type="text"
-                            placeholder="Название (например, Мука)"
-                            minLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MIN_LENGTH}
-                            maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MAX_LENGTH}
-                        />
-                        <Input
-                            {...register(`ingredients.${index}.quantity`, validationRules.ingredientQuantity)}
-                            type="text"
-                            placeholder="Количество (например, 200 г)"
-                            maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_QUANTITY_MAX_LENGTH}
-                        />
-                        {ingredientFields.length > 1 && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeIngredient(index)}
-                                className="text-destructive hover:text-destructive/80"
-                            >
-                                <Trash className="w-4 h-4" />
-                                </Button>
-                        )}
-                        </div>
-                    ))}
-                    {/* Показать ошибки валидации для ингредиентов */}
+            <div className="bg-white/20 backdrop-blur-xl p-4 rounded-2xl shadow-xl border border-white/30 relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl"></div>
+                <div className="relative z-10 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-gray-900">Ингредиенты</h3>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                if (ingredientFields.length < RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT) {
+                                    appendIngredient({ name: '', quantity: '' });
+                                }
+                            }}
+                            disabled={ingredientFields.length >= RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT}
+                            className="h-7 px-2 text-xs bg-white/60 border-white/40 hover:bg-white/80"
+                        >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Добавить
+                        </Button>
+                    </div>
+
+                    <div className="space-y-3">
+                        {ingredientFields.map((field, index) => (
+                            <div key={field.id} className="flex gap-2 p-2 bg-gray-50/50 rounded-lg">
+                                <div className="flex-1">
+                                    <Controller
+                                        name={`ingredients.${index}.name`}
+                                        control={control}
+                                        rules={validationRules.ingredientName}
+                                        render={({ field }) => (
+                                            <ValidatedInput
+                                                {...field}
+                                                placeholder="Название (например, Мука)"
+                                                maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_NAME_MAX_LENGTH}
+                                                showErrors={isSubmitted}
+                                                validationRules={RecipeValidationRules.ingredientName}
+                                                className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm h-8 text-sm"
+                                            />
+                                        )}
+                                    />
+                                </div>
+                                <div className="w-24">
+                                    <Controller
+                                        name={`ingredients.${index}.quantity`}
+                                        control={control}
+                                        rules={validationRules.ingredientQuantity}
+                                        render={({ field }) => (
+                                            <ValidatedInput
+                                                {...field}
+                                                placeholder="200 г"
+                                                maxLength={RECIPE_VALIDATION_CONSTANTS.INGREDIENT_QUANTITY_MAX_LENGTH}
+                                                showErrors={isSubmitted}
+                                                validationRules={RecipeValidationRules.ingredientQuantity}
+                                                className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm h-8 text-sm"
+                                            />
+                                        )}
+                                    />
+                                </div>
+                                {ingredientFields.length > 1 && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => removeIngredient(index)}
+                                        className="text-destructive hover:text-destructive/80 h-8 w-8 p-0"
+                                    >
+                                        <Trash className="w-3 h-3" />
+                                    </Button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
                     {Object.keys(errors).some(key => key.startsWith('ingredients.')) && (
                         <div className="space-y-1">
                             {ingredientFields.map((_, index) => (
                                 <div key={index}>
                                     {errors.ingredients?.[index]?.name && (
-                                        <p className="text-destructive text-sm">
+                                        <p className="text-destructive text-xs">
                                             Ингредиент {index + 1}: {errors.ingredients[index].name.message}
                                         </p>
                                     )}
                                     {errors.ingredients?.[index]?.quantity && (
-                                        <p className="text-destructive text-sm">
+                                        <p className="text-destructive text-xs">
                                             Ингредиент {index + 1}: {errors.ingredients[index].quantity.message}
                                         </p>
                                     )}
@@ -419,144 +473,143 @@ const AddRecipeForm = () => {
                             ))}
                         </div>
                     )}
-                    <p className="text-sm text-muted-foreground">
+
+                    <p className="text-xs text-gray-600">
                         {ingredientFields.length} из {RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT} ингредиентов
                     </p>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
-            <Card>
-                <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                    Инструкция приготовления
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleAddInstruction}
-                        disabled={instructionFields.length >= RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT}
-                    >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Добавить шаг
-                    </Button>
-                </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    {instructionFields.map((field, index) => (
-                        <div key={field.id} className="flex items-start gap-2">
-                        <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-medium mt-2">
-                            {index + 1}
-                        </div>
-                        <div className="flex-1 space-y-2">
-                            <Textarea
-                                {...register(`instructions.${index}.description`, validationRules.instructionDescription)}
-                                placeholder={`Шаг ${field.step_number}`}
-                                rows={2}
-                                maxLength={RECIPE_VALIDATION_CONSTANTS.INSTRUCTION_DESCRIPTION_MAX_LENGTH}
-                            />
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <Label className="text-sm text-muted-foreground">Фото шага (необязательно)</Label>
-                                    <PhotoUploadInfo
-                                        recommendedSize="800×600px (4:3)"
-                                        maxFileSize="5MB"
-                                        formats="PNG, JPG, JPEG"
-                                        className="hidden md:block"
-                                    />
+            <div className="bg-white/20 backdrop-blur-xl p-4 rounded-2xl shadow-xl border border-white/30 relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl"></div>
+                <div className="relative z-10 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-gray-900">Инструкция приготовления</h3>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleAddInstruction}
+                            disabled={instructionFields.length >= RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT}
+                            className="h-7 px-2 text-xs bg-white/60 border-white/40 hover:bg-white/80"
+                        >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Добавить шаг
+                        </Button>
+                    </div>
+
+                    <div className="space-y-3">
+                        {instructionFields.map((field, index) => (
+                            <div key={field.id} className="p-2 bg-gray-50/50 rounded-lg space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-medium text-xs">
+                                            {index + 1}
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700">Шаг {index + 1}</span>
+                                    </div>
+                                    {instructionFields.length > 1 && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                removeInstruction(index);
+                                                setInstructionPhotoPreviews(prev => {
+                                                    const newPreviews = { ...prev };
+                                                    delete newPreviews[index];
+                                                    return newPreviews;
+                                                });
+                                            }}
+                                            className="text-destructive hover:text-destructive/80 h-6 w-6 p-0"
+                                        >
+                                            <Trash className="w-3 h-3" />
+                                        </Button>
+                                    )}
                                 </div>
-                                <Controller
-                                    name={`instructions.${index}.photo`}
-                                    control={control}
-                                    render={({ field }) => (
-                                    <div className="flex flex-col gap-2 w-full">
-                                        <Input
-                                        type="file"
-                                        accept="image/png,image/jpg,image/jpeg"
-                                        onChange={(e) => {
-                                            const file = e.target.files[0];
-                                            // Валидация типа файла
-                                            if (file) {
-                                                const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
-                                                if (!allowedTypes.includes(file.type.toLowerCase())) {
-                                                    toast({
-                                                        variant: 'destructive',
-                                                        title: 'Ошибка',
-                                                        description: 'Разрешены только PNG, JPG и JPEG файлы',
-                                                    });
-                                                    return;
-                                                }
-                                                // Валидация размера файла
-                                                if (file.size > 5 * 1024 * 1024) {
-                                                    toast({
-                                                        variant: 'destructive',
-                                                        title: 'Ошибка',
-                                                        description: 'Файл слишком большой. Максимальный размер: 5MB',
-                                                    });
-                                                    return;
-                                                }
-                                            }
-                                            field.onChange(file);
-                                            handleInstructionPhotoChange(index, file);
-                                        }}
-                                        className="w-full"
-                                        placeholder="Загрузите фото для шага"
-                                        />
+
+                                <Textarea
+                                    {...register(`instructions.${index}.description`, validationRules.instructionDescription)}
+                                    placeholder={`Опишите шаг ${field.step_number}`}
+                                    rows={2}
+                                    maxLength={RECIPE_VALIDATION_CONSTANTS.INSTRUCTION_DESCRIPTION_MAX_LENGTH}
+                                    className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm text-sm resize-none"
+                                />
+
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <Label className="text-xs text-gray-600">Фото шага (необязательно)</Label>
                                         <PhotoUploadInfo
                                             recommendedSize="800×600px (4:3)"
                                             maxFileSize="5MB"
                                             formats="PNG, JPG, JPEG"
-                                            className="md:hidden"
+                                            className="hidden md:block"
                                         />
-                                        {instructionPhotoPreviews[index] && (
-                                            <div className="relative inline-block">
-                                                <img
-                                                    src={instructionPhotoPreviews[index]}
-                                                    alt={`Превью шага ${index + 1}`}
-                                                    className="w-24 h-24 object-cover rounded-lg border"
+                                    </div>
+                                    <Controller
+                                        name={`instructions.${index}.photo`}
+                                        control={control}
+                                        render={({ field }) => (
+                                            <div className="space-y-2">
+                                                <input
+                                                    type="file"
+                                                    accept="image/png,image/jpg,image/jpeg"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            const validation = validateImageFile(file);
+                                                            if (validation !== true) {
+                                                                toast({
+                                                                    variant: 'destructive',
+                                                                    title: 'Ошибка',
+                                                                    description: validation,
+                                                                });
+                                                                return;
+                                                            }
+                                                        }
+                                                        field.onChange(file);
+                                                        handleInstructionPhotoChange(index, file);
+                                                    }}
+                                                    className="bg-white/60 border-white/40 text-gray-900 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm h-8 w-full rounded-md border px-3 py-1 text-sm cursor-pointer file:border-0 file:bg-transparent file:text-sm file:font-medium"
                                                 />
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleRemoveInstructionPhoto(index)}
-                                                    className="absolute -top-2 -right-2 text-destructive hover:text-destructive/80 bg-background border rounded-full w-6 h-6 p-0"
-                                                >
-                                                    &times;
-                                                </Button>
+                                                <PhotoUploadInfo
+                                                    recommendedSize="800×600px (4:3)"
+                                                    maxFileSize="5MB"
+                                                    formats="PNG, JPG, JPEG"
+                                                    className="md:hidden"
+                                                />
+                                                {instructionPhotoPreviews[index] && (
+                                                    <div className="relative inline-block">
+                                                        <img
+                                                            src={instructionPhotoPreviews[index]}
+                                                            alt={`Превью шага ${index + 1}`}
+                                                            className="w-20 h-20 object-cover rounded-lg border"
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleRemoveInstructionPhoto(index)}
+                                                            className="absolute -top-1 -right-1 text-destructive hover:text-destructive/80 bg-background border rounded-full w-5 h-5 p-0 text-xs"
+                                                        >
+                                                            ×
+                                                        </Button>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
-                                    </div>
-                                    )}
-                                />
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        {instructionFields.length > 1 && (
-                            <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                                removeInstruction(index);
-                                setInstructionPhotoPreviews(prev => {
-                                    const newPreviews = { ...prev };
-                                    delete newPreviews[index];
-                                    return newPreviews;
-                                });
-                            }}
-                            className="text-destructive hover:text-destructive/80 mt-2"
-                            >
-                            <Trash className="w-4 h-4" />
-                            </Button>
-                        )}
-                        </div>
-                    ))}
-                    {/* Показать ошибки валидации для инструкций */}
+                        ))}
+                    </div>
+
                     {Object.keys(errors).some(key => key.startsWith('instructions.')) && (
                         <div className="space-y-1">
                             {instructionFields.map((_, index) => (
                                 <div key={index}>
                                     {errors.instructions?.[index]?.description && (
-                                        <p className="text-destructive text-sm">
+                                        <p className="text-destructive text-xs">
                                             Шаг {index + 1}: {errors.instructions[index].description.message}
                                         </p>
                                     )}
@@ -564,18 +617,34 @@ const AddRecipeForm = () => {
                             ))}
                         </div>
                     )}
-                    <p className="text-sm text-muted-foreground">
+
+                    <p className="text-xs text-gray-600">
                         {instructionFields.length} из {RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT} шагов
                     </p>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
-            <Button type="submit" className="w-full" size="lg">
-                Опубликовать рецепт
-            </Button>
+            <div className="flex gap-2 pt-2">
+                <Button type="submit" className="flex-1 h-9" disabled={!tags.length}>
+                    Опубликовать рецепт
+                </Button>
+                <Button type="button" variant="outline" className="h-9 px-6" onClick={() => router.push('/')}>
+                    Отмена
+                </Button>
+            </div>
 
-            <div className='text-center'>
-                Нажимая на кнопку, вы даете согласие на <a className="text-blue-600 hover:underline" href='/docs/policy'>обработку персональных данных</a> и <a className="text-blue-600 hover:underline" href='/docs/recommendations-policy'>использование рекомендательных систем</a>.
+            <div className="text-center">
+                <p className="text-xs text-gray-600">
+                    Нажимая на кнопку, вы даете согласие на{' '}
+                    <a className="text-primary hover:underline" href="/docs/policy">
+                        обработку персональных данных
+                    </a>
+                    {' '}и{' '}
+                    <a className="text-primary hover:underline" href="/docs/recommendations-policy">
+                        использование рекомендательных систем
+                    </a>
+                    .
+                </p>
             </div>
         </form>
     );
