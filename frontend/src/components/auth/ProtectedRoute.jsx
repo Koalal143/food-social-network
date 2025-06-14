@@ -4,13 +4,12 @@ import { useAuth } from '@/context/AuthContext'
 import { RecipeCardSkeletonGrid, RecommendationsSkeleton, ProfileSkeleton } from '../ui/skeletons'
 import Container from '../layout/Container'
 import AuthRequiredCard from './AuthRequiredCard'
-import { Bot, User, ShoppingBag } from 'lucide-react'
+import { User, ShoppingBag, Star } from 'lucide-react'
 
 export default function ProtectedRoute({
     children,
     skeleton = 'default',
     authIcon,
-    authTitle,
     authDescription
 }) {
     const { user, loading } = useAuth()
@@ -53,7 +52,7 @@ export default function ProtectedRoute({
             switch (skeleton) {
                 case 'recommendations':
                     return {
-                        icon: Bot,
+                        icon: Star,
                         description: 'Для получения персональных рекомендаций необходимо войти в систему'
                     }
                 case 'profile':

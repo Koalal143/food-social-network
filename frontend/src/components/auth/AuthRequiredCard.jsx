@@ -26,7 +26,7 @@ export default function AuthRequiredCard({
                             </p>
                             <div className="flex flex-col gap-3">
                                 <Button
-                                    onClick={() => router.push('/login')}
+                                    onClick={() => router.push('/auth/login')}
                                     className="w-full"
                                 >
                                     <LogIn className="w-4 h-4 mr-2" />
@@ -34,7 +34,7 @@ export default function AuthRequiredCard({
                                 </Button>
                                 <Button
                                     variant="outline"
-                                    onClick={() => router.push('/registration')}
+                                    onClick={() => router.push('/auth/register')}
                                     className="w-full"
                                 >
                                     <UserPlus className="w-4 h-4 mr-2" />

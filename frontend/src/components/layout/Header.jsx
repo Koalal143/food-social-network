@@ -23,7 +23,7 @@ export default function Header() {
 
     const handleLogout = () => {
         logout()
-        router.push('/login')
+        router.push('/auth/login')
     }
 
     const toggleMobileSearch = () => {
@@ -157,12 +157,12 @@ export default function Header() {
                                         </Link>
                                     </Button>
                                     <Button variant="ghost" size="sm" asChild className="text-gray-700 hover:text-gray-900 hover:bg-gray-100/50 text-xs md:text-sm">
-                                        <Link href="/login">
+                                        <Link href="/auth/login">
                                             Войти
                                         </Link>
                                     </Button>
                                     <Button className="bg-primary/90 hover:bg-primary/80 text-white text-xs md:text-sm" size="sm" asChild>
-                                        <Link href="/registration">
+                                        <Link href="/auth/register">
                                             Регистрация
                                         </Link>
                                     </Button>
