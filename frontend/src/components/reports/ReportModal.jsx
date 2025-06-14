@@ -8,8 +8,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import ReportForm from "./ReportForm";
 
 export default function ReportModal({ 
@@ -38,14 +36,6 @@ export default function ReportModal({
                         <DialogTitle className="text-lg font-semibold">
                             Пожаловаться на рецепт
                         </DialogTitle>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={onClose}
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
                     </div>
                     <DialogDescription className="text-sm text-muted-foreground">
                         {recipeName && (
