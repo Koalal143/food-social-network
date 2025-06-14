@@ -1,11 +1,24 @@
 import Link from "next/link"
 import Image from "next/image"
 import { ChefHat } from "lucide-react"
+import { useUser } from "@/context/UserContext"
 
 export default function AuthorCard({ author }) {
+  const { getUserByUsername, users } = useUser()
+
+  const handleMouseEnter = () => {
+    // Предзагружаем данные пользователя только если их еще нет в кэше
+    if (!users[author.username]) {
+      getUserByUsername(author.username).catch(() => {})
+    }
+  }
+
   return (
-    <Link href={`/profile/${author.username}`} className="block">
-      <div className="group cursor-pointer transition-all duration-200 hover:shadow-md p-3 bg-background rounded-lg shadow-sm border">
+    <Link href={`/profile/${author.username}`} className="block" prefetch={false}>
+      <div
+        className="group cursor-pointer transition-all duration-200 hover:shadow-md p-3 bg-background rounded-lg shadow-sm border"
+        onMouseEnter={handleMouseEnter}
+      >
         <div className="flex items-center gap-3">
           <div className="relative flex-shrink-0">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">

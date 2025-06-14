@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import Container from "@/components/layout/Container";
-import { useRecipes } from "@/context/RecipeContext";
 import { AuthorProfileSkeleton } from "@/components/ui/skeletons";
 import { useUser } from "@/context/UserContext";
 import CopyLinkButton from "@/components/ui/CopyLinkButton"
@@ -15,13 +14,13 @@ const RECIPES_PER_PAGE = 9;
 
 export default function ProfileIdPage({ params }) {
     const { username } = React.use(params);
-    const { loading: globalLoading } = useRecipes();
-    const { getUserByUsername } = useUser();
+    const { getUserByUsername, users } = useUser();
 
     const [user, setUser] = useState(null);
     const [recipes, setRecipes] = useState([]);
     const [offset, setOffset] = useState(0);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [error, setError] = useState(null);
     const [hasMore, setHasMore] = useState(true);
     const [totalCount, setTotalCount] = useState(0);
@@ -32,16 +31,22 @@ export default function ProfileIdPage({ params }) {
 
     const fetchInitialData = useCallback(async () => {
         if (loadingRef.current) return;
-        
+
         try {
             loadingRef.current = true;
-            setIsLoading(true);
-            
+
+            // Проверяем кэш пользователя сначала
+            const cachedUser = users[username];
+            if (cachedUser) {
+                setUser(cachedUser);
+                setIsLoading(false);
+            }
+
             const authorData = await getUserByUsername(username);
             setUser(authorData);
-            
+
             const result = await RecipesService.getPaginatedRecipesByUsername(username, 0, RECIPES_PER_PAGE);
-            
+
             setRecipes(result.data || []);
             setTotalCount(result.totalCount || 0);
             setHasMore((result.data?.length || 0) > 0 && (result.data?.length || 0) < (result.totalCount || 0));
@@ -53,7 +58,7 @@ export default function ProfileIdPage({ params }) {
             setIsLoading(false);
             loadingRef.current = false;
         }
-    }, [username, getUserByUsername]);
+    }, [username, getUserByUsername, users]);
 
     const loadMoreRecipes = useCallback(() => {
         if (debounceTimerRef.current) {
@@ -67,18 +72,18 @@ export default function ProfileIdPage({ params }) {
             
             try {
                 loadingRef.current = true;
-                setIsLoading(true);
-                
+                setIsLoadingMore(true);
+
                 console.log(`Loading more recipes at offset ${offset}`);
-                
+
                 const result = await RecipesService.getPaginatedRecipesByUsername(username, offset, RECIPES_PER_PAGE);
                 const newRecipes = result.data || [];
-                
+
                 if (newRecipes.length === 0) {
                     setHasMore(false);
                     return;
                 }
-                
+
                 setRecipes(prev => {
                     const existingIds = new Set(prev.map(r => r.id));
                     const uniqueNewRecipes = newRecipes.filter(r => !existingIds.has(r.id));
@@ -92,12 +97,12 @@ export default function ProfileIdPage({ params }) {
 
 
                 setOffset(prev => prev + newRecipes.length);
-                
+
             } catch (err) {
                 console.error("Error loading more recipes:", err);
                 setError(err.message);
             } finally {
-                setIsLoading(false);
+                setIsLoadingMore(false);
                 loadingRef.current = false;
             }
         }, 300);
@@ -113,7 +118,7 @@ export default function ProfileIdPage({ params }) {
         };
     }, [fetchInitialData]);
 
-    if (globalLoading) {
+    if (isLoading) {
         return (
             <Container className="py-8">
                 <AuthorProfileSkeleton />
@@ -126,7 +131,7 @@ export default function ProfileIdPage({ params }) {
             <Container className="py-6">
                 <div className="text-center text-red-500">
                     <p>Произошла ошибка при загрузке данных: {error}</p>
-                    <button 
+                    <button
                         className="mt-4 px-4 py-2 bg-primary text-white rounded"
                         onClick={() => {
                             setError(null);
@@ -169,7 +174,7 @@ export default function ProfileIdPage({ params }) {
 
                     <InfiniteRecipesList
                         recipes={recipes}
-                        loading={isLoading}
+                        loading={isLoadingMore}
                         hasMore={hasMore}
                         onLoadMore={loadMoreRecipes}
                         source="author-page"
