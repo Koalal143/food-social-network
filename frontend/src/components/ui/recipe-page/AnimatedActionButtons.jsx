@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Bookmark, ThumbsDown } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import CopyLinkButton from "@/components/ui/CopyLinkButton"
 
 // Компонент для партикл-эффектов
 const ParticleEffect = ({ isActive, type, onComplete }) => {
@@ -255,25 +256,38 @@ const AnimatedDislikeButton = ({ isDisliked, onClick, disabled }) => {
 }
 
 // Основной компонент
-export default function AnimatedActionButtons({ 
-  isSaved, 
-  isDisliked, 
-  onSave, 
-  onDislike, 
-  disabled = false 
+export default function AnimatedActionButtons({
+  isSaved,
+  isDisliked,
+  onSave,
+  onDislike,
+  disabled = false,
+  shareLink = null
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <AnimatedFavoriteButton 
-        isSaved={isSaved}
-        onClick={onSave}
-        disabled={disabled}
-      />
-      <AnimatedDislikeButton 
-        isDisliked={isDisliked}
-        onClick={onDislike}
-        disabled={disabled}
-      />
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        <AnimatedFavoriteButton
+          isSaved={isSaved}
+          onClick={onSave}
+          disabled={disabled}
+        />
+        <AnimatedDislikeButton
+          isDisliked={isDisliked}
+          onClick={onDislike}
+          disabled={disabled}
+        />
+      </div>
+      {shareLink && (
+        <CopyLinkButton
+          link={shareLink}
+          tooltipText="Скопировать ссылку на этот рецепт для отправки друзьям"
+          variant="outline"
+          size="sm"
+          className="h-8 px-3 text-xs"
+          showText={true}
+        />
+      )}
     </div>
   )
 }

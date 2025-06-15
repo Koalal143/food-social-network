@@ -9,9 +9,9 @@ import { RecipeDetailSkeleton } from "@/components/ui/skeletons";
 import Image from "next/image";
 import AuthorCard from "@/components/ui/recipe-page/AuthorCard";
 import AnimatedActionButtons from "@/components/ui/recipe-page/AnimatedActionButtons";
-import { Share2, Trash2, ShoppingBag } from "lucide-react";
+import { Trash2, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import CopyLinkButton from "@/components/ui/CopyLinkButton";
+
 import ReportButton from "@/components/reports/ReportButton";
 import RecipeInfoCards from "@/components/ui/recipe-page/RecipeInfoCards";
 import RecipeIngridients from "@/components/ui/recipe-page/RecipeIngridients";
@@ -186,19 +186,6 @@ function RecipePageContent({ params }) {
                         )}
                         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
                         <div className="absolute top-3 right-3 flex gap-1.5">
-                            <CopyLinkButton
-                                link={`${window.location.origin}/recipe/${recipe.slug}?source=shared`}
-                                tooltipText="Скопировать ссылку на рецепт"
-                                trigger={
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 bg-white/90 dark:bg-background/90 backdrop-blur rounded-full hover:bg-white dark:hover:bg-background shadow-md hover:scale-105 transition-transform"
-                                    >
-                                        <Share2 className="w-3.5 h-3.5" />
-                                    </Button>
-                                }
-                            />
                             {!canDeleteRecipe() && isAuth && (
                                 <ReportButton
                                     recipeId={recipe.id}
@@ -242,6 +229,7 @@ function RecipePageContent({ params }) {
                             onSave={handleSave}
                             onDislike={handleDislike}
                             disabled={!isAuth}
+                            shareLink={`${window.location.origin}/recipe/${recipe.slug}?source=shared`}
                         />
 
                         {/* Author card */}
