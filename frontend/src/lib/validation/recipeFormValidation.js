@@ -1,4 +1,5 @@
 import { ValidationRules } from "@/components/ui/ValidatedInput";
+import { createValidationRule } from './validationUtils';
 import {
     validateRecipeTitle,
     validateRecipeDescription,
@@ -9,101 +10,17 @@ import {
     validateImageFile,
 } from './recipe.validation';
 
+/**
+ * Правила валидации для полей рецепта
+ * Используют кастомные функции валидации, которые уже включают проверку на обязательность
+ */
 export const RecipeValidationRules = {
-    title: [
-        ValidationRules.required("Название рецепта обязательно для заполнения"),
-        {
-            validate: async (value) => {
-                const result = validateRecipeTitle(value);
-                return {
-                    isValid: result === true,
-                    message: result === true ? '' : result,
-                    severity: 'error'
-                };
-            }
-        }
-    ],
-
-    short_description: [
-        ValidationRules.required("Описание рецепта обязательно для заполнения"),
-        {
-            validate: async (value) => {
-                const result = validateRecipeDescription(value);
-                return {
-                    isValid: result === true,
-                    message: result === true ? '' : result,
-                    severity: 'error'
-                };
-            }
-        }
-    ],
-
-    cook_time_minutes: [
-        ValidationRules.required("Время приготовления обязательно для заполнения"),
-        {
-            validate: async (value) => {
-                const result = validateCookTime(value);
-                return {
-                    isValid: result === true,
-                    message: result === true ? '' : result,
-                    severity: 'error'
-                };
-            }
-        }
-    ],
-
-    ingredientName: [
-        ValidationRules.required("Название ингредиента обязательно"),
-        {
-            validate: async (value) => {
-                const result = validateIngredientName(value);
-                return {
-                    isValid: result === true,
-                    message: result === true ? '' : result,
-                    severity: 'error'
-                };
-            }
-        }
-    ],
-
-    ingredientQuantity: [
-        ValidationRules.required("Количество ингредиента обязательно"),
-        {
-            validate: async (value) => {
-                const result = validateIngredientQuantity(value);
-                return {
-                    isValid: result === true,
-                    message: result === true ? '' : result,
-                    severity: 'error'
-                };
-            }
-        }
-    ],
-
-    instructionDescription: [
-        ValidationRules.required("Описание шага обязательно"),
-        {
-            validate: async (value) => {
-                const result = validateInstructionDescription(value);
-                return {
-                    isValid: result === true,
-                    message: result === true ? '' : result,
-                    severity: 'error'
-                };
-            }
-        }
-    ],
-
-    imageFile: [
-        {
-            validate: async (file) => {
-                const result = validateImageFile(file);
-                return {
-                    isValid: result === true,
-                    message: result === true ? '' : result,
-                    severity: 'error'
-                };
-            }
-        }
-    ],
+    title: [createValidationRule(validateRecipeTitle)],
+    short_description: [createValidationRule(validateRecipeDescription)],
+    cook_time_minutes: [createValidationRule(validateCookTime)],
+    ingredientName: [createValidationRule(validateIngredientName)],
+    ingredientQuantity: [createValidationRule(validateIngredientQuantity)],
+    instructionDescription: [createValidationRule(validateInstructionDescription)],
+    imageFile: [createValidationRule(validateImageFile)],
+    difficulty: [ValidationRules.required("Сложность обязательна для выбора")],
 };

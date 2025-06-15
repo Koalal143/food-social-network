@@ -27,7 +27,7 @@ import {
  */
 export const validateRecipeTitle = (value) => {
     if (!value) {
-        return 'Название рецепта обязательно для заполнения';
+        return 'Название рецепта обязательно';
     }
 
     const trimmed = value.trim();
@@ -60,7 +60,7 @@ export const validateRecipeTitle = (value) => {
  */
 export const validateRecipeDescription = (value) => {
     if (!value) {
-        return 'Описание рецепта обязательно для заполнения';
+        return 'Описание рецепта обязательно';
     }
 
     const trimmed = value.trim();
@@ -81,7 +81,7 @@ export const validateRecipeDescription = (value) => {
  */
 export const validateCookTime = (value) => {
     if (!value) {
-        return 'Время приготовления обязательно для заполнения';
+        return 'Время приготовления обязательно';
     }
 
     const num = Number(value);
@@ -226,29 +226,7 @@ export const validateInstructions = (instructions) => {
     return true;
 };
 
-/**
- * Получить правила валидации для react-hook-form
- */
-export const getRecipeValidationRules = () => ({
-    title: {
-        validate: validateRecipeTitle,
-    },
-    short_description: {
-        validate: validateRecipeDescription,
-    },
-    cook_time_minutes: {
-        validate: validateCookTime,
-    },
-    ingredientName: {
-        validate: validateIngredientName,
-    },
-    ingredientQuantity: {
-        validate: validateIngredientQuantity,
-    },
-    instructionDescription: {
-        validate: validateInstructionDescription,
-    },
-});
+
 
 /**
  * Валидация файла изображения

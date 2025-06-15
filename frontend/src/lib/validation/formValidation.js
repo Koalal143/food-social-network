@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { ValidationRules } from "@/components/ui/ValidatedInput";
+import { createValidationRule } from './validationUtils';
 import {
   USERNAME_MIN_LENGTH,
   USERNAME_MAX_LENGTH,
@@ -29,26 +30,18 @@ export const AuthValidationRules = {
     ValidationRules.required("Юзернейм обязателен для заполнения"),
     ValidationRules.minLength(USERNAME_MIN_LENGTH, "Юзернейм должен содержать минимум 3 символа"),
     ValidationRules.maxLength(USERNAME_MAX_LENGTH, "Юзернейм не должен превышать 30 символов"),
-    {
-      validate: async (value) => {
-        if (!value) return { isValid: true };
-        return {
-          isValid: USERNAME_REGEX.test(value),
-          message: "Юзернейм может содержать только латинские буквы, цифры, дефис и нижнее подчеркивание",
-          severity: 'error'
-        };
-      }
-    },
-    {
-      validate: async (value) => {
-        if (!value) return { isValid: true };
-        return {
-          isValid: !isBannedUsername(value),
-          message: "Данное имя пользователя запрещено",
-          severity: 'error'
-        };
-      }
-    }
+    createValidationRule((value) => {
+      if (!value) return true;
+      return USERNAME_REGEX.test(value)
+        ? true
+        : "Юзернейм может содержать только латинские буквы, цифры, дефис и нижнее подчеркивание";
+    }),
+    createValidationRule((value) => {
+      if (!value) return true;
+      return !isBannedUsername(value)
+        ? true
+        : "Данное имя пользователя запрещено";
+    })
   ],
 
   // Правила для email в форме регистрации
@@ -61,46 +54,30 @@ export const AuthValidationRules = {
   password: [
     ValidationRules.required("Пароль обязателен для заполнения"),
     ValidationRules.minLength(PASSWORD_MIN_LENGTH, `Пароль должен содержать минимум ${PASSWORD_MIN_LENGTH} символов`),
-    {
-      validate: async (value) => {
-        if (!value) return { isValid: true };
-        return {
-          isValid: /[A-ZА-Я]/.test(value),
-          message: "Пароль должен содержать хотя бы одну заглавную букву",
-          severity: 'error'
-        };
-      }
-    },
-    {
-      validate: async (value) => {
-        if (!value) return { isValid: true };
-        return {
-          isValid: /[a-zа-я]/.test(value),
-          message: "Пароль должен содержать хотя бы одну строчную букву",
-          severity: 'error'
-        };
-      }
-    },
-    {
-      validate: async (value) => {
-        if (!value) return { isValid: true };
-        return {
-          isValid: /[0-9]/.test(value),
-          message: "Пароль должен содержать хотя бы одну цифру",
-          severity: 'error'
-        };
-      }
-    },
-    {
-      validate: async (value) => {
-        if (!value) return { isValid: true };
-        return {
-          isValid: /[!@#$%^&*(),.?":{}|<>]/.test(value),
-          message: "Пароль должен содержать хотя бы один специальный символ",
-          severity: 'error'
-        };
-      }
-    }
+    createValidationRule((value) => {
+      if (!value) return true;
+      return /[A-ZА-Я]/.test(value)
+        ? true
+        : "Пароль должен содержать хотя бы одну заглавную букву";
+    }),
+    createValidationRule((value) => {
+      if (!value) return true;
+      return /[a-zа-я]/.test(value)
+        ? true
+        : "Пароль должен содержать хотя бы одну строчную букву";
+    }),
+    createValidationRule((value) => {
+      if (!value) return true;
+      return /[0-9]/.test(value)
+        ? true
+        : "Пароль должен содержать хотя бы одну цифру";
+    }),
+    createValidationRule((value) => {
+      if (!value) return true;
+      return /[!@#$%^&*(),.?":{}|<>]/.test(value)
+        ? true
+        : "Пароль должен содержать хотя бы один специальный символ";
+    })
   ],
 
   // Правила для подтверждения пароля (используется в форме регистрации)
@@ -116,16 +93,12 @@ export const AuthValidationRules = {
  */
 export const createConfirmPasswordRules = (passwordValue) => [
   ...AuthValidationRules.confirmPassword,
-  {
-    validate: async (value) => {
-      if (!value) return { isValid: true };
-      return {
-        isValid: value === passwordValue,
-        message: "Пароли не совпадают",
-        severity: 'error'
-      };
-    }
-  }
+  createValidationRule((value) => {
+    if (!value) return true;
+    return value === passwordValue
+      ? true
+      : "Пароли не совпадают";
+  })
 ];
 
 /**

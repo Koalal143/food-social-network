@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -17,11 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useRecipes } from '@/context/RecipeContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRouter } from 'next/navigation';
-import ValidatedInput from "@/components/ui/ValidatedInput";
+import ValidatedInput, { ValidatedTextarea } from "@/components/ui/ValidatedInput";
 import {
-    getRecipeValidationRules,
-    validateIngredients,
-    validateInstructions,
     validateImageFile,
     RECIPE_VALIDATION_CONSTANTS,
 } from '@/lib/validation/recipe.validation';
@@ -56,9 +52,7 @@ const AddRecipeForm = () => {
     const [instructionPhotoPreviews, setInstructionPhotoPreviews] = useState({});
     const [isSubmitted, setIsSubmitted] = useState(false);
 
-    const validationRules = getRecipeValidationRules();
-
-    const { control, handleSubmit, register, setValue, formState: { errors } } = useForm({
+    const { control, handleSubmit, setValue } = useForm({
         defaultValues: {
             ingredients: [{ name: '', quantity: '' }],
             instructions: [{ step_number: 1, description: '', photo: null }],
@@ -151,38 +145,6 @@ const AddRecipeForm = () => {
             return;
         }
 
-        const ingredientsValidation = validateIngredients(data.ingredients);
-        if (ingredientsValidation !== true) {
-            toast({
-                variant: 'destructive',
-                title: 'Ошибка валидации',
-                description: ingredientsValidation,
-            });
-            return;
-        }
-
-        const instructionsValidation = validateInstructions(data.instructions);
-        if (instructionsValidation !== true) {
-            toast({
-                variant: 'destructive',
-                title: 'Ошибка валидации',
-                description: instructionsValidation,
-            });
-            return;
-        }
-
-        if (data.main_photo) {
-            const fileValidation = validateImageFile(data.main_photo);
-            if (fileValidation !== true) {
-                toast({
-                    variant: 'destructive',
-                    title: 'Ошибка валидации',
-                    description: fileValidation,
-                });
-                return;
-            }
-        }
-
         try {
             addRecipe({ ...data, tags });
             toast({
@@ -222,7 +184,6 @@ const AddRecipeForm = () => {
                         <Controller
                             name="title"
                             control={control}
-                            rules={validationRules.title}
                             render={({ field }) => (
                                 <ValidatedInput
                                     {...field}
@@ -234,19 +195,25 @@ const AddRecipeForm = () => {
                                 />
                             )}
                         />
-                        {errors.title && <p className="text-destructive text-xs">{errors.title.message}</p>}
                     </div>
 
                     <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-700">Описание</Label>
-                        <Textarea
-                            {...register('short_description', validationRules.short_description)}
-                            rows={2}
-                            placeholder="Краткое описание рецепта"
-                            maxLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MAX_LENGTH}
-                            className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm text-sm resize-none"
+                        <Controller
+                            name="short_description"
+                            control={control}
+                            render={({ field }) => (
+                                <ValidatedTextarea
+                                    {...field}
+                                    rows={2}
+                                    placeholder="Краткое описание рецепта"
+                                    maxLength={RECIPE_VALIDATION_CONSTANTS.DESCRIPTION_MAX_LENGTH}
+                                    showErrors={isSubmitted}
+                                    validationRules={RecipeValidationRules.short_description}
+                                    className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm text-sm resize-none"
+                                />
+                            )}
                         />
-                        {errors.short_description && <p className="text-destructive text-xs">{errors.short_description.message}</p>}
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -255,7 +222,6 @@ const AddRecipeForm = () => {
                             <Controller
                                 name="cook_time_minutes"
                                 control={control}
-                                rules={validationRules.cook_time_minutes}
                                 render={({ field }) => (
                                     <ValidatedInput
                                         {...field}
@@ -269,7 +235,6 @@ const AddRecipeForm = () => {
                                     />
                                 )}
                             />
-                            {errors.cook_time_minutes && <p className="text-destructive text-xs">{errors.cook_time_minutes.message}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -277,7 +242,6 @@ const AddRecipeForm = () => {
                             <Controller
                                 name="difficulty"
                                 control={control}
-                                rules={{ required: 'Сложность обязательна' }}
                                 render={({ field }) => (
                                     <Select onValueChange={field.onChange} value={field.value}>
                                         <SelectTrigger className="bg-white/60 border-white/40 text-gray-900 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm h-8">
@@ -291,7 +255,6 @@ const AddRecipeForm = () => {
                                     </Select>
                                 )}
                             />
-                            {errors.difficulty && <p className="text-destructive text-xs">{errors.difficulty.message}</p>}
                         </div>
                     </div>
 
@@ -337,7 +300,6 @@ const AddRecipeForm = () => {
                         <Controller
                             name="main_photo"
                             control={control}
-                            rules={{ required: 'Фото обязательно' }}
                             render={({ field }) => (
                                 <div className="space-y-2">
                                     <FileUploadProgress
@@ -393,7 +355,6 @@ const AddRecipeForm = () => {
                                 </div>
                             )}
                         />
-                        {errors.main_photo && <p className="text-destructive text-xs">{errors.main_photo.message}</p>}
                     </div>
                 </div>
             </div>
@@ -427,7 +388,6 @@ const AddRecipeForm = () => {
                                     <Controller
                                         name={`ingredients.${index}.name`}
                                         control={control}
-                                        rules={validationRules.ingredientName}
                                         render={({ field }) => (
                                             <ValidatedInput
                                                 {...field}
@@ -444,7 +404,6 @@ const AddRecipeForm = () => {
                                     <Controller
                                         name={`ingredients.${index}.quantity`}
                                         control={control}
-                                        rules={validationRules.ingredientQuantity}
                                         render={({ field }) => (
                                             <ValidatedInput
                                                 {...field}
@@ -472,24 +431,7 @@ const AddRecipeForm = () => {
                         ))}
                     </div>
 
-                    {Object.keys(errors).some(key => key.startsWith('ingredients.')) && (
-                        <div className="space-y-1">
-                            {ingredientFields.map((field, index) => (
-                                <div key={`ingredient-error-${field.id}-${index}`}>
-                                    {errors.ingredients?.[index]?.name && (
-                                        <p className="text-destructive text-xs">
-                                            Ингредиент {index + 1}: {errors.ingredients[index].name.message}
-                                        </p>
-                                    )}
-                                    {errors.ingredients?.[index]?.quantity && (
-                                        <p className="text-destructive text-xs">
-                                            Ингредиент {index + 1}: {errors.ingredients[index].quantity.message}
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
+
 
                     <p className="text-xs text-gray-600">
                         {ingredientFields.length} из {RECIPE_VALIDATION_CONSTANTS.INGREDIENTS_MAX_COUNT} ингредиентов
@@ -545,12 +487,20 @@ const AddRecipeForm = () => {
                                     )}
                                 </div>
 
-                                <Textarea
-                                    {...register(`instructions.${index}.description`, validationRules.instructionDescription)}
-                                    placeholder={`Опишите шаг ${field.step_number}`}
-                                    rows={2}
-                                    maxLength={RECIPE_VALIDATION_CONSTANTS.INSTRUCTION_DESCRIPTION_MAX_LENGTH}
-                                    className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm text-sm resize-none"
+                                <Controller
+                                    name={`instructions.${index}.description`}
+                                    control={control}
+                                    render={({ field }) => (
+                                        <ValidatedTextarea
+                                            {...field}
+                                            placeholder={`Опишите шаг ${index + 1}`}
+                                            rows={2}
+                                            maxLength={RECIPE_VALIDATION_CONSTANTS.INSTRUCTION_DESCRIPTION_MAX_LENGTH}
+                                            showErrors={isSubmitted}
+                                            validationRules={RecipeValidationRules.instructionDescription}
+                                            className="bg-white/60 border-white/40 text-gray-900 placeholder:text-gray-500 focus:bg-white/80 focus:border-white/60 transition-all backdrop-blur-sm text-sm resize-none"
+                                        />
+                                    )}
                                 />
 
                                 <div className="space-y-2">
@@ -621,19 +571,7 @@ const AddRecipeForm = () => {
                         ))}
                     </div>
 
-                    {Object.keys(errors).some(key => key.startsWith('instructions.')) && (
-                        <div className="space-y-1">
-                            {instructionFields.map((_, index) => (
-                                <div key={index}>
-                                    {errors.instructions?.[index]?.description && (
-                                        <p className="text-destructive text-xs">
-                                            Шаг {index + 1}: {errors.instructions[index].description.message}
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
+
 
                     <p className="text-xs text-gray-600">
                         {instructionFields.length} из {RECIPE_VALIDATION_CONSTANTS.INSTRUCTIONS_MAX_COUNT} шагов
