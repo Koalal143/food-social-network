@@ -66,7 +66,7 @@ export default function RecommendationsPage() {
 
   const handleLike = async () => {
     if (currentRecipe) {
-      addFavorite(currentRecipe.id);
+      addFavorite(currentRecipe);
     }
     setDirection('right');
 

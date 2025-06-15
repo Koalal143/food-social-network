@@ -26,7 +26,7 @@ import DeleteRecipeDialog from "@/components/shared/recipeActions/DeleteRecipeDi
 
 function RecipePageContent({ params }) {
     const { getRecipeBySlug, error, loading } = useRecipes();
-    const { addFavorite, removeFavorite } = useFavorites();
+    const { addFavorite, removeFavorite, isRecipeInFavorites } = useFavorites();
     const { addToDisliked, removeFromDisliked } = useDislikes();
     const [recipe, setRecipe] = useState(null);
     const { toast } = useToast()
@@ -62,6 +62,15 @@ function RecipePageContent({ params }) {
         fetchData();
     }, [slug]);
 
+    useEffect(() => {
+        if (recipe && isAuth) {
+            const isInFavorites = isRecipeInFavorites(recipe.id);
+            setIsSaved(isInFavorites);
+        } else if (!isAuth) {
+            setIsSaved(false);
+        }
+    }, [recipe, isRecipeInFavorites, isAuth]);
+
     const canDeleteRecipe = () => {
         if (!user || !recipe) return false;
         return user.id === recipe.author.id || user.is_superuser;
@@ -93,7 +102,7 @@ function RecipePageContent({ params }) {
                     await removeFromDisliked(recipe.id);
                     setIsDisliked(false);
                 }
-                addFavorite(recipe.id);
+                addFavorite(recipe);
                 setIsSaved(true);
             }
         } catch (error) {

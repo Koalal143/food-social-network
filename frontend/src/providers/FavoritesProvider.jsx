@@ -55,18 +55,21 @@ export default function FavoritesProvider({ children }) {
         }
     }, [user?.id])
 
-    const addFavorite = useCallback((recipe) => {
+    const addFavorite = useCallback((recipeOrId) => {
         // Проверяем авторизацию перед добавлением в избранное
         if (!user?.id) {
             console.warn('Попытка добавления в избранное без авторизации')
             return
         }
 
-        FavoritesService.addToFavorites(recipe)
+        const recipeId = typeof recipeOrId === 'object' ? recipeOrId.id : recipeOrId;
+        const recipe = typeof recipeOrId === 'object' ? recipeOrId : { id: recipeOrId };
+
+        FavoritesService.addToFavorites(recipeId)
         setFavorites(prev => {
             if (!Array.isArray(prev)) return [recipe]
             // Проверяем, что рецепт еще не в избранном
-            if (prev.some(fav => fav.id === recipe.id)) return prev
+            if (prev.some(fav => fav.id === recipeId)) return prev
             return [...prev, recipe]
         })
         setFavoritesTotalCount(prev => prev + 1)
@@ -96,6 +99,11 @@ export default function FavoritesProvider({ children }) {
         setFavoritesTotalCount(prev => Math.max(0, prev - 1))
     }, [])
 
+    const isRecipeInFavorites = useCallback((recipeId) => {
+        if (!Array.isArray(favorites)) return false
+        return favorites.some(recipe => recipe.id === recipeId)
+    }, [favorites])
+
     // Загрузка избранных рецептов при авторизации и очистка при выходе
     useEffect(() => {
         if (!user?.id) {
@@ -122,8 +130,8 @@ export default function FavoritesProvider({ children }) {
     }, [user?.id]) // Убираем getFavorites из зависимостей
 
     return (
-        <FavoritesContext.Provider 
-            value={{ 
+        <FavoritesContext.Provider
+            value={{
                 favorites,
                 loading,
                 favoritesLoading,
@@ -132,7 +140,8 @@ export default function FavoritesProvider({ children }) {
                 getFavorites,
                 addFavorite,
                 removeFavorite,
-                removeFromFavoritesOnDelete
+                removeFromFavoritesOnDelete,
+                isRecipeInFavorites
             }}
         >
             {children}

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Clock, Bookmark, BookmarkCheck, ChefHat } from "lucide-react";
 import minutesToHuman from "@/utils/minutesToHuman";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFavorites } from "@/context/FavoritesContext";
 import { DIFFICULTY } from "@/constants/difficulty";
 import { useAuth } from "@/context/AuthContext";
@@ -11,9 +11,18 @@ import RecipeCardActions from "@/components/shared/recipeActions/RecipeCardActio
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 export default function RecipeCard({ recipe, source='feed', editable }) {
-    const { addFavorite, removeFavorite } = useFavorites();
+    const { addFavorite, removeFavorite, isRecipeInFavorites } = useFavorites();
     const [isSaved, setIsSaved] = useState(recipe.is_on_favorites);
     const { isAuth } = useAuth();
+
+    useEffect(() => {
+        if (isAuth) {
+            const isInFavorites = isRecipeInFavorites(recipe.id);
+            setIsSaved(isInFavorites);
+        } else {
+            setIsSaved(false);
+        }
+    }, [recipe.id, isRecipeInFavorites, isAuth]);
 
     const handleSave = (e) => {
         e.preventDefault();
@@ -21,7 +30,7 @@ export default function RecipeCard({ recipe, source='feed', editable }) {
         if (isSaved) {
             removeFavorite(recipe.id);
         } else {
-            addFavorite(recipe.id);
+            addFavorite(recipe);
         }
         setIsSaved(!isSaved);
     };
