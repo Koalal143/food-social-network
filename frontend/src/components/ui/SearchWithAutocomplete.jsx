@@ -207,7 +207,7 @@ export default function SearchWithAutocomplete({
                                     <div className="py-2">
                                         {suggestions.map((suggestion, index) => (
                                             <motion.button
-                                                key={index}
+                                                key={`suggestion-${suggestion.text || suggestion}-${index}`}
                                                 className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors ${
                                                     highlightedIndex === index ? 'bg-gray-50' : ''
                                                 }`}

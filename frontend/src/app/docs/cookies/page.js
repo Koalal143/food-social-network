@@ -117,7 +117,7 @@ export default function CookiesPage() {
             {cookieTypes.map((type, index) => {
               const Icon = type.icon;
               return (
-                <Card key={index} className="border border-gray-200">
+                <Card key={`cookie-type-${type.title}-${index}`} className="border border-gray-200">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center text-lg">
                       <Icon className="w-5 h-5 mr-2 text-gray-600" />
@@ -128,7 +128,7 @@ export default function CookiesPage() {
                   <CardContent className="pt-0">
                     <div className="space-y-3">
                       {type.cookies.map((cookie, cookieIndex) => (
-                        <div key={cookieIndex} className="bg-gray-50 rounded-md p-3">
+                        <div key={`cookie-${cookie.name}-${cookieIndex}`} className="bg-gray-50 rounded-md p-3">
                           <div className="flex justify-between items-start mb-1">
                             <code className="text-xs font-mono bg-gray-200 px-2 py-1 rounded">
                               {cookie.name}

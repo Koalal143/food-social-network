@@ -51,7 +51,7 @@ export function RecipeCardSkeletonGrid({ count = 6 }) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: count }, (_, i) => (
-                <RecipeCardSkeleton key={i} />
+                <RecipeCardSkeleton key={`recipe-skeleton-${i}`} />
             ))}
         </div>
     );
@@ -64,7 +64,7 @@ export function InfiniteLoadingSkeleton({ count = 3 }) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: count }, (_, i) => (
-                <RecipeCardSkeleton key={i} />
+                <RecipeCardSkeleton key={`infinite-skeleton-${i}`} />
             ))}
         </div>
     );

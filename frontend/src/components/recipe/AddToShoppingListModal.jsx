@@ -222,7 +222,7 @@ export default function AddToShoppingListModal({
                             <div className="flex-1 overflow-y-auto space-y-2 pr-2">
                                 {recipe.ingredients.map((ingredient, index) => (
                                     <div
-                                        key={index}
+                                        key={ingredient.id || `ingredient-${index}-${ingredient.name}`}
                                         className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                                             selectedIngredients[index]
                                                 ? 'bg-primary/5 border-primary/20'

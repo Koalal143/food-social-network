@@ -6,7 +6,7 @@ export default function RecipeInstruction({ recipe }) {
       <h2 className="text-lg font-bold">Инструкция</h2>
       <ol className="space-y-4">
         {recipe.instructions.map((instruction, index) => (
-          <li key={index} className="p-4 bg-background rounded-lg shadow-sm">
+          <li key={instruction.id || `instruction-${instruction.step_number}`} className="p-4 bg-background rounded-lg shadow-sm">
             <div className="flex gap-3 items-start mb-3">
               <span className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-medium text-sm">
                 {instruction.step_number}

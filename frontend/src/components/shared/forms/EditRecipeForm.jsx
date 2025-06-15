@@ -633,8 +633,8 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
 
           {Object.keys(errors).some(key => key.startsWith('ingredients.')) && (
             <div className="space-y-1">
-              {ingredientFields.map((_, index) => (
-                <div key={index}>
+              {ingredientFields.map((field, index) => (
+                <div key={`ingredient-error-${field.id}-${index}`}>
                   {errors.ingredients?.[index]?.name && (
                     <p className="text-destructive text-xs">
                       Ингредиент {index + 1}: {errors.ingredients[index].name.message}

@@ -37,7 +37,7 @@ export function ShoppingListSectionSkeleton({ count = 3 }) {
 
             <div className="px-4 md:px-6 pb-4 md:pb-6 pt-0 space-y-2 md:space-y-2">
                 {Array.from({ length: count }, (_, i) => (
-                    <ShoppingListItemSkeleton key={i} />
+                    <ShoppingListItemSkeleton key={`shopping-item-skeleton-${i}`} />
                 ))}
             </div>
         </div>

@@ -58,7 +58,7 @@ export default function RecipeDetailSkeleton() {
                     <div className="h-6 bg-gray-200 rounded w-32" />
                     <div className="space-y-2">
                         {Array.from({ length: 6 }, (_, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 bg-background rounded-lg shadow-sm animate-pulse">
+                            <div key={`ingredient-skeleton-${i}`} className="flex items-center justify-between p-3 bg-background rounded-lg shadow-sm animate-pulse">
                                 <div className="flex items-center gap-2.5">
                                     <div className="w-2.5 h-2.5 bg-gray-200 rounded-full flex-shrink-0" />
                                     <div className="h-4 bg-gray-200 rounded w-32" />
