@@ -19,7 +19,7 @@ export default function UserRoleBadge({ user, className = "" }) {
                 type: "superuser",
                 label: "Владелец",
                 icon: Crown,
-                description: "Владелец платформы с полными правами администрирования системы",
+                description: "Официальный аккаунт владельца платформы, не доверяйте мошенникам",
                 className: "bg-gradient-to-r from-yellow-500/10 to-orange-500/10 text-yellow-700 border-yellow-500/20 hover:from-yellow-500/20 hover:to-orange-500/20"
             }
         }
@@ -29,7 +29,7 @@ export default function UserRoleBadge({ user, className = "" }) {
                 type: "admin",
                 label: "Администратор",
                 icon: Shield,
-                description: "Администратор с правами модерации контента и управления пользователями",
+                description: "Официальный аккаунт администратора платформы, не доверяйте мошенникам",
                 className: "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 text-blue-700 border-blue-500/20 hover:from-blue-500/20 hover:to-indigo-500/20"
             }
         }
