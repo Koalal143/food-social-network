@@ -9,7 +9,7 @@ export default function AddRecipePage() {
     <ProtectedRoute skeleton="form">
       <div className="py-8">
         <Container>
-          <div className="max-w-3xl mx-auto space-y-8">
+          <div className="max-w-3xl lg:max-w-7xl mx-auto space-y-8">
             <h1 className="text-3xl font-bold tracking-tight">Добавить рецепт</h1>
             <AddRecipeForm />
           </div>

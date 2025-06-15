@@ -29,7 +29,7 @@ export default function EditRecipePage({ params }) {
         <ProtectedRoute skeleton="form">
             <div className="py-8">
                 <Container>
-                    <div className="max-w-3xl mx-auto space-y-8">
+                    <div className="max-w-3xl lg:max-w-7xl mx-auto space-y-8">
                         {loading ? (
                             <>
                                 <HeaderSkeleton level={1} width="w-1/3" />

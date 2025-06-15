@@ -33,6 +33,8 @@ import RecipeTagsInput from './RecipeTagsInput';
 import PhotoUploadInfo from '@/components/ui/PhotoUploadInfo';
 import { handleApiError } from '@/utils/errorHandler';
 import FileUploadProgress from '@/components/ui/FileUploadProgress';
+import RecipePreview from './RecipePreview';
+import { useWatch } from 'react-hook-form';
 
 const EditRecipeForm = ({ slug, onSuccess }) => {
   const { getRecipeBySlug, updateRecipe } = useRecipes();
@@ -86,6 +88,11 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
   const { fields: instructionFields, append: appendInstruction, remove: removeInstruction } = useFieldArray({
     control,
     name: 'instructions',
+  });
+
+  const watchedData = useWatch({
+    control,
+    name: ['title', 'short_description', 'cook_time_minutes', 'difficulty']
   });
 
   // Получаем рецепт по slug
@@ -341,8 +348,18 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
   if (serverError) return <div className='text-destructive'>{serverError}</div>;
   if (accessDenied) return null;
 
+  const formData = {
+    title: watchedData[0],
+    short_description: watchedData[1],
+    cook_time_minutes: watchedData[2],
+    difficulty: watchedData[3]
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+      {/* Форма */}
+      <div className="lg:col-span-8 w-full">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="bg-white/20 backdrop-blur-xl p-4 rounded-2xl shadow-xl border border-white/30 relative">
         <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-white/10 rounded-2xl"></div>
         <div className="relative z-10 space-y-3">
@@ -792,20 +809,33 @@ const EditRecipeForm = ({ slug, onSuccess }) => {
         </Button>
       </div>
 
-      <div className="text-center">
-        <p className="text-xs text-gray-600">
-          Нажимая на кнопку, вы даете согласие на{' '}
-          <a className="text-primary hover:underline" href="/docs/policy">
-            обработку персональных данных
-          </a>
-          {' '}и{' '}
-          <a className="text-primary hover:underline" href="/docs/recommendations-policy">
-            использование рекомендательных систем
-          </a>
-          .
-        </p>
+          <div className="text-center">
+            <p className="text-xs text-gray-600">
+              Нажимая на кнопку, вы даете согласие на{' '}
+              <a className="text-primary hover:underline" href="/docs/policy">
+                обработку персональных данных
+              </a>
+              {' '}и{' '}
+              <a className="text-primary hover:underline" href="/docs/recommendations-policy">
+                использование рекомендательных систем
+              </a>
+              .
+            </p>
+          </div>
+        </form>
       </div>
-    </form>
+
+      {/* Превью - только на десктопе */}
+      <div className="hidden lg:block lg:col-span-4">
+        <div className="sticky top-20">
+          <RecipePreview
+            formData={formData}
+            mainPhotoPreview={mainPhotoPreview}
+            isVisible={true}
+          />
+        </div>
+      </div>
+    </div>
   );
 };
 
