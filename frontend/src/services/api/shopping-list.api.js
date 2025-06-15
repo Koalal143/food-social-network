@@ -1,6 +1,64 @@
 
+import { ERROR_MESSAGES } from '@/constants/errors'
+import { NetworkError, AuthError, ValidationError } from '@/utils/errors'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
+/**
+ * Обработка ошибок API для списка покупок
+ * @param {Response} response - ответ от API
+ * @returns {Promise<never>}
+ */
+async function handleAPIError(response) {
+    try {
+        const errorData = await response.json()
+        const { error_key, detail } = errorData
+
+        // Если есть error_key, используем локализованное сообщение
+        if (error_key && ERROR_MESSAGES[error_key]) {
+            switch (response.status) {
+                case 401:
+                    throw new AuthError(ERROR_MESSAGES[error_key])
+                case 422:
+                    throw new ValidationError(ERROR_MESSAGES[error_key])
+                default:
+                    throw new Error(ERROR_MESSAGES[error_key])
+            }
+        }
+
+        // Обработка по HTTP статусу
+        switch (response.status) {
+            case 401:
+                throw new AuthError(ERROR_MESSAGES.not_authenticated)
+            case 403:
+                throw new AuthError(ERROR_MESSAGES.insufficient_permissions)
+            case 404:
+                throw new ValidationError(ERROR_MESSAGES.not_found)
+            case 422:
+                throw new ValidationError(ERROR_MESSAGES.validation_error)
+            case 500:
+                throw new NetworkError(ERROR_MESSAGES.internal_server_error)
+            default:
+                throw new NetworkError(ERROR_MESSAGES.default)
+        }
+    } catch (parseError) {
+        // Если не удалось распарсить JSON, используем общую ошибку
+        switch (response.status) {
+            case 401:
+                throw new AuthError(ERROR_MESSAGES.not_authenticated)
+            case 403:
+                throw new AuthError(ERROR_MESSAGES.insufficient_permissions)
+            case 404:
+                throw new ValidationError(ERROR_MESSAGES.not_found)
+            case 422:
+                throw new ValidationError(ERROR_MESSAGES.validation_error)
+            case 500:
+                throw new NetworkError(ERROR_MESSAGES.internal_server_error)
+            default:
+                throw new NetworkError(ERROR_MESSAGES.default)
+        }
+    }
+}
 
 class ShoppingListAPI {
     /**
@@ -30,7 +88,7 @@ class ShoppingListAPI {
         })
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+            await handleAPIError(response)
         }
 
         const items = await response.json()
@@ -59,7 +117,7 @@ class ShoppingListAPI {
         })
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+            await handleAPIError(response)
         }
 
         return await response.json()
@@ -82,7 +140,7 @@ class ShoppingListAPI {
         })
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+            await handleAPIError(response)
         }
 
         return await response.json()
@@ -104,7 +162,7 @@ class ShoppingListAPI {
         })
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+            await handleAPIError(response)
         }
 
         return await response.json()
@@ -128,7 +186,7 @@ class ShoppingListAPI {
         })
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+            await handleAPIError(response)
         }
 
         return await response.json()
@@ -150,7 +208,7 @@ class ShoppingListAPI {
         })
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+            await handleAPIError(response)
         }
 
         return await response.json()
@@ -171,7 +229,7 @@ class ShoppingListAPI {
         })
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`)
+            await handleAPIError(response)
         }
     }
 
@@ -183,7 +241,7 @@ class ShoppingListAPI {
     static async bulkDeleteItems(itemIds) {
         // Проверяем, что передан массив ID
         if (!Array.isArray(itemIds) || itemIds.length === 0) {
-            throw new Error('Необходимо передать массив ID элементов для удаления')
+            throw new ValidationError('Необходимо передать массив ID элементов для удаления')
         }
 
         // Формируем query-параметры из массива ID

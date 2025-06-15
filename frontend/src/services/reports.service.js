@@ -39,19 +39,19 @@ export default class ReportsService {
                     case 401:
                         throw new AuthError(errorData.detail || ERROR_MESSAGES.not_authenticated);
                     case 404:
-                        throw new NotFoundError(errorData.detail || 'Рецепт не найден');
+                        throw new NotFoundError(ERROR_MESSAGES.recipe_not_found);
                     case 409:
                         if (errorData.error_key === 'recipe_report_already_exists') {
-                            throw new ValidationError('Вы уже подавали жалобу на этот рецепт');
+                            throw new ValidationError(ERROR_MESSAGES.recipe_report_already_exists);
                         }
                         if (errorData.error_key === 'cannot_report_own_recipe') {
-                            throw new ValidationError('Нельзя подавать жалобу на собственный рецепт');
+                            throw new ValidationError(ERROR_MESSAGES.cannot_report_own_recipe);
                         }
-                        throw new ValidationError(errorData.detail || 'Конфликт данных');
+                        throw new ValidationError(ERROR_MESSAGES.already_exists);
                     case 422:
-                        throw new ValidationError(errorData.detail || 'Ошибка валидации данных');
+                        throw new ValidationError(ERROR_MESSAGES.validation_error);
                     default:
-                        throw new NetworkError(errorData.detail || ERROR_MESSAGES.server_error);
+                        throw new NetworkError(ERROR_MESSAGES.server_error);
                 }
             }
 

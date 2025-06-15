@@ -35,7 +35,7 @@ export default class RecipesService {
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
                     throw new Error(ERROR_MESSAGES[errorData.error_key]);
                 } else {
-                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                    throw new Error(ERROR_MESSAGES.default);
                 }
             }
 
@@ -89,10 +89,10 @@ export default class RecipesService {
                     if (errorData.error_key === 'recipe_not_found') {
                         throw new NotFoundError(ERROR_MESSAGES.recipe_not_found);
                     }
-                    throw new NotFoundError(errorData.detail || ERROR_MESSAGES.recipe_not_found);
+                    throw new NotFoundError(ERROR_MESSAGES.recipe_not_found);
                 }
 
-                throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                throw new Error(ERROR_MESSAGES.default);
             }
 
             return await response.json();
@@ -138,10 +138,10 @@ export default class RecipesService {
                 }
 
                 if (response.status === 400) {
-                    throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
+                    throw new ValidationError(ERROR_MESSAGES.validation_error);
                 }
 
-                throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                throw new Error(ERROR_MESSAGES.default);
             }
 
             return await response.json();
@@ -193,7 +193,7 @@ export default class RecipesService {
                     throw new AuthError(ERROR_MESSAGES.not_authenticated);
                 }
 
-                throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                throw new Error(ERROR_MESSAGES.default);
             }
 
             return await response.json();
@@ -250,7 +250,7 @@ export default class RecipesService {
                     throw new AuthError(ERROR_MESSAGES.not_authenticated);
                 }
 
-                throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                throw new Error(ERROR_MESSAGES.default);
             }
 
             return await response.json();
@@ -302,10 +302,10 @@ export default class RecipesService {
                 }
 
                 if (response.status === 400) {
-                    throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
+                    throw new ValidationError(ERROR_MESSAGES.validation_error);
                 }
 
-                throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                throw new Error(ERROR_MESSAGES.default);
             }
 
             return await response.json();
@@ -334,7 +334,7 @@ export default class RecipesService {
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
                     throw new Error(ERROR_MESSAGES[errorData.error_key]);
                 } else {
-                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                    throw new Error(ERROR_MESSAGES.default);
                 }
             }
 
@@ -381,7 +381,7 @@ export default class RecipesService {
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
                     throw new Error(ERROR_MESSAGES[errorData.error_key]);
                 } else {
-                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                    throw new Error(ERROR_MESSAGES.default);
                 }
             }
 
@@ -435,9 +435,9 @@ export default class RecipesService {
                     if (errorData.error_key === 'recipe_not_found') {
                         throw new NotFoundError(ERROR_MESSAGES.recipe_not_found);
                     }
-                    throw new Error(ERROR_MESSAGES[errorData.error_key] || errorData.detail || ERROR_MESSAGES.default);
+                    throw new Error(ERROR_MESSAGES[errorData.error_key] || ERROR_MESSAGES.default);
                 } else {
-                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                    throw new Error(ERROR_MESSAGES.default);
                 }
             }
 

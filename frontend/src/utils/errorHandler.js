@@ -7,6 +7,19 @@ import { NetworkError, AuthError, ValidationError, NotFoundError } from '@/utils
  * @returns {{ message: string, type: 'error' | 'warning' }} Объект с сообщением и типом ошибки
  */
 export const handleApiError = (error) => {
+  // Добавляем логирование для отладки
+  if (process.env.NODE_ENV === 'development') {
+    console.log('handleApiError called with:', {
+      error,
+      errorType: error?.constructor?.name,
+      errorMessage: error?.message,
+      isAuthError: error instanceof AuthError,
+      isValidationError: error instanceof ValidationError,
+      isNetworkError: error instanceof NetworkError,
+      isNotFoundError: error instanceof NotFoundError
+    });
+  }
+
   // Обработка кастомных ошибок
   if (error instanceof NetworkError) {
     return {
@@ -33,7 +46,7 @@ export const handleApiError = (error) => {
   // Проверка ответа API
   if (error.response?.data) {
     const { error_key, detail } = error.response.data;
-    
+
     // Если есть error_key, используем соответствующее сообщение
     if (error_key && ERROR_MESSAGES[error_key]) {
       return {
@@ -41,11 +54,24 @@ export const handleApiError = (error) => {
         type: error_key.includes('not_found') ? 'warning' : 'error'
       };
     }
-    
-    // Если есть detail, но нет error_key
+
+    // Если есть detail, но нет error_key - НЕ показываем detail напрямую
+    // Вместо этого используем общее сообщение об ошибке
     if (detail && typeof detail === 'string') {
+      // Пытаемся определить тип ошибки по HTTP статусу
+      const status = error.response?.status;
+      const statusKey = `http_${status}`;
+
+      if (status && ERROR_MESSAGES[statusKey]) {
+        return {
+          message: ERROR_MESSAGES[statusKey],
+          type: status === 404 ? 'warning' : 'error'
+        };
+      }
+
+      // Fallback на общее сообщение
       return {
-        message: detail,
+        message: ERROR_MESSAGES.default,
         type: 'error'
       };
     }
@@ -53,19 +79,18 @@ export const handleApiError = (error) => {
 
   // Обработка стандартного объекта Error
   if (error.message) {
-    // Проверяем, есть ли сообщение в константах
-    for (const key in ERROR_MESSAGES) {
-      if (ERROR_MESSAGES[key].toLowerCase() === error.message.toLowerCase()) {
-        return {
-          message: ERROR_MESSAGES[key],
-          type: key.includes('not_found') ? 'warning' : 'error'
-        };
-      }
+    // Если это уже локализованное сообщение из констант, используем его напрямую
+    const isLocalizedMessage = Object.values(ERROR_MESSAGES).includes(error.message);
+    if (isLocalizedMessage) {
+      return {
+        message: error.message,
+        type: 'error'
+      };
     }
-    
-    // Если сообщение не найдено в константах, используем его как есть
+
+    // Если сообщение не найдено в константах, используем общее сообщение
     return {
-      message: error.message,
+      message: ERROR_MESSAGES.default,
       type: 'error'
     };
   }

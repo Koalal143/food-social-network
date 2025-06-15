@@ -1,6 +1,7 @@
 
 import ShoppingListAPI from './api/shopping-list.api.js'
-import { AuthError } from '@/utils/errors'
+import { AuthError, ValidationError } from '@/utils/errors'
+import { ERROR_MESSAGES } from '@/constants/errors'
 
 class ShoppingListService {
     /**
@@ -9,7 +10,7 @@ class ShoppingListService {
      */
     static ensureAuthenticated() {
         if (!ShoppingListAPI.isAuthenticated()) {
-            throw new AuthError('Для работы со списком покупок необходимо войти в систему')
+            throw new AuthError(ERROR_MESSAGES.not_authenticated)
         }
     }
 
@@ -88,23 +89,23 @@ class ShoppingListService {
     
     static validateIngredient(ingredient) {
         if (!ingredient || typeof ingredient !== 'object') {
-            throw new Error('Ингредиент должен быть объектом')
+            throw new ValidationError('Ингредиент должен быть объектом')
         }
 
         const name = ingredient.name?.trim()
         if (!name) {
-            throw new Error('Название ингредиента обязательно')
+            throw new ValidationError('Название ингредиента обязательно')
         }
         if (name.length < 2) {
-            throw new Error('Название ингредиента должно содержать минимум 2 символа')
+            throw new ValidationError('Название ингредиента должно содержать минимум 2 символа')
         }
         if (name.length > 135) {
-            throw new Error('Название ингредиента не должно превышать 135 символов')
+            throw new ValidationError('Название ингредиента не должно превышать 135 символов')
         }
 
         const quantity = ingredient.quantity?.trim() || ''
         if (quantity && quantity.length > 50) {
-            throw new Error('Количество не должно превышать 50 символов')
+            throw new ValidationError('Количество не должно превышать 50 символов')
         }
 
         return {

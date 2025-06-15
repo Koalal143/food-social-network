@@ -33,7 +33,7 @@ export default class DislikesService {
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
                     throw new Error(ERROR_MESSAGES[errorData.error_key]);
                 } else {
-                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                    throw new Error(ERROR_MESSAGES.default);
                 }
             }
 
@@ -73,7 +73,7 @@ export default class DislikesService {
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
                     throw new Error(ERROR_MESSAGES[errorData.error_key]);
                 } else {
-                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                    throw new Error(ERROR_MESSAGES.default);
                 }
             }
         } catch (error) {

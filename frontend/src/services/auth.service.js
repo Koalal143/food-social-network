@@ -86,14 +86,14 @@ export default class AuthService {
                     if (errorData.error_key === 'token_expired') {
                         throw new AuthError(ERROR_MESSAGES.token_expired);
                     }
-                    throw new AuthError(errorData.detail || ERROR_MESSAGES.invalid_credentials);
+                    throw new AuthError(ERROR_MESSAGES.invalid_credentials);
                 }
                 
                 if (response.status === 400) {
                     if (errorData.error_key === 'validation_error') {
-                        throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
+                        throw new ValidationError(ERROR_MESSAGES.validation_error);
                     }
-                    throw new ValidationError(errorData.detail || ERROR_MESSAGES.invalid_request);
+                    throw new ValidationError(ERROR_MESSAGES.invalid_request);
                 }
                 
                 if (response.status === 403) {
@@ -101,10 +101,10 @@ export default class AuthService {
                 }
                 
                 if (response.status === 404) {
-                    throw new Error(ERROR_MESSAGES.not_found);
+                    throw new ValidationError(ERROR_MESSAGES.not_found);
                 }
-                
-                throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
+
+                throw new NetworkError(ERROR_MESSAGES.internal_server_error);
             }
 
             return response;
@@ -137,7 +137,7 @@ export default class AuthService {
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
                     throw new ValidationError(ERROR_MESSAGES[errorData.error_key]);
                 } else {
-                    throw new ValidationError(errorData.detail || ERROR_MESSAGES.validation_error);
+                    throw new ValidationError(ERROR_MESSAGES.validation_error);
                 }
             }
 
@@ -169,11 +169,23 @@ export default class AuthService {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                
+
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('AuthService.login error:', {
+                        status: response.status,
+                        errorData,
+                        error_key: errorData.error_key,
+                        hasErrorKey: !!(errorData.error_key && ERROR_MESSAGES[errorData.error_key]),
+                        messageToThrow: errorData.error_key && ERROR_MESSAGES[errorData.error_key]
+                            ? ERROR_MESSAGES[errorData.error_key]
+                            : ERROR_MESSAGES.invalid_credentials
+                    });
+                }
+
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
-                    throw new Error(ERROR_MESSAGES[errorData.error_key]);
+                    throw new AuthError(ERROR_MESSAGES[errorData.error_key]);
                 } else {
-                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                    throw new AuthError(ERROR_MESSAGES.invalid_credentials);
                 }
             }
 
@@ -210,7 +222,7 @@ export default class AuthService {
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
                     throw new AuthError(ERROR_MESSAGES[errorData.error_key]);
                 } else {
-                    throw new Error(errorData.detail || ERROR_MESSAGES.internal_server_error);
+                    throw new AuthError(ERROR_MESSAGES.internal_server_error);
                 }
             }
 
@@ -307,9 +319,9 @@ export default class AuthService {
                 const errorData = await response.json().catch(() => ({}));
                 
                 if (errorData.error_key && ERROR_MESSAGES[errorData.error_key]) {
-                    throw new Error(ERROR_MESSAGES[errorData.error_key]);
+                    throw new AuthError(ERROR_MESSAGES[errorData.error_key]);
                 } else {
-                    throw new Error(errorData.detail || ERROR_MESSAGES.default);
+                    throw new AuthError(ERROR_MESSAGES.default);
                 }
             }
 
