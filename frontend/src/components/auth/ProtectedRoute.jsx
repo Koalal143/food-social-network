@@ -35,7 +35,7 @@ export default function ProtectedRoute({
             return (
                 <div className="py-8">
                     <Container>
-                        <div className="max-w-3xl mx-auto space-y-8">
+                        <div className="max-w-3xl lg:max-w-7xl mx-auto space-y-8">
                             <HeaderSkeleton level={1} width="w-1/3" />
                             <RecipeFormSkeleton />
                         </div>
