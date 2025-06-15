@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Container from "@/components/layout/Container";
 import RecipeSwipeCard from "@/components/shared/RecipeSwipeCard";
 import { useRouter } from 'next/navigation';
@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bookmark, ThumbsDown, Eye, Info, ChevronRight, RefreshCw, X, FastForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import RecipesService from '@/services/recipes.service';
 
 export default function RecommendationsPage() {
   const router = useRouter();
@@ -28,6 +29,29 @@ export default function RecommendationsPage() {
   const [direction, setDirection] = useState(null);
 
   const currentRecipe = getCurrentRecipe();
+
+  const viewedRecipeIds = useRef(new Set());
+
+  const sendRecipeViewAnalytics = async (recipe) => {
+    if (!recipe || viewedRecipeIds.current.has(recipe.id)) {
+      return;
+    }
+
+    try {
+      viewedRecipeIds.current.add(recipe.id);
+
+      await RecipesService.getRecipeBySlug(recipe.slug, 'recs-details');
+    } catch (error) {
+      console.error('Ошибка при отправке аналитики просмотра рецепта:', error);
+      viewedRecipeIds.current.delete(recipe.id);
+    }
+  };
+
+  useEffect(() => {
+    if (currentRecipe) {
+      sendRecipeViewAnalytics(currentRecipe);
+    }
+  }, [currentRecipe]);
 
   useEffect(() => {
     if (recipes.length === 0 && !loading && !error) {
@@ -74,7 +98,7 @@ export default function RecommendationsPage() {
   };
 
   const handleViewRecipe = (recipe) => {
-    router.push(`/recipe/${recipe.slug}?source=recs-detail`);
+    router.push(`/recipe/${recipe.slug}?source=recs-details`);
   };
 
   const tutorialContent = [
