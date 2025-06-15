@@ -42,10 +42,10 @@ export default function RecipeCardActions({ recipe, className = "" }) {
                         Редактировать
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onSelect={(e) => {
-                            e.preventDefault()
+                        onSelect={() => {
+                            setIsOpen(false)
                             setIsDeleteDialogOpen(true)
                         }}
                     >
